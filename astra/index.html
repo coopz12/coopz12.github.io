@@ -5,18 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#04060f">
 <title>ASTRA — Deep Field Observatory</title>
-<meta name="description" content="A website you navigate like a star chart. Chart a course, travel the routes, dock at six bodies.">
+<meta name="description" content="A website you navigate like a star chart. Chart a course, fly the star lanes, dock at six bodies.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Michroma&family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --accent:#6ee7ff;
   --accent-dim:rgba(110,231,255,.55);
-  --ink:#eef4ff;
-  --ink-dim:rgba(238,244,255,.6);
-  --ink-faint:rgba(238,244,255,.34);
-  --glass:rgba(7,12,26,.72);
+  --ink:#f2f7ff;
+  --ink-dim:rgba(242,247,255,.64);
+  --ink-faint:rgba(242,247,255,.36);
+  --glass:rgba(6,11,24,.74);
   --line:rgba(160,200,255,.16);
   --ease:cubic-bezier(.22,1,.36,1);
 }
@@ -28,9 +28,9 @@ body{background:#04060f;color:var(--ink);font-family:"Space Grotesk",system-ui,s
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
 
-/* ---------- deep space layers ---------- */
-.deepbg{position:fixed;inset:-12%;z-index:0;pointer-events:none;opacity:.5;
-  background:url("assets/nebula.jpg") center/cover;filter:blur(30px) saturate(1.1) brightness(.55);
+/* ---------- far space (screen-fixed parallax) ---------- */
+.deepbg{position:fixed;inset:-12%;z-index:0;pointer-events:none;opacity:.42;
+  background:url("assets/nebula.jpg") center/cover;filter:blur(34px) saturate(1.15) brightness(.5);
   will-change:transform}
 .stars-a,.stars-b{position:fixed;inset:-60%;z-index:1;pointer-events:none;will-change:background-position}
 .stars-a{background-image:
@@ -42,112 +42,167 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   background-size:380px 280px}
 .stars-b{background-image:
   radial-gradient(1px 1px at 80px 120px,rgba(255,255,255,.5) 50%,transparent 51%),
-  radial-gradient(1.6px 1.6px at 300px 300px,rgba(255,255,255,.8) 50%,transparent 51%),
+  radial-gradient(1.6px 1.6px at 300px 300px,rgba(255,255,255,.85) 50%,transparent 51%),
   radial-gradient(.9px .9px at 190px 40px,rgba(200,230,255,.5) 50%,transparent 51%),
   radial-gradient(1.1px 1.1px at 420px 190px,rgba(255,255,255,.65) 50%,transparent 51%);
-  background-size:520px 420px;opacity:.8}
+  background-size:520px 420px;opacity:.85}
 
-/* ---------- chart viewport ---------- */
+/* ---------- chart world ---------- */
 .viewport{position:fixed;inset:0;z-index:2;overflow:hidden;cursor:grab;touch-action:none}
 .viewport.dragging{cursor:grabbing}
 .world{position:absolute;left:0;top:0;width:2600px;height:1700px;transform-origin:0 0;will-change:transform}
-svg.chart{width:2600px;height:1700px;display:block}
-.edge{stroke:rgba(160,200,255,.17);stroke-width:1.4;fill:none}
-.edge.flown{stroke:var(--accent-dim);stroke-width:1.8}
-.edge.route{stroke:var(--accent);stroke-width:2.4;stroke-dasharray:7 9;
-  animation:dashmove 1s linear infinite;filter:drop-shadow(0 0 6px rgba(110,231,255,.7))}
-@keyframes dashmove{to{stroke-dashoffset:-16}}
+.world .galaxy{position:absolute;inset:0;width:2600px;height:1700px;object-fit:cover;
+  filter:brightness(.96) saturate(1.06)}
+.world .veil{position:absolute;inset:0;background:
+  radial-gradient(120% 90% at 50% 42%,transparent 55%,rgba(2,4,10,.5) 100%),
+  linear-gradient(180deg,rgba(2,4,10,.22),transparent 22%,transparent 80%,rgba(2,4,10,.3))}
+svg.chart{position:absolute;inset:0;width:2600px;height:1700px;display:block}
+
+/* star lanes */
+.lane-glow{stroke-width:10;fill:none;opacity:.06}
+.lane-core{stroke-width:1.6;fill:none;stroke-opacity:.28}
+.lane-flow{stroke-width:3.2;fill:none;stroke:var(--accent);stroke-linecap:round;
+  stroke-dasharray:0.1 17;opacity:0}
+.lane.flown .lane-glow{opacity:.15}
+.lane.flown .lane-core{stroke-opacity:.5}
+.lane.flown .lane-flow{opacity:.75;animation:dashflow 1.15s linear infinite}
+.lane.route .lane-glow{opacity:.22}
+.lane.route .lane-core{stroke-opacity:.7}
+.lane.route .lane-flow{opacity:1;stroke-dasharray:11 9;animation:dashflow .55s linear infinite;
+  filter:drop-shadow(0 0 5px rgba(110,231,255,.8))}
+@keyframes dashflow{to{stroke-dashoffset:-17.1}}
+.lane.route .lane-flow{animation-name:dashroute}
+@keyframes dashroute{to{stroke-dashoffset:-20}}
+
+/* bodies */
 .node{cursor:pointer}
 .node .hit{fill:transparent}
-.node .halo{fill:url(#haloGrad);opacity:.5;transition:opacity .3s}
+.node .halo{opacity:.55;transition:opacity .35s}
 .node:hover .halo,.node:focus-visible .halo{opacity:1}
-.node .core{fill:#dfeeff;stroke:rgba(110,231,255,.0);transition:fill .3s}
-.node .ring{fill:none;stroke:var(--accent-dim);stroke-width:1.4;opacity:0}
-.node.visited .core{fill:var(--accent)}
-.node.current .core{fill:#fff}
-.node.current .ring{opacity:1;animation:pulse 2.6s ease-out infinite}
-@keyframes pulse{0%{transform:scale(.55);opacity:.95}70%{transform:scale(1.5);opacity:0}100%{opacity:0}}
-.node .ring{transform-origin:center;transform-box:fill-box}
+.node .sphere{transition:filter .4s}
+.node.dim .spherewrap{filter:saturate(.3) brightness(.62)}
+.node .spherewrap{transition:filter .4s}
+.node .ring{fill:none;stroke:var(--accent-dim);stroke-width:1.6;opacity:0;
+  transform-origin:center;transform-box:fill-box}
+.node.current .ring{opacity:1;animation:pulse 2.8s ease-out infinite}
+@keyframes pulse{0%{transform:scale(.6);opacity:.95}70%{transform:scale(1.45);opacity:0}100%{opacity:0}}
+.node .ring2{fill:none;stroke:var(--accent);stroke-width:2.4;opacity:0;
+  transform-origin:center;transform-box:fill-box}
+.node.arrive .ring2{animation:arrive .95s var(--ease)}
+@keyframes arrive{0%{transform:scale(.4);opacity:1}100%{transform:scale(2.8);opacity:0}}
+.node .spark{transform-origin:center;transform-box:fill-box;animation:spin 26s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 .node text{pointer-events:none}
-.node .nm{font-family:"Michroma",sans-serif;font-size:25px;letter-spacing:.14em;fill:var(--ink);
-  paint-order:stroke;stroke:rgba(3,6,15,.85);stroke-width:5px}
-.node .cl{font-family:"Space Mono",monospace;font-size:13.5px;letter-spacing:.3em;fill:var(--ink-faint);
-  paint-order:stroke;stroke:rgba(3,6,15,.85);stroke-width:4px;text-transform:uppercase}
-.node.dim .nm{fill:rgba(238,244,255,.55)}
-.node.arrive .ring2{animation:arrive .9s var(--ease)}
-.ring2{fill:none;stroke:var(--accent);stroke-width:2;opacity:0;transform-origin:center;transform-box:fill-box}
-@keyframes arrive{0%{transform:scale(.4);opacity:1}100%{transform:scale(2.6);opacity:0}}
-.deco-star{fill:rgba(220,238,255,.75)}
-.deco-line{stroke:rgba(160,200,255,.07);stroke-width:1.2;fill:none}
+.node .nm{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:28px;letter-spacing:.17em;
+  fill:var(--ink);paint-order:stroke;stroke:rgba(2,4,11,.9);stroke-width:6px}
+.node .cl{font-family:"IBM Plex Mono",monospace;font-size:13px;letter-spacing:.34em;
+  fill:rgba(242,247,255,.55);paint-order:stroke;stroke:rgba(2,4,11,.9);stroke-width:4px;text-transform:uppercase}
+.node.dim .nm{fill:rgba(242,247,255,.62)}
+.deco-star{fill:rgba(224,240,255,.8)}
+
+/* warp streaks */
+#warp{position:fixed;inset:0;z-index:3;pointer-events:none;opacity:0;transition:opacity .35s}
 
 /* route tag */
-.rtag{position:fixed;z-index:30;pointer-events:none;font-family:"Space Mono",monospace;
-  font-size:10.5px;letter-spacing:.18em;color:var(--ink);background:var(--glass);
+.rtag{position:fixed;z-index:30;pointer-events:none;font-family:"IBM Plex Mono",monospace;
+  font-size:10.5px;letter-spacing:.16em;color:var(--ink);background:var(--glass);
   border:1px solid var(--line);border-radius:9px;padding:8px 11px;backdrop-filter:blur(8px);
-  opacity:0;transform:translate(-50%,-140%);transition:opacity .25s;white-space:nowrap}
+  opacity:0;transform:translate(-50%,-150%);transition:opacity .25s;white-space:nowrap}
 .rtag.show{opacity:1}
 .rtag b{color:var(--accent)}
 
-/* ---------- HUD ---------- */
+/* ---------- frame + HUD ---------- */
+.frame{position:fixed;inset:12px;z-index:39;pointer-events:none}
+.frame i{position:absolute;width:22px;height:22px;border:1px solid rgba(160,200,255,.35)}
+.frame i:nth-child(1){top:0;left:0;border-right:0;border-bottom:0;border-radius:6px 0 0 0}
+.frame i:nth-child(2){top:0;right:0;border-left:0;border-bottom:0;border-radius:0 6px 0 0}
+.frame i:nth-child(3){bottom:0;left:0;border-right:0;border-top:0;border-radius:0 0 0 6px}
+.frame i:nth-child(4){bottom:0;right:0;border-left:0;border-top:0;border-radius:0 0 6px 0}
 .hud{position:fixed;top:0;left:0;right:0;z-index:40;display:flex;justify-content:space-between;
-  align-items:flex-start;padding:20px 26px 0;pointer-events:none}
-.brand .word{font-family:"Michroma",sans-serif;font-size:19px;letter-spacing:.34em}
-.brand .word b{color:var(--accent);font-weight:400}
-.brand .sub{font-family:"Space Mono",monospace;font-size:9.5px;letter-spacing:.4em;
-  color:var(--ink-dim);margin-top:6px;text-transform:uppercase}
-.coords{text-align:right;font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.14em;color:var(--ink-dim);line-height:1.9}
-.coords b{color:var(--ink);font-weight:700}
-.coords .lab{color:var(--ink-faint);font-size:9.5px;letter-spacing:.3em}
+  align-items:flex-start;padding:26px 34px 0;pointer-events:none}
+.brand .word{font-weight:700;font-size:21px;letter-spacing:.42em;display:flex;align-items:center;gap:13px}
+.brand .word .dot{width:8px;height:8px;border-radius:99px;background:var(--accent);
+  box-shadow:0 0 12px var(--accent);animation:blink 3.2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+.brand .word b{color:var(--accent);font-weight:700}
+.brand .sub{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.42em;
+  color:var(--ink-dim);margin-top:7px;text-transform:uppercase}
+.status{text-align:center;font-family:"IBM Plex Mono",monospace;font-size:10.5px;
+  letter-spacing:.3em;color:var(--ink-dim);text-transform:uppercase;padding-top:6px}
+.status b{color:var(--ink);font-weight:600}
+.coords{text-align:right;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.13em;
+  color:var(--ink-dim);line-height:1.95}
+.coords b{color:var(--ink);font-weight:600}
+.coords .lab{color:var(--ink-faint);font-size:9.5px;letter-spacing:.28em}
 
-.deck{position:fixed;left:26px;right:26px;bottom:22px;z-index:40;display:flex;
+.deck{position:fixed;left:34px;right:34px;bottom:26px;z-index:40;display:flex;
   justify-content:space-between;align-items:flex-end;gap:16px;pointer-events:none}
-.hint{font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.22em;
-  color:var(--ink-faint);text-transform:uppercase;line-height:2}
-.hint b{color:var(--ink-dim)}
-.log{font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.22em;color:var(--ink-faint);
-  text-transform:uppercase;text-align:right;line-height:2}
-.log b{color:var(--accent)}
+.hint{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.24em;
+  color:var(--ink-faint);text-transform:uppercase;line-height:2.05}
+.hint b{color:var(--ink-dim);font-weight:500}
+.log{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.24em;
+  color:var(--ink-faint);text-transform:uppercase;text-align:right;line-height:2.05}
+.log b{color:var(--accent);font-weight:600}
 .zoomctl{display:flex;gap:8px;pointer-events:auto}
 .zoomctl button{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);
   background:var(--glass);backdrop-filter:blur(10px);font-size:17px;display:grid;place-items:center;
   transition:border-color .3s,transform .3s var(--ease)}
 .zoomctl button:hover{border-color:var(--accent);transform:translateY(-2px)}
-.zoomctl button.wide{width:auto;padding:0 15px;font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.22em}
+.zoomctl button.wide{width:auto;padding:0 15px;font-family:"IBM Plex Mono",monospace;
+  font-size:9.5px;letter-spacing:.24em}
+
+/* flight computer */
+.flightlog{position:fixed;left:50%;bottom:100px;transform:translate(-50%,14px);z-index:55;
+  min-width:min(430px,86vw);background:var(--glass);border:1px solid var(--line);border-radius:14px;
+  backdrop-filter:blur(14px);padding:13px 18px 14px;opacity:0;pointer-events:none;
+  transition:opacity .4s,transform .4s var(--ease)}
+.flightlog.show{opacity:1;transform:translate(-50%,0)}
+.flightlog .fl-top{display:flex;justify-content:space-between;gap:18px;font-family:"IBM Plex Mono",monospace;
+  font-size:10.5px;letter-spacing:.18em}
+.flightlog .fl-top .st{color:var(--accent);font-weight:600}
+.flightlog .fl-route{font-weight:600;font-size:14.5px;letter-spacing:.05em;margin-top:6px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.flightlog .fl-bar{display:flex;gap:5px;margin-top:11px}
+.flightlog .fl-bar i{flex:1;height:3px;border-radius:99px;background:rgba(160,200,255,.18)}
+.flightlog .fl-bar i.done{background:var(--accent);box-shadow:0 0 8px rgba(110,231,255,.7)}
+.flightlog .fl-bar i.now{background:var(--accent);animation:blink 0.8s ease-in-out infinite}
 
 /* ---------- docking panel ---------- */
-.panel{position:fixed;top:0;right:0;bottom:0;z-index:60;width:min(428px,92vw);
-  background:var(--glass);backdrop-filter:blur(22px);border-left:1px solid var(--line);
+.panel{position:fixed;top:0;right:0;bottom:0;z-index:60;width:min(430px,92vw);
+  background:var(--glass);backdrop-filter:blur(24px);border-left:1px solid var(--line);
   transform:translateX(104%);transition:transform .65s var(--ease);display:flex;flex-direction:column;
-  box-shadow:-30px 0 80px rgba(0,0,0,.5)}
+  box-shadow:-30px 0 80px rgba(0,0,0,.55)}
 body.docked .panel{transform:none}
-.panel .ph{height:196px;flex:none;position:relative;overflow:hidden;background:#0a1122}
+.panel .ph{height:198px;flex:none;position:relative;overflow:hidden;background:#0a1122}
 .panel .ph img{width:100%;height:100%;object-fit:cover;display:block}
-.panel .ph::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(7,12,26,.88))}
+.panel .ph::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(6,11,24,.12) 30%,rgba(6,11,24,.92))}
 .panel .ph .hero-num{position:absolute;inset:0;display:grid;place-items:center;
-  font-family:"Michroma",sans-serif;font-size:76px;color:var(--ink);letter-spacing:.04em;
-  text-shadow:0 10px 44px rgba(0,0,0,.6)}
+  font-weight:700;font-size:80px;letter-spacing:.02em;color:var(--ink);
+  text-shadow:0 12px 44px rgba(0,0,0,.65)}
 .panel .pbody{padding:24px 26px 26px;overflow-y:auto;overscroll-behavior:contain}
-.panel .kick{font-family:"Space Mono",monospace;font-size:10px;font-weight:700;letter-spacing:.36em;
+.panel .kick{font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:600;letter-spacing:.36em;
   color:var(--accent);text-transform:uppercase;display:flex;align-items:center;gap:10px}
 .panel .kick::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--accent-dim),transparent)}
-.panel h2{font-family:"Michroma",sans-serif;font-weight:400;font-size:27px;letter-spacing:.06em;
-  line-height:1.25;margin:13px 0 12px}
-.panel p{font-size:15px;line-height:1.65;color:var(--ink-dim);text-wrap:pretty}
+.panel h2{font-weight:700;font-size:27px;letter-spacing:.05em;line-height:1.22;margin:13px 0 12px}
+.panel p{font-size:15px;line-height:1.66;color:var(--ink-dim);text-wrap:pretty}
 .stats{margin-top:20px;border-top:1px solid var(--line)}
 .stats .row{display:flex;justify-content:space-between;gap:14px;padding:11px 0;border-bottom:1px solid var(--line)}
-.stats .k{font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.26em;color:var(--ink-faint);text-transform:uppercase;padding-top:2px}
+.stats .k{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.24em;
+  color:var(--ink-faint);text-transform:uppercase;padding-top:3px}
 .stats .v{font-size:14px;font-weight:500;text-align:right}
-.stats .v .tag{font-family:"Space Mono",monospace;font-size:9px;letter-spacing:.18em;color:#04121a;
-  background:var(--accent);border-radius:99px;padding:3px 8px;margin-left:8px;vertical-align:2px;font-weight:700}
+.stats .v .tag{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.16em;color:#04121a;
+  background:var(--accent);border-radius:99px;padding:3px 8px;margin-left:8px;vertical-align:2px;font-weight:600}
 .routes{margin-top:22px}
-.routes h3{font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.3em;color:var(--ink-faint);
-  text-transform:uppercase;margin-bottom:10px;font-weight:400}
+.routes h3{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.3em;
+  color:var(--ink-faint);text-transform:uppercase;margin-bottom:10px;font-weight:400}
 .route-btn{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;
   padding:13px 15px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;
   transition:border-color .3s,background .3s,transform .3s var(--ease);background:rgba(160,200,255,.03)}
 .route-btn:hover{border-color:var(--accent);background:rgba(110,231,255,.08);transform:translateX(-3px)}
-.route-btn .rn{font-weight:700;font-size:14px;letter-spacing:.04em}
-.route-btn .rj{font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.2em;color:var(--accent)}
+.route-btn .rn{font-weight:600;font-size:14px;letter-spacing:.04em;display:flex;align-items:center;gap:10px}
+.route-btn .rn .cdot{width:9px;height:9px;border-radius:99px;flex:none;box-shadow:0 0 8px currentColor}
+.route-btn .rj{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.18em;color:var(--accent);text-align:right}
 .closebtn{position:absolute;top:14px;right:14px;z-index:2;width:40px;height:40px;border-radius:12px;
   border:1px solid var(--line);background:rgba(4,8,18,.55);backdrop-filter:blur(8px);font-size:15px;
   display:grid;place-items:center;transition:border-color .3s}
@@ -158,31 +213,26 @@ body.docked .panel{transform:none}
 .panel.swap-in .pbody>*:nth-child(4){animation-delay:.15s}
 @keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 
-/* toast */
-.toast{position:fixed;left:50%;bottom:96px;transform:translate(-50%,16px);z-index:55;
-  font-family:"Space Mono",monospace;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;
-  background:var(--glass);border:1px solid var(--line);border-radius:99px;padding:11px 18px;
-  opacity:0;pointer-events:none;transition:opacity .4s,transform .4s var(--ease);backdrop-filter:blur(10px)}
-.toast.show{opacity:1;transform:translate(-50%,0)}
-.toast b{color:var(--accent)}
-
 @media (max-width:820px){
-  .panel{top:auto;left:0;right:0;bottom:0;width:auto;max-height:62dvh;border-left:0;border-top:1px solid var(--line);
-    transform:translateY(105%);border-radius:20px 20px 0 0}
+  .panel{top:auto;left:0;right:0;bottom:0;width:auto;max-height:62dvh;border-left:0;
+    border-top:1px solid var(--line);transform:translateY(105%);border-radius:20px 20px 0 0}
   body.docked .panel{transform:none}
-  .panel .ph{height:128px}
-  .panel .ph .hero-num{font-size:52px}
-  .hud{padding:15px 16px 0}
-  .brand .word{font-size:15px}
+  .panel .ph{height:126px}
+  .panel .ph .hero-num{font-size:54px}
+  .hud{padding:19px 20px 0}
+  .brand .word{font-size:16px}
+  .status{display:none}
   .coords{display:none}
-  .deck{left:16px;right:16px;bottom:14px}
+  .frame{inset:8px}
+  .deck{left:20px;right:20px;bottom:16px}
   .hint{display:none}
   .log{display:none}
-  .toast{bottom:auto;top:76px}
+  .flightlog{bottom:auto;top:70px}
 }
 @media (prefers-reduced-motion:reduce){
-  .edge.route{animation:none}
-  .node.current .ring{animation:none;opacity:.7}
+  .lane.flown .lane-flow,.lane.route .lane-flow{animation:none}
+  .node.current .ring,.node .spark,.brand .word .dot{animation:none}
+  .node.current .ring{opacity:.7}
   .panel{transition-duration:.01ms}
 }
 </style>
@@ -193,30 +243,30 @@ body.docked .panel{transform:none}
 <div class="stars-a" id="starsA"></div>
 <div class="stars-b" id="starsB"></div>
 
-<div class="viewport" id="viewport" role="application" aria-label="Star chart. Drag to pan, scroll to zoom, select a body to chart a course to it.">
+<div class="viewport" id="viewport" role="application" aria-label="Star chart of the Astra observatory region. Drag to pan, scroll to zoom, select a body to chart a course to it.">
   <div class="world" id="world">
-    <svg class="chart" viewBox="0 0 2600 1700" aria-hidden="false">
-      <defs>
-        <radialGradient id="haloGrad">
-          <stop offset="0%" stop-color="#6ee7ff" stop-opacity=".34"/>
-          <stop offset="55%" stop-color="#6ee7ff" stop-opacity=".1"/>
-          <stop offset="100%" stop-color="#6ee7ff" stop-opacity="0"/>
-        </radialGradient>
-      </defs>
+    <img class="galaxy" src="assets/galaxy.jpg" alt="" draggable="false">
+    <div class="veil"></div>
+    <svg class="chart" viewBox="0 0 2600 1700">
+      <defs id="defsRoot"></defs>
       <g id="decoLayer"></g>
       <g id="edgeLayer"></g>
+      <g id="cometLayer"></g>
       <g id="nodeLayer"></g>
     </svg>
   </div>
 </div>
 
+<canvas id="warp"></canvas>
 <div class="rtag" id="rtag"></div>
+<div class="frame" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
 
 <header class="hud">
   <div class="brand">
-    <div class="word">ASTRA<b>.</b></div>
+    <div class="word"><span class="dot"></span>ASTRA<b>.</b></div>
     <div class="sub">Deep Field Observatory</div>
   </div>
+  <div class="status" id="statusOut">DOCKED · <b>ASTRA PRIME</b></div>
   <div class="coords" aria-hidden="true">
     <div><span class="lab">RA</span> <b id="raOut">12.00h</b> &nbsp; <span class="lab">DEC</span> <b id="decOut">+0.0°</b></div>
     <div><span class="lab">CHART SCALE</span> <b id="zoomOut">52%</b></div>
@@ -231,6 +281,12 @@ body.docked .panel{transform:none}
     <button id="zoomInBtn" aria-label="Zoom in">+</button>
     <button id="resetBtn" class="wide">RESET CHART</button>
   </div>
+</div>
+
+<div class="flightlog" id="flightlog" aria-live="polite">
+  <div class="fl-top"><span class="st" id="flState">IN TRANSIT</span><span id="flCount"></span></div>
+  <div class="fl-route" id="flRoute"></div>
+  <div class="fl-bar" id="flBar"></div>
 </div>
 
 <aside class="panel" id="panel" aria-label="Destination details">
@@ -248,29 +304,33 @@ body.docked .panel{transform:none}
   </div>
 </aside>
 
-<div class="toast" id="toast"></div>
-
 <script>
 /* ================= data ================= */
 const NODES = {
-  prime:   { x:1300, y:850,  name:"ASTRA PRIME",   cls:"The Observatory", img:"assets/observatory.jpg",
+  prime:   { x:1300, y:850,  r:30, kind:"star",   name:"ASTRA PRIME",   cls:"The Observatory",
+    col:{ l:"#fff3d6", m:"#ffd98c", d:"#a8741f" }, img:"assets/observatory.jpg",
     body:"A white dome on a black summit, open to the darkest sky on the continent. Astra Prime is where every chart begins: the telescope, the archive, and the last hot coffee for four hundred miles.",
     stats:[["Elevation","4,204 m"],["First light","1987"],["Clear nights","287 / year"],["Resident astronomers","14"]] },
-  nebula:  { x:620,  y:420,  name:"VEIL NEBULA",   cls:"Stellar Nursery", img:"assets/nebula.jpg",
+  nebula:  { x:620,  y:420,  r:24, kind:"star",   name:"VEIL NEBULA",   cls:"Stellar Nursery",
+    col:{ l:"#e9dcff", m:"#a678ff", d:"#41217d" }, img:"assets/nebula.jpg",
     body:"The expanding shell of a star that tore itself apart eight thousand years ago. Gas moving at 1.5 million kilometres an hour, lit from inside by the newborn cluster it left behind.",
     stats:[["Distance","1,470 light-years"],["Expansion","1.5M km / hour"],["Catalog","NGC 6960"],["Best viewing","June to September"]] },
-  exo:     { x:870,  y:1220, name:"KEPLER-186F",   cls:"Exoplanet Index", img:"assets/exoplanet.jpg",
+  exo:     { x:870,  y:1220, r:25, kind:"planet", name:"KEPLER-186F",   cls:"Exoplanet Index",
+    col:{ l:"#d9fff3", m:"#3ecfa4", d:"#0b5a46" }, img:"assets/exoplanet.jpg",
     body:"The first Earth-sized world found inside another star's habitable zone. Its sun is a red dwarf, its noon is a permanent amber dusk, and its seas, if they exist, have never seen a night sky like ours.",
     stats:[["Distance","582 light-years"],["Orbital period","130 days"],["Radius","1.17 × Earth"],["Status","Habitable zone"]] },
-  lens:    { x:1720, y:470,  name:"THE GREAT LENS", cls:"The Telescope", hero:"8.2 M",
+  lens:    { x:1720, y:470,  r:24, kind:"star",   name:"THE GREAT LENS", cls:"The Telescope",
+    col:{ l:"#fff7db", m:"#ffd76a", d:"#9c6a17" }, hero:"8.2 M",
     body:"Eight point two metres of polished glass and patience. The Great Lens gathers in one hour what the human eye would need nine hundred years to see, then hands it to whoever is on shift.",
     stats:[["Aperture","8.2 m"],["Light grasp","900 × the eye"],["Mirror mass","16.8 tonnes"],["Cooling","Liquid nitrogen, nightly"]] },
-  missions:{ x:1920, y:1160, name:"MISSION LOG",   cls:"Expeditions", hero:"47",
+  missions:{ x:1920, y:1160, r:22, kind:"star",   name:"MISSION LOG",   cls:"Expeditions",
+    col:{ l:"#ffffff", m:"#bcd7ff", d:"#44659c" }, hero:"47",
     body:"Forty-seven expeditions charted from this dome, from comet chases to a decade-long stare at a single patch of nothing that turned out to contain nine thousand galaxies.",
-    stats:[["Expeditions","47 flown", "ARCHIVE"],["Deep field stare","11 days", "COMPLETE"],["Comet intercepts","6", "COMPLETE"],["Next launch window","March 2027", "QUEUED"]] },
-  visit:   { x:2260, y:740,  name:"NIGHT TICKETS", cls:"Visit the Dome", hero:"287",
+    stats:[["Expeditions","47 flown","ARCHIVE"],["Deep field stare","11 days","COMPLETE"],["Comet intercepts","6","COMPLETE"],["Next launch window","March 2027","QUEUED"]] },
+  visit:   { x:2260, y:740,  r:24, kind:"planet", name:"NIGHT TICKETS", cls:"Visit the Dome",
+    col:{ l:"#ffe3ec", m:"#ff9db8", d:"#7e3350" }, hero:"287",
     body:"On clear nights the dome opens to the public. Deck passes for the terrace, dome sessions at the eyepiece, and one astronomer-led night a week that usually ends at sunrise.",
-    stats:[["Deck pass","$24", "BOOK"],["Dome session","$58", "BOOK"],["Astronomer night","$140", "2 LEFT"],["Season","April to October"]] },
+    stats:[["Deck pass","$24","BOOK"],["Dome session","$58","BOOK"],["Astronomer night","$140","2 LEFT"],["Season","April to October"]] },
 };
 const EDGES = [
   ["prime","nebula"],["prime","exo"],["prime","lens"],
@@ -280,43 +340,110 @@ const EDGES = [
 const IDS = Object.keys(NODES);
 const ADJ = {}; IDS.forEach(id => ADJ[id] = []);
 EDGES.forEach(([a,b]) => { ADJ[a].push(b); ADJ[b].push(a); });
+const dist = (a,b) => Math.hypot(NODES[a].x - NODES[b].x, NODES[a].y - NODES[b].y);
 
 /* ================= chart build ================= */
 const NS = "http://www.w3.org/2000/svg";
 const el = (tag, attrs) => { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); return n; };
+const defs = document.getElementById("defsRoot");
 const edgeLayer = document.getElementById("edgeLayer");
 const nodeLayer = document.getElementById("nodeLayer");
 const decoLayer = document.getElementById("decoLayer");
-const edgeEls = {};
+const cometLayer = document.getElementById("cometLayer");
+
+/* per-body gradients */
+IDS.forEach(id => {
+  const c = NODES[id].col;
+  const g = el("radialGradient", { id:"sg-" + id, cx:"35%", cy:"30%", r:"78%" });
+  g.innerHTML = `<stop offset="0%" stop-color="${c.l}"/><stop offset="42%" stop-color="${c.m}"/>` +
+    `<stop offset="80%" stop-color="${c.d}"/><stop offset="100%" stop-color="#05070f"/>`;
+  defs.appendChild(g);
+  const sh = el("radialGradient", { id:"sh-" + id, cx:"30%", cy:"26%", r:"76%" });
+  sh.innerHTML = `<stop offset="52%" stop-color="rgba(2,4,12,0)"/><stop offset="86%" stop-color="rgba(2,4,12,.38)"/>` +
+    `<stop offset="100%" stop-color="rgba(2,4,12,.72)"/>`;
+  defs.appendChild(sh);
+  const h = el("radialGradient", { id:"hg-" + id });
+  h.innerHTML = `<stop offset="0%" stop-color="${c.m}" stop-opacity=".5"/><stop offset="55%" stop-color="${c.m}" stop-opacity=".13"/>` +
+    `<stop offset="100%" stop-color="${c.m}" stop-opacity="0"/>`;
+  defs.appendChild(h);
+});
+const cg = el("radialGradient", { id:"cometGlow" });
+cg.innerHTML = `<stop offset="0%" stop-color="#ffffff" stop-opacity=".95"/><stop offset="35%" stop-color="#6ee7ff" stop-opacity=".55"/>` +
+  `<stop offset="100%" stop-color="#6ee7ff" stop-opacity="0"/>`;
+defs.appendChild(cg);
+
+/* star lanes */
+const laneEls = {};
 EDGES.forEach(([a,b]) => {
   const A = NODES[a], B = NODES[b];
-  const ln = el("line", { x1:A.x, y1:A.y, x2:B.x, y2:B.y, "class":"edge" });
-  edgeLayer.appendChild(ln);
-  edgeEls[a+"|"+b] = ln; edgeEls[b+"|"+a] = ln;
+  const lg = el("linearGradient", { id:`lg-${a}-${b}`, gradientUnits:"userSpaceOnUse", x1:A.x, y1:A.y, x2:B.x, y2:B.y });
+  lg.innerHTML = `<stop offset="0%" stop-color="${A.col.m}"/><stop offset="100%" stop-color="${B.col.m}"/>`;
+  defs.appendChild(lg);
+  const g = el("g", { "class":"lane" });
+  g.append(
+    el("line", { x1:A.x, y1:A.y, x2:B.x, y2:B.y, "class":"lane-glow", stroke:`url(#lg-${a}-${b})` }),
+    el("line", { x1:A.x, y1:A.y, x2:B.x, y2:B.y, "class":"lane-core", stroke:`url(#lg-${a}-${b})` }),
+    el("line", { x1:A.x, y1:A.y, x2:B.x, y2:B.y, "class":"lane-flow" }),
+  );
+  edgeLayer.appendChild(g);
+  laneEls[a+"|"+b] = g; laneEls[b+"|"+a] = g;
 });
-/* decorative minor stars + faint deco constellations */
-let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-for (let i = 0; i < 90; i++){
+
+/* ambient field stars */
+let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+for (let i = 0; i < 210; i++){
   decoLayer.appendChild(el("circle", { cx:(rnd()*2600).toFixed(0), cy:(rnd()*1700).toFixed(0),
-    r:(0.8 + rnd()*1.6).toFixed(1), "class":"deco-star", opacity:(0.25 + rnd()*0.6).toFixed(2) }));
+    r:(0.7 + rnd()*1.7).toFixed(1), "class":"deco-star", opacity:(0.2 + rnd()*0.65).toFixed(2) }));
 }
+for (let i = 0; i < 12; i++){
+  const x = (rnd()*2500 + 50).toFixed(0), y = (rnd()*1600 + 50).toFixed(0), s = 7 + rnd()*8;
+  const p = el("path", { d:`M ${x} ${+y - s} L ${x} ${+y + s} M ${+x - s} ${y} L ${+x + s} ${y}`,
+    stroke:"rgba(225,242,255,.5)", "stroke-width":1.3, fill:"none" });
+  decoLayer.appendChild(p);
+}
+
+/* bodies */
 const nodeEls = {};
 IDS.forEach(id => {
-  const n = NODES[id];
+  const n = NODES[id], R = n.r;
   const g = el("g", { "class":"node dim", tabindex:"0", role:"button",
     "aria-label": n.name + ", " + n.cls + ". Activate to chart a course." });
   g.dataset.id = id;
-  const halo = el("circle", { cx:n.x, cy:n.y, r: id==="prime" ? 120 : 92, "class":"halo" });
-  const ring = el("circle", { cx:n.x, cy:n.y, r: id==="prime" ? 26 : 20, "class":"ring" });
-  const ring2 = el("circle", { cx:n.x, cy:n.y, r: id==="prime" ? 26 : 20, "class":"ring2" });
-  const core = el("circle", { cx:n.x, cy:n.y, r: id==="prime" ? 11 : 8, "class":"core" });
-  const hit  = el("circle", { cx:n.x, cy:n.y, r:56, "class":"hit" });
-  const t1 = el("text", { x:n.x, y:n.y + 52, "text-anchor":"middle", "class":"nm" }); t1.textContent = n.name;
-  const t2 = el("text", { x:n.x, y:n.y + 78, "text-anchor":"middle", "class":"cl" }); t2.textContent = n.cls;
-  g.append(halo, ring2, ring, core, hit, t1, t2);
+  const wrap = el("g", { "class":"spherewrap" });
+  wrap.appendChild(el("circle", { cx:n.x, cy:n.y, r:R * 4.1, fill:`url(#hg-${id})`, "class":"halo" }));
+  if (n.kind === "planet"){
+    wrap.appendChild(el("ellipse", { cx:n.x, cy:n.y, rx:R * 1.85, ry:R * 0.52,
+      transform:`rotate(-16 ${n.x} ${n.y})`, fill:"none", stroke:n.col.m, "stroke-width":1.7, opacity:.6 }));
+    wrap.appendChild(el("circle", { cx:n.x + R * 1.5, cy:n.y - R * 0.62, r:3.4, fill:n.col.l, opacity:.9 }));
+  } else {
+    const spark = el("g", { "class":"spark" });
+    const s1 = R * 2.1, s2 = R * 1.25;
+    spark.appendChild(el("path", { d:`M ${n.x} ${n.y - s1} L ${n.x} ${n.y + s1} M ${n.x - s1} ${n.y} L ${n.x + s1} ${n.y}`,
+      stroke:n.col.m, "stroke-width":2, opacity:.5, fill:"none" }));
+    spark.appendChild(el("path", { d:`M ${n.x - s2 * .7} ${n.y - s2 * .7} L ${n.x + s2 * .7} ${n.y + s2 * .7} M ${n.x + s2 * .7} ${n.y - s2 * .7} L ${n.x - s2 * .7} ${n.y + s2 * .7}`,
+      stroke:n.col.m, "stroke-width":1.4, opacity:.3, fill:"none" }));
+    wrap.appendChild(spark);
+  }
+  wrap.appendChild(el("circle", { cx:n.x, cy:n.y, r:R, fill:`url(#sg-${id})`, "class":"sphere" }));
+  wrap.appendChild(el("circle", { cx:n.x, cy:n.y, r:R, fill:`url(#sh-${id})` }));
+  wrap.appendChild(el("circle", { cx:n.x - R * .34, cy:n.y - R * .38, r:R * .26, fill:"#ffffff", opacity:.5 }));
+  g.append(wrap,
+    el("circle", { cx:n.x, cy:n.y, r:R + 13, "class":"ring2" }),
+    el("circle", { cx:n.x, cy:n.y, r:R + 13, "class":"ring" }),
+    el("circle", { cx:n.x, cy:n.y, r:58, "class":"hit" }));
+  const t1 = el("text", { x:n.x, y:n.y + R + 40, "text-anchor":"middle", "class":"nm" }); t1.textContent = n.name;
+  const t2 = el("text", { x:n.x, y:n.y + R + 66, "text-anchor":"middle", "class":"cl" }); t2.textContent = n.cls;
+  g.append(t1, t2);
   nodeLayer.appendChild(g);
   nodeEls[id] = g;
 });
+
+/* comet */
+const comet = el("g", { opacity:0 });
+comet.appendChild(el("circle", { r:26, fill:"url(#cometGlow)" }));
+comet.appendChild(el("circle", { r:5.5, fill:"#ffffff" }));
+cometLayer.appendChild(comet);
+function setComet(x, y, on){ comet.setAttribute("transform", `translate(${x} ${y})`); comet.setAttribute("opacity", on ? 1 : 0); }
 
 /* ================= camera ================= */
 const viewport = document.getElementById("viewport");
@@ -324,7 +451,6 @@ const world = document.getElementById("world");
 const deepbg = document.getElementById("deepbg");
 const starsA = document.getElementById("starsA"), starsB = document.getElementById("starsB");
 let vw = innerWidth, vh = innerHeight;
-addEventListener("resize", () => { vw = innerWidth; vh = innerHeight; apply(); });
 const cam = { x: NODES.prime.x, y: NODES.prime.y, k: 0.5 };
 const clampK = k => Math.min(2.4, Math.max(0.3, k));
 function apply(){
@@ -339,7 +465,7 @@ function apply(){
 }
 const easeIO = t => t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
 let anim = null;
-function tweenCam(to, dur, done){
+function tweenCam(to, dur, done, onFrame){
   if (anim) cancelAnimationFrame(anim.id);
   const from = { ...cam }, t0 = performance.now();
   const stepFn = now => {
@@ -348,13 +474,47 @@ function tweenCam(to, dur, done){
     cam.y = from.y + (to.y - from.y) * e;
     cam.k = from.k + (to.k - from.k) * e;
     apply();
+    if (onFrame) onFrame(e);
     if (t < 1) anim = { id: requestAnimationFrame(stepFn) };
     else { anim = null; done && done(); }
   };
   anim = { id: requestAnimationFrame(stepFn) };
 }
 
-/* ================= navigation logic ================= */
+/* ================= warp streaks ================= */
+const warpC = document.getElementById("warp"), wctx = warpC.getContext("2d");
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+let warpLevel = 0, warpTarget = 0, wStars = [];
+function sizeWarp(){
+  const dpr = Math.min(devicePixelRatio || 1, 1.5);
+  warpC.width = vw * dpr; warpC.height = vh * dpr;
+  wctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  wStars = Array.from({ length: 140 }, () => ({ a: Math.random() * Math.PI * 2, d: Math.random() * 0.5 + 0.04, s: 0.6 + Math.random() * 0.9 }));
+}
+function warpLoop(){
+  requestAnimationFrame(warpLoop);
+  warpLevel += (warpTarget - warpLevel) * 0.06;
+  if (warpLevel < 0.02){ if (warpC.style.opacity !== "0") warpC.style.opacity = 0; return; }
+  warpC.style.opacity = Math.min(1, warpLevel * 1.4);
+  const cx = vw / 2, cy = vh / 2, maxR = Math.hypot(cx, cy);
+  wctx.clearRect(0, 0, vw, vh);
+  wctx.lineCap = "round";
+  for (const st of wStars){
+    const prev = st.d;
+    st.d += st.d * 0.028 * warpLevel * st.s + 0.0006 * warpLevel;
+    if (st.d > 1.15){ st.d = 0.03 + Math.random() * 0.1; st.a = Math.random() * Math.PI * 2; continue; }
+    const r0 = prev * maxR, r1 = st.d * maxR;
+    wctx.beginPath();
+    wctx.moveTo(cx + Math.cos(st.a) * r0, cy + Math.sin(st.a) * r0);
+    wctx.lineTo(cx + Math.cos(st.a) * r1, cy + Math.sin(st.a) * r1);
+    wctx.strokeStyle = `rgba(190,235,255,${Math.min(0.85, st.d * 0.9 * warpLevel)})`;
+    wctx.lineWidth = 1 + st.d * 1.6;
+    wctx.stroke();
+  }
+}
+if (!reduced){ sizeWarp(); requestAnimationFrame(warpLoop); }
+
+/* ================= navigation ================= */
 function bfs(from, to){
   if (from === to) return [from];
   const prev = { [from]: null }, q = [from];
@@ -377,38 +537,53 @@ function refreshStates(){
     g.classList.toggle("current", id === current);
     g.classList.toggle("dim", !visited.has(id) && id !== current);
   });
-  for (const key in edgeEls) edgeEls[key].classList.toggle("flown", flown.has(key));
+  for (const key in laneEls) laneEls[key].classList.toggle("flown", flown.has(key) || flown.has(key.split("|").reverse().join("|")));
   document.getElementById("logOut").innerHTML =
     `BODIES VISITED <b>${visited.size} / 6</b><br>ROUTES FLOWN <b>${flown.size}</b>`;
+  document.getElementById("statusOut").innerHTML = traveling
+    ? `IN TRANSIT · <b>${NODES[current].name}</b>` : `DOCKED · <b>${NODES[current].name}</b>`;
 }
-let toastTimer = null;
-function toast(html){
-  const t = document.getElementById("toast");
-  t.innerHTML = html; t.classList.add("show");
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2600);
+const flightlog = document.getElementById("flightlog");
+let flTimer = null;
+function showFlight(state, route, legsDone, legsTotal, nowLeg){
+  document.getElementById("flState").textContent = state;
+  document.getElementById("flCount").textContent = legsTotal ? `JUMP ${Math.min(legsDone + 1, legsTotal)} / ${legsTotal}` : "";
+  document.getElementById("flRoute").textContent = route;
+  document.getElementById("flBar").innerHTML = Array.from({ length: legsTotal || 1 }, (_, i) =>
+    `<i class="${i < legsDone ? "done" : i === nowLeg ? "now" : ""}"></i>`).join("");
+  flightlog.classList.add("show");
+  clearTimeout(flTimer);
 }
+function hideFlight(delay){ clearTimeout(flTimer); flTimer = setTimeout(() => flightlog.classList.remove("show"), delay); }
 function flyTo(target){
-  if (traveling || target === current && document.body.classList.contains("docked")) { if (target === current) openPanel(target); return; }
+  if (traveling) return;
   if (target === current){ openPanel(target); return; }
   clearRoutePreview();
   const path = bfs(current, target);
   const legs = path.slice(1);
-  traveling = true;
+  traveling = true; refreshStates();
   closePanel();
-  toast(`COURSE CHARTED · <b>${legs.length} JUMP${legs.length > 1 ? "S" : ""}</b> TO ${NODES[target].name}`);
+  warpTarget = reduced ? 0 : 1;
+  showFlight("IN TRANSIT", `${NODES[path[0]].name} ▸ ${NODES[target].name}`, 0, legs.length, 0);
   const runLeg = i => {
     if (i >= legs.length){
-      traveling = false;
+      traveling = false; warpTarget = 0;
+      setComet(0, 0, false);
       current = target; visited.add(target);
       const g = nodeEls[target];
       g.classList.remove("arrive"); void g.getBoundingClientRect(); g.classList.add("arrive");
-      refreshStates(); openPanel(target);
+      refreshStates();
+      showFlight("DOCKED", NODES[target].name, legs.length, legs.length, -1);
+      hideFlight(1900);
+      openPanel(target);
       return;
     }
-    const nid = legs[i], n = NODES[nid];
+    const nid = legs[i], n = NODES[nid], fromN = NODES[path[i]];
     flown.add(path[i] + "|" + nid);
+    showFlight("IN TRANSIT", `${fromN.name} ▸ ${NODES[target].name}`, i, legs.length, i);
     const midK = legs.length > 1 && i < legs.length - 1 ? Math.min(cam.k, 0.85) : 1.12;
-    tweenCam({ x:n.x, y:n.y, k:midK }, 640, () => { visited.add(nid); refreshStates(); runLeg(i + 1); });
+    tweenCam({ x:n.x, y:n.y, k:midK }, 660, () => { visited.add(nid); refreshStates(); runLeg(i + 1); },
+      e => setComet(fromN.x + (n.x - fromN.x) * e, fromN.y + (n.y - fromN.y) * e, true));
   };
   runLeg(0);
 }
@@ -417,15 +592,17 @@ function flyTo(target){
 const panel = document.getElementById("panel");
 function openPanel(id){
   const n = NODES[id];
-  const head = document.getElementById("panelHead");
-  head.innerHTML = n.img ? `<img src="${n.img}" alt="">` : `<div class="hero-num">${n.hero || ""}</div>`;
+  document.getElementById("panelHead").innerHTML = n.img
+    ? `<img src="${n.img}" alt="">` : `<div class="hero-num">${n.hero || ""}</div>`;
   document.getElementById("pKick").textContent = n.cls;
   document.getElementById("pTitle").textContent = n.name;
   document.getElementById("pBody").textContent = n.body;
   document.getElementById("pStats").innerHTML = n.stats.map(([k,v,tag]) =>
     `<div class="row"><span class="k">${k}</span><span class="v">${v}${tag ? `<span class="tag">${tag}</span>` : ""}</span></div>`).join("");
-  document.getElementById("pRoutes").innerHTML = ADJ[id].map(nb =>
-    `<button class="route-btn" data-go="${nb}"><span class="rn">${NODES[nb].name}</span><span class="rj">1 JUMP →</span></button>`).join("");
+  document.getElementById("pRoutes").innerHTML = ADJ[id].map(nb => {
+    const m = NODES[nb];
+    return `<button class="route-btn" data-go="${nb}"><span class="rn"><span class="cdot" style="background:${m.col.m};color:${m.col.m}"></span>${m.name}</span><span class="rj">1 JUMP · ${(dist(id, nb) / 100).toFixed(1)} LY →</span></button>`;
+  }).join("");
   document.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => flyTo(b.dataset.go)));
   document.body.classList.add("docked");
   panel.classList.remove("swap-in"); void panel.offsetWidth; panel.classList.add("swap-in");
@@ -436,31 +613,35 @@ function openPanel(id){
 function closePanel(){ document.body.classList.remove("docked"); }
 document.getElementById("closePanel").addEventListener("click", closePanel);
 
-/* ================= route preview (hover) ================= */
+/* ================= route preview ================= */
 const rtag = document.getElementById("rtag");
 function clearRoutePreview(){
-  for (const key in edgeEls) edgeEls[key].classList.remove("route");
+  for (const key in laneEls) laneEls[key].classList.remove("route");
   rtag.classList.remove("show");
 }
 function previewRoute(target, evt){
   if (traveling || target === current) return;
   const path = bfs(current, target);
-  for (let i = 0; i < path.length - 1; i++) edgeEls[path[i] + "|" + path[i+1]].classList.add("route");
+  for (let i = 0; i < path.length - 1; i++) laneEls[path[i] + "|" + path[i+1]].classList.add("route");
   const via = path.slice(1, -1).map(id => NODES[id].name).join(" · ");
   rtag.innerHTML = `<b>${path.length - 1} JUMP${path.length > 2 ? "S" : ""}</b>${via ? " VIA " + via : " · DIRECT"}`;
   rtag.style.left = evt.clientX + "px"; rtag.style.top = evt.clientY + "px";
   rtag.classList.add("show");
 }
 
-/* ================= input: pan / zoom / pinch / click ================= */
+/* ================= input ================= */
 const pointers = new Map();
 let dragMoved = 0, lastPinch = 0;
+function cancelFlight(){
+  if (anim){ cancelAnimationFrame(anim.id); anim = null; }
+  if (traveling){ traveling = false; warpTarget = 0; setComet(0, 0, false); hideFlight(300); refreshStates(); }
+}
 viewport.addEventListener("pointerdown", e => {
   pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
   dragMoved = 0;
   viewport.setPointerCapture(e.pointerId);
   viewport.classList.add("dragging");
-  if (anim){ cancelAnimationFrame(anim.id); anim = null; traveling = false; }
+  cancelFlight();
 });
 viewport.addEventListener("pointermove", e => {
   if (!pointers.has(e.pointerId)) return;
@@ -472,13 +653,13 @@ viewport.addEventListener("pointermove", e => {
     cam.x -= dx / cam.k; cam.y -= dy / cam.k; apply();
   } else if (pointers.size === 2){
     const [a, b] = [...pointers.values()];
-    const dist = Math.hypot(a.x - b.x, a.y - b.y);
+    const d = Math.hypot(a.x - b.x, a.y - b.y);
     if (lastPinch){
       const mid = { x:(a.x + b.x) / 2, y:(a.y + b.y) / 2 };
-      zoomAt(mid.x, mid.y, cam.k * (dist / lastPinch));
+      zoomAt(mid.x, mid.y, cam.k * (d / lastPinch));
       dragMoved = 99;
     }
-    lastPinch = dist;
+    lastPinch = d;
   }
 });
 const endPointer = e => {
@@ -503,18 +684,15 @@ function zoomAt(sx, sy, nk){
 }
 viewport.addEventListener("wheel", e => {
   e.preventDefault();
-  if (anim){ cancelAnimationFrame(anim.id); anim = null; traveling = false; }
+  cancelFlight();
   zoomAt(e.clientX, e.clientY, cam.k * (e.deltaY < 0 ? 1.13 : 0.885));
 }, { passive:false });
 document.getElementById("zoomInBtn").addEventListener("click", () => tweenCam({ ...cam, k: clampK(cam.k * 1.35) }, 380));
 document.getElementById("zoomOutBtn").addEventListener("click", () => tweenCam({ ...cam, k: clampK(cam.k / 1.35) }, 380));
-document.getElementById("resetBtn").addEventListener("click", () => { closePanel(); flyHome(); });
-function flyHome(){
-  traveling = true;
+document.getElementById("resetBtn").addEventListener("click", () => {
+  closePanel(); cancelFlight(); traveling = true;
   tweenCam({ x:NODES.prime.x, y:NODES.prime.y, k:0.62 }, 900, () => { traveling = false; current = "prime"; refreshStates(); });
-}
-
-/* node hover + keyboard */
+});
 IDS.forEach(id => {
   const g = nodeEls[id];
   g.addEventListener("mouseenter", e => previewRoute(id, e));
@@ -540,13 +718,15 @@ addEventListener("keydown", e => {
   if (e.key === "-") tweenCam({ ...cam, k: clampK(cam.k / 1.3) }, 300);
   if (e.key === "0") document.getElementById("resetBtn").click();
 });
+addEventListener("resize", () => { vw = innerWidth; vh = innerHeight; sizeWarp(); apply(); });
 
 /* ================= intro ================= */
 refreshStates();
 apply();
 tweenCam({ x:NODES.prime.x, y:NODES.prime.y, k:1.04 }, 1500, () => {
   openPanel("prime");
-  setTimeout(() => toast("CHART IS LIVE · <b>CLICK ANY BODY</b> TO TRAVEL"), 500);
+  showFlight("CHART LIVE", "CLICK ANY BODY TO FLY THE LANES", 0, 0, -1);
+  hideFlight(3200);
 });
 </script>
 </body>
