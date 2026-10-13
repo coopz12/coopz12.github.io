@@ -90,6 +90,21 @@ body {
 	z-index: 1;
 }
 		</style>
+<style>
+body { background-color: #0c1710; }
+#status { background: linear-gradient(180deg, #16281a 0%, #0c1710 78%); }
+#status-progress { display: none !important; }
+#loader { display: flex; flex-direction: column; align-items: center; width: min(430px, 86vw); }
+#loader-art { width: 100%; height: auto; display: block; }
+#loader-sun { transition: transform 0.35s ease-out; }
+#loader-word { margin-top: 20px; font-family: Georgia, 'Times New Roman', serif; font-size: 30px; font-weight: 600; letter-spacing: 0.42em; text-indent: 0.42em; color: #f3efe2; }
+#loader-track { margin-top: 22px; width: 100%; height: 3px; border-radius: 2px; background: rgba(243, 239, 226, 0.15); overflow: hidden; }
+#loader-fill { height: 100%; width: 0%; border-radius: 2px; background: linear-gradient(90deg, #ffb35c, #ffd9a0); transition: width 0.25s ease-out; }
+#loader-meta { margin-top: 12px; display: flex; gap: 14px; align-items: baseline; font-family: Arial, sans-serif; }
+#loader-pct { font-size: 13px; color: #ffb35c; font-variant-numeric: tabular-nums; }
+#loader-sub { font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(243, 239, 226, 0.5); }
+</style>
+
 		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
 <link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
 
@@ -104,14 +119,26 @@ body {
 		</noscript>
 
 		<div id="status">
-			<img id="status-splash" class="show-image--true fullsize--true use-filter--true" src="index.png" alt="">
+
+			<div id="loader">
+				<svg id="loader-art" viewBox="0 0 320 150" aria-hidden="true">
+					<circle id="loader-sun" cx="160" cy="120" r="16" fill="#ffb35c"/>
+					<path d="M0 94 Q 62 60 130 86 T 320 82 V150 H0 Z" fill="#2a4d24"/>
+					<path d="M0 114 Q 86 82 170 106 T 320 104 V150 H0 Z" fill="#1a361c"/>
+					<path d="M0 132 Q 98 108 202 127 T 320 125 V150 H0 Z" fill="#0f2713"/>
+				</svg>
+				<div id="loader-word">HILLSIDE</div>
+				<div id="loader-track"><div id="loader-fill"></div></div>
+				<div id="loader-meta"><span id="loader-pct">0%</span><span id="loader-sub">growing the grass</span></div>
+			</div>
+			<img id="status-splash" class="show-image--false" src="index.png" alt="">
 			<progress id="status-progress"></progress>
 			<div id="status-notice"></div>
 		</div>
 
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":399224,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":400200,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
@@ -201,6 +228,7 @@ window.__bootGodot = function () {
 		setStatusMode('progress');
 		engine.startGame({
 			'onProgress': function (current, total) {
+				if (window.__loadProgress) { window.__loadProgress(current, total); }
 				if (current > 0 && total > 0) {
 					statusProgress.value = current;
 					statusProgress.max = total;
@@ -218,6 +246,16 @@ window.__bootGodot = function () {
 		<script>
 		// The engine binary ships in three parts (host file-size limit); sw.js
 		// stitches them back together for the loader. Boot once it is in control.
+		window.__loadProgress = function (current, total) {
+			if (!(total > 0)) { return; }
+			var pct = Math.max(0, Math.min(100, Math.round(current / total * 100)));
+			var fill = document.getElementById('loader-fill');
+			var label = document.getElementById('loader-pct');
+			var sun = document.getElementById('loader-sun');
+			if (fill) { fill.style.width = pct + '%'; }
+			if (label) { label.textContent = pct + '%'; }
+			if (sun) { sun.style.transform = 'translateY(' + (-(pct / 100) * 54) + 'px)'; }
+		};
 		if ('serviceWorker' in navigator && !navigator.serviceWorker.controller) {
 			var booted = false;
 			var bootOnce = function () { if (!booted) { booted = true; window.__bootGodot(); } };
