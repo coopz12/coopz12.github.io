@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Hillside, a walking place</title>
+<meta name="description" content="Walk rolling grass hills under a living sky: sunrise, gold day, sunset, and a midnight full of stars.">
+<style>
+  :root{
+    --ink:#f3efe6;
+    --glass:rgba(12,16,24,.42);
+    --glass-edge:rgba(255,255,255,.16);
+    --amber:#ffb066;
+    --ease:cubic-bezier(.22,.8,.28,1);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden;background:#0a101f;font-family:ui-rounded,"Avenir Next","Segoe UI",system-ui,sans-serif;color:var(--ink)}
+  #scene{position:fixed;inset:0;display:block;touch-action:none}
+  .veil{
+    position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+    background:radial-gradient(120% 90% at 50% 30%, rgba(10,14,24,.08), rgba(10,14,24,.55));
+    text-align:center;padding:24px;transition:opacity .8s var(--ease);cursor:pointer;
+  }
+  .veil.gone{opacity:0;pointer-events:none}
+  .veil .kicker{font-size:12px;letter-spacing:.34em;text-transform:uppercase;color:var(--amber)}
+  .veil h1{font-family:Georgia,"Times New Roman",serif;font-weight:500;font-size:clamp(44px,10vw,84px);line-height:1;letter-spacing:.01em;text-shadow:0 4px 30px rgba(0,0,0,.45)}
+  .veil p{max-width:420px;font-size:15px;line-height:1.55;color:rgba(243,239,230,.85)}
+  .veil .go{
+    margin-top:8px;font-size:14px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#1c130a;
+    background:var(--amber);border:none;border-radius:999px;padding:13px 30px;cursor:pointer;
+    box-shadow:0 10px 30px rgba(255,176,102,.35);
+  }
+  .hud{position:fixed;z-index:20;pointer-events:none}
+  .hud.titlebox{top:calc(14px + env(safe-area-inset-top));left:18px}
+  .hud.titlebox .name{font-family:Georgia,serif;font-size:22px;letter-spacing:.02em;text-shadow:0 2px 12px rgba(0,0,0,.6)}
+  .hud.titlebox .sub{font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:rgba(243,239,230,.75);margin-top:3px;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+  .hud.clockbox{
+    top:calc(14px + env(safe-area-inset-top));right:18px;text-align:right;
+    background:var(--glass);border:1px solid var(--glass-edge);border-radius:14px;padding:8px 14px;backdrop-filter:blur(8px);
+  }
+  .hud.clockbox .clock{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+  .hud.clockbox .phase{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--amber);margin-top:4px}
+  .dock{
+    position:fixed;z-index:20;left:50%;transform:translateX(-50%);
+    bottom:calc(16px + env(safe-area-inset-bottom));
+    display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:94vw;
+  }
+  .dock button{
+    pointer-events:auto;font:inherit;font-size:13.5px;font-weight:600;color:var(--ink);
+    background:var(--glass);border:1px solid var(--glass-edge);border-radius:999px;padding:10px 16px;cursor:pointer;
+    backdrop-filter:blur(8px);transition:background .25s var(--ease),color .25s var(--ease),transform .15s var(--ease);
+  }
+  .dock button:active{transform:scale(.96)}
+  .dock button.on{background:var(--amber);color:#1c130a;border-color:transparent}
+  .hint{
+    position:fixed;z-index:20;right:18px;bottom:calc(16px + env(safe-area-inset-bottom));
+    font-size:11.5px;color:rgba(243,239,230,.65);text-shadow:0 2px 8px rgba(0,0,0,.7);text-align:right;line-height:1.7;pointer-events:none;
+  }
+  @media (max-width:640px){ .hint{display:none} .hud.titlebox .name{font-size:19px} }
+  #joy{
+    position:fixed;z-index:25;left:22px;bottom:calc(86px + env(safe-area-inset-bottom));
+    width:118px;height:118px;border-radius:50%;display:none;
+    background:rgba(12,16,24,.30);border:1px solid var(--glass-edge);backdrop-filter:blur(4px);
+  }
+  #joy .knob{
+    position:absolute;left:50%;top:50%;width:52px;height:52px;border-radius:50%;
+    background:rgba(243,239,230,.85);transform:translate(-50%,-50%);box-shadow:0 4px 16px rgba(0,0,0,.4);
+  }
+  #joy.live{display:block}
+  .fallback{
+    position:fixed;inset:0;z-index:40;display:none;place-items:center;text-align:center;padding:24px;background:#101725;
+  }
+  .fallback.show{display:grid}
+  .fallback p{max-width:380px;line-height:1.6;color:rgba(243,239,230,.85)}
+</style>
+</head>
+<body>
+
+<canvas id="scene"></canvas>
+
+<div class="veil" id="veil">
+  <div class="kicker">A walking place</div>
+  <h1>Hillside</h1>
+  <p>Rolling grass hills under a living sky. Walk anywhere. The light is yours to move: sunrise, gold day, sunset, and a midnight full of stars.</p>
+  <button class="go" id="goBtn" type="button">Start walking</button>
+</div>
+
+<div class="hud titlebox">
+  <div class="name">Hillside</div>
+  <div class="sub">Grass · hills · sky</div>
+</div>
+
+<div class="hud clockbox">
+  <div class="clock" id="clock">17:54</div>
+  <div class="phase" id="phase">Sunset</div>
+</div>
+
+<div class="dock" id="dock">
+  <button type="button" data-hour="6.4">Sunrise</button>
+  <button type="button" data-hour="12.8">Midday</button>
+  <button type="button" data-hour="17.9" class="on">Sunset</button>
+  <button type="button" data-hour="0">Midnight</button>
+  <button type="button" id="autoBtn">Auto cycle</button>
+  <button type="button" id="soundBtn">Sound: on</button>
+</div>
+
+<div class="hint">WASD or joystick to walk · drag or mouse to look<br>Keys 1 to 4 change the sky · Shift runs · M mutes</div>
+<div id="joy"><div class="knob" id="knob"></div></div>
+
+<div class="fallback" id="fallback">
+  <p>This little world needs WebGL to render its hills and sky, and your browser has it turned off or unavailable. Try a different browser and it should open right up.</p>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+
+/* ================= config ================= */
+var CFG = {
+  worldRadius: 285,        // how far you can walk from spawn
+  terrainSize: 620, terrainSegs: 150,
+  eyeHeight: 1.7,
+  walkSpeed: 7, runSpeed: 13,
+  startHour: 17.9,         // open at sunset, the money light
+  autoHoursPerSec: 24 / 300,   // a full day in five minutes on Auto
+  sweepHoursPerSec: 2.6,   // preset changes sweep the sky at this rate
+  pixelRatioCap: 1.75
+};
+var REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ================= deterministic noise (world height, one source of truth) ================= */
+function hash2(x, z){ var s = Math.sin(x * 127.1 + z * 311.7) * 43758.5453; return s - Math.floor(s); }
+function vnoise(x, z){
+  var xi = Math.floor(x), zi = Math.floor(z), xf = x - xi, zf = z - zi;
+  var u = xf * xf * (3 - 2 * xf), v = zf * zf * (3 - 2 * zf);
+  var a = hash2(xi, zi), b = hash2(xi + 1, zi), c = hash2(xi, zi + 1), d = hash2(xi + 1, zi + 1);
+  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;   // 0..1
+}
+function fbm(x, z){
+  return (vnoise(x, z) * 0.55 + vnoise(x * 2.1, z * 2.1) * 0.28 + vnoise(x * 4.3, z * 4.3) * 0.17);
+}
+var LANDMARK = { x: -78, z: -66 };   // the big hill to the northwest, lone tree on top
+function groundH(x, z){
+  var d = Math.sqrt(x * x + z * z);
+  var flat = Math.min(1, Math.max(0, (d - 8) / 34)); flat = flat * flat * (3 - 2 * flat);
+  var h = (fbm(x * 0.011 + 7.3, z * 0.011 + 2.9) - 0.5) * 30 + (fbm(x * 0.055, z * 0.055) - 0.5) * 3.4;
+  h *= 0.22 + 0.78 * flat;                                     // calm meadow at spawn
+  var ld = Math.sqrt((x - LANDMARK.x) * (x - LANDMARK.x) + (z - LANDMARK.z) * (z - LANDMARK.z));
+  h += 13 * Math.exp(-(ld * ld) / (2 * 34 * 34));             // landmark hill
+  return h;
+}
+function groundNormalY(x, z){
+  var e = 0.9, h = groundH(x, z);
+  var dx = groundH(x + e, z) - h, dz = groundH(x, z + e) - h;
+  var inv = 1 / Math.sqrt(dx * dx + e * e + dz * dz);
+  return e * inv;
+}
+
+/* ================= renderer / scene ================= */
+var canvas = document.getElementById('scene');
+var renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+} catch (e) {
+  document.getElementById('fallback').classList.add('show');
+  throw e;
+}
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, CFG.pixelRatioCap));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.06;
+
+var scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0xd98a5e, 55, 430);
+var camera = new THREE.PerspectiveCamera(68, window.innerWidth / window.innerHeight, 0.1, 2000);
+var SUN_DIST = 760;
+
+/* ================= lights ================= */
+var sunLight = new THREE.DirectionalLight(0xff9440, 1.7);
+sunLight.castShadow = true;
+sunLight.shadow.mapSize.set(2048, 2048);
+sunLight.shadow.camera.left = -60; sunLight.shadow.camera.right = 60;
+sunLight.shadow.camera.top = 60; sunLight.shadow.camera.bottom = -60;
+sunLight.shadow.camera.near = 10; sunLight.shadow.camera.far = 520;
+sunLight.shadow.bias = -0.0006;
+scene.add(sunLight); scene.add(sunLight.target);
+var hemi = new THREE.HemisphereLight(0x6d7fb0, 0x4a4030, 0.5);
+scene.add(hemi);
+
+/* ================= sky dome (gradient + sun glow, all in shader) ================= */
+var skyUniforms = {
+  topColor:     { value: new THREE.Color(0x37477e) },
+  horizonColor: { value: new THREE.Color(0xff7e47) },
+  sunDir:       { value: new THREE.Vector3(0, 0.1, 0.3) },
+  sunColor:     { value: new THREE.Color(0xff9440) },
+  sunAmount:    { value: 1.0 }
+};
+var sky = new THREE.Mesh(
+  new THREE.SphereGeometry(880, 28, 14),
+  new THREE.ShaderMaterial({
+    uniforms: skyUniforms, side: THREE.BackSide, depthWrite: false, fog: false,
+    vertexShader: [
+      'varying vec3 vDir;',
+      'void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }'
+    ].join('\n'),
+    fragmentShader: [
+      'uniform vec3 topColor; uniform vec3 horizonColor; uniform vec3 sunDir; uniform vec3 sunColor; uniform float sunAmount;',
+      'varying vec3 vDir;',
+      'void main(){',
+      '  float h = clamp(vDir.y, -1.0, 1.0);',
+      '  float t = pow(max(h, 0.0), 0.52);',
+      '  vec3 col = mix(horizonColor, topColor, t);',
+      '  if(h < 0.0) col = mix(horizonColor, horizonColor * 0.55, clamp(-h * 3.0, 0.0, 1.0));',
+      '  float d = max(dot(normalize(vDir), normalize(sunDir)), 0.0);',
+      '  col += sunColor * (pow(d, 220.0) * 1.15 + pow(d, 10.0) * 0.22) * sunAmount;',
+      '  gl_FragColor = vec4(col, 1.0);',
+      '}'
+    ].join('\n')
+  })
+);
+scene.add(sky);
+
+/* stars */
+var STAR_N = 1500;
+var starPos = new Float32Array(STAR_N * 3);
+for (var si = 0; si < STAR_N; si++) {
+  var th = Math.random() * Math.PI * 2, ph = Math.acos(1 - Math.random() * 0.98);
+  var sr = 845;
+  starPos[si * 3]     = sr * Math.sin(ph) * Math.cos(th);
+  starPos[si * 3 + 1] = sr * Math.cos(ph) + 20;
+  starPos[si * 3 + 2] = sr * Math.sin(ph) * Math.sin(th);
+}
+var starGeo = new THREE.BufferGeometry();
+starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+var starMat = new THREE.PointsMaterial({ color: 0xd7e4ff, size: 1.7, sizeAttenuation: false, transparent: true, opacity: 0, depthWrite: false, fog: false });
+var stars = new THREE.Points(starGeo, starMat);
+scene.add(stars);
+
+/* moon + glow sprites */
+function glowTexture(){
+  var c = document.createElement('canvas'); c.width = c.height = 128;
+  var g = c.getContext('2d');
+  var grad = g.createRadialGradient(64, 64, 2, 64, 64, 64);
+  grad.addColorStop(0, 'rgba(255,255,255,0.9)'); grad.addColorStop(0.35, 'rgba(255,255,255,0.28)'); grad.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = grad; g.fillRect(0, 0, 128, 128);
+  var tex = new THREE.CanvasTexture(c); return tex;
+}
+var glowTex = glowTexture();
+var moon = new THREE.Mesh(new THREE.CircleGeometry(24, 40), new THREE.MeshBasicMaterial({ color: 0xe9efff, fog: false }));
+scene.add(moon);
+var moonGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xaFC4ee, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+moonGlow.scale.set(210, 210, 1); scene.add(moonGlow);
+var sunGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xffb37a, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+sunGlow.scale.set(460, 460, 1); scene.add(sunGlow);
+
+/* clouds: soft flattened puffs, one shared material so the sky can tint them all */
+var cloudMat = new THREE.MeshLambertMaterial({ color: 0xffab7a, transparent: true, opacity: 0.82 });
+var cloudGeo = new THREE.SphereGeometry(1, 10, 8);
+var clouds = [];
+for (var ci = 0; ci < 13; ci++) {
+  var grp = new THREE.Group();
+  var puffs = 3 + Math.floor(Math.random() * 3);
+  for (var pi = 0; pi < puffs; pi++) {
+    var m = new THREE.Mesh(cloudGeo, cloudMat);
+    var s = 9 + Math.random() * 15;
+    m.scale.set(s, s * 0.34, s * 0.7);
+    m.position.set(pi * s * 0.85 - puffs * s * 0.4, (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 10);
+    grp.add(m);
+  }
+  grp.position.set((Math.random() - 0.5) * 760, 95 + Math.random() * 55, (Math.random() - 0.5) * 760);
+  grp.userData.speed = 0.7 + Math.random() * 0.9;
+  scene.add(grp); clouds.push(grp);
+}
+
+/* ================= terrain (vertex-colored hills) ================= */
+function speckleTexture(){
+  var c = document.createElement('canvas'); c.width = c.height = 256;
+  var g = c.getContext('2d');
+  g.fillStyle = '#8a9a72'; g.fillRect(0, 0, 256, 256);
+  for (var i = 0; i < 5200; i++) {
+    var v = Math.random();
+    g.fillStyle = v < 0.5 ? 'rgba(52,74,36,0.25)' : 'rgba(196,214,150,0.20)';
+    g.fillRect(Math.random() * 256, Math.random() * 256, 2.2, 2.2 + Math.random() * 3);
+  }
+  var tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(90, 90);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+var terrainGeo = new THREE.PlaneGeometry(CFG.terrainSize, CFG.terrainSize, CFG.terrainSegs, CFG.terrainSegs);
+terrainGeo.rotateX(-Math.PI / 2);
+{
+  var pos = terrainGeo.attributes.position;
+  var colors = new Float32Array(pos.count * 3);
+  var cGrassA = new THREE.Color(0x47763a), cGrassB = new THREE.Color(0x7fae4e);
+  var cDry = new THREE.Color(0xa9a05e), cRock = new THREE.Color(0x6f6a63), cLow = new THREE.Color(0x3a6530);
+  var tmpC = new THREE.Color();
+  for (var vi = 0; vi < pos.count; vi++) {
+    var vx = pos.getX(vi), vz = pos.getZ(vi);
+    var h = groundH(vx, vz);
+    pos.setY(vi, h);
+    var n = fbm(vx * 0.03 + 40, vz * 0.03 + 9);
+    tmpC.copy(cGrassA).lerp(cGrassB, n);
+    if (h < 1.2) tmpC.lerp(cLow, Math.min(1, (1.2 - h) * 0.5));
+    if (h > 8) tmpC.lerp(cDry, Math.min(0.55, (h - 8) * 0.06) * (0.4 + n * 0.6));
+    var ny = groundNormalY(vx, vz);
+    if (ny < 0.86) tmpC.lerp(cRock, Math.min(0.9, (0.86 - ny) * 3.2));
+    colors[vi * 3] = tmpC.r; colors[vi * 3 + 1] = tmpC.g; colors[vi * 3 + 2] = tmpC.b;
+  }
+  terrainGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  terrainGeo.computeVertexNormals();
+}
+var terrain = new THREE.Mesh(terrainGeo, new THREE.MeshStandardMaterial({ map: speckleTexture(), vertexColors: true, roughness: 1, metalness: 0 }));
+terrain.receiveShadow = true;
+scene.add(terrain);
+
+/* pond in a low hollow */
+var pond = null;
+{
+  var best = null, bestH = 1e9;
+  for (var gx = -110; gx <= 110; gx += 6) for (var gz = -110; gz <= 110; gz += 6) {
+    var d0 = Math.sqrt(gx * gx + gz * gz);
+    if (d0 < 26 || d0 > 120) continue;
+    var hh = groundH(gx, gz);
+    if (hh < bestH) { bestH = hh; best = { x: gx, z: gz }; }
+  }
+  if (best) {
+    pond = new THREE.Mesh(
+      new THREE.CircleGeometry(10.5, 36),
+      new THREE.MeshStandardMaterial({ color: 0xd98a5e, roughness: 0.08, metalness: 0.15, transparent: true, opacity: 0.94 })
+    );
+    pond.rotation.x = -Math.PI / 2;
+    pond.position.set(best.x, bestH + 0.55, best.z);
+    scene.add(pond);
+  }
+}
+
+/* ================= vegetation & stones (instanced) ================= */
+var dummy = new THREE.Object3D();
+var tint = new THREE.Color();
+function slopeOK(x, z){ return groundNormalY(x, z) > 0.8; }
+function scatterPos(minR, maxR){
+  for (var tries = 0; tries < 24; tries++) {
+    var a = Math.random() * Math.PI * 2, r = minR + Math.random() * (maxR - minR);
+    var x = Math.cos(a) * r, z = Math.sin(a) * r;
+    if (slopeOK(x, z)) return { x: x, z: z };
+  }
+  return null;
+}
+/* trees */
+{
+  var treePts = [ { x: LANDMARK.x, z: LANDMARK.z, big: true } ];
+  for (var ti = 0; ti < 130; ti++) { var p = scatterPos(16, 262); if (p) treePts.push(p); }
+  var trunkGeo = new THREE.CylinderGeometry(0.22, 0.38, 2.4, 6);
+  var canGeo = new THREE.IcosahedronGeometry(2.1, 0);
+  var trunks = new THREE.InstancedMesh(trunkGeo, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 }), treePts.length);
+  var cans = new THREE.InstancedMesh(canGeo, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, flatShading: true }), treePts.length);
+  trunks.castShadow = true; cans.castShadow = true;
+  for (var t2 = 0; t2 < treePts.length; t2++) {
+    var tp = treePts[t2], th = groundH(tp.x, tp.z);
+    var s = tp.big ? 2.3 : 0.85 + Math.random() * 0.9;
+    dummy.rotation.set(0, Math.random() * Math.PI * 2, 0);
+    dummy.scale.set(s, s, s);
+    dummy.position.set(tp.x, th + 1.1 * s, tp.z); dummy.updateMatrix();
+    trunks.setMatrixAt(t2, dummy.matrix);
+    tint.setHSL(0.07, 0.35, 0.2 + Math.random() * 0.05); trunks.setColorAt(t2, tint);
+    dummy.position.set(tp.x + (Math.random() - 0.5) * 0.7, th + (2.4 + 1.4) * s, tp.z + (Math.random() - 0.5) * 0.7);
+    dummy.scale.set(s * (0.9 + Math.random() * 0.4), s * 1.18, s * (0.9 + Math.random() * 0.4));
+    dummy.updateMatrix();
+    cans.setMatrixAt(t2, dummy.matrix);
+    tint.setHSL(0.26 + Math.random() * 0.05, 0.42, 0.3 + Math.random() * 0.12); cans.setColorAt(t2, tint);
+  }
+  scene.add(trunks); scene.add(cans);
+}
+/* rocks */
+{
+  var rockGeo = new THREE.DodecahedronGeometry(1, 0);
+  var rocks = new THREE.InstancedMesh(rockGeo, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, flatShading: true }), 80);
+  rocks.castShadow = true;
+  for (var ri = 0; ri < 80; ri++) {
+    var rp = scatterPos(10, 268) || { x: 30, z: 30 };
+    var rs = 0.35 + Math.random() * 1.9;
+    dummy.position.set(rp.x, groundH(rp.x, rp.z) + rs * 0.3, rp.z);
+    dummy.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
+    dummy.scale.set(rs, rs * (0.6 + Math.random() * 0.5), rs);
+    dummy.updateMatrix(); rocks.setMatrixAt(ri, dummy.matrix);
+    tint.setHSL(0.08, 0.05 + Math.random() * 0.05, 0.4 + Math.random() * 0.14); rocks.setColorAt(ri, tint);
+  }
+  scene.add(rocks);
+}
+/* flowers: tiny bright heads in the meadow */
+{
+  var flGeo = new THREE.SphereGeometry(0.1, 6, 5);
+  var flowers = new THREE.InstancedMesh(flGeo, new THREE.MeshLambertMaterial({ color: 0xffffff }), 650);
+  var palette = [0xffffff, 0xffd94d, 0xc792ff, 0xff7d9c, 0xfff3b0];
+  for (var fi = 0; fi < 650; fi++) {
+    var fp = scatterPos(4, 85) || { x: 6, z: 6 };
+    dummy.position.set(fp.x, groundH(fp.x, fp.z) + 0.3, fp.z);
+    dummy.rotation.set(0, 0, 0);
+    var fs = 0.8 + Math.random() * 0.9; dummy.scale.set(fs, fs, fs);
+    dummy.updateMatrix(); flowers.setMatrixAt(fi, dummy.matrix);
+    tint.setHex(palette[fi % palette.length]); flowers.setColorAt(fi, tint);
+  }
+  scene.add(flowers);
+}
+/* grass tufts near spawn: crossed blades texture, drawn in code */
+{
+  var gc = document.createElement('canvas'); gc.width = 128; gc.height = 128;
+  var gg = gc.getContext('2d');
+  gg.clearRect(0, 0, 128, 128);
+  for (var bi = 0; bi < 26; bi++) {
+    var bx = 14 + Math.random() * 100, bend = (Math.random() - 0.5) * 30, bh = 60 + Math.random() * 62;
+    var grad = gg.createLinearGradient(0, 128, 0, 128 - bh);
+    grad.addColorStop(0, '#3c612e'); grad.addColorStop(1, '#8fbc5a');
+    gg.strokeStyle = grad; gg.lineWidth = 3.4; gg.lineCap = 'round';
+    gg.beginPath(); gg.moveTo(bx, 128); gg.quadraticCurveTo(bx + bend * 0.3, 128 - bh * 0.6, bx + bend, 128 - bh); gg.stroke();
+  }
+  var gtex = new THREE.CanvasTexture(gc); gtex.colorSpace = THREE.SRGBColorSpace;
+  var tuftGeo = new THREE.PlaneGeometry(1.15, 0.8);
+  var tuftMat = new THREE.MeshLambertMaterial({ map: gtex, alphaTest: 0.42, side: THREE.DoubleSide });
+  var tufts = new THREE.InstancedMesh(tuftGeo, tuftMat, 2100);
+  for (var ui = 0; ui < 2100; ui++) {
+    var up = scatterPos(3, 95) || { x: 5, z: 5 };
+    dummy.position.set(up.x, groundH(up.x, up.z) + 0.36, up.z);
+    dummy.rotation.set(0, Math.random() * Math.PI, 0);
+    var us = 0.7 + Math.random() * 0.8; dummy.scale.set(us, us, us);
+    dummy.updateMatrix(); tufts.setMatrixAt(ui, dummy.matrix);
+  }
+  scene.add(tufts);
+}
+/* fireflies for the midnight hours */
+var FLY_N = 70;
+var flyPos = new Float32Array(FLY_N * 3);
+var flySeed = new Float32Array(FLY_N * 3);
+for (var wi = 0; wi < FLY_N; wi++) {
+  var wa = Math.random() * Math.PI * 2, wr = 6 + Math.random() * 46;
+  flySeed[wi * 3] = Math.cos(wa) * wr; flySeed[wi * 3 + 1] = Math.sin(wa) * wr; flySeed[wi * 3 + 2] = Math.random() * 10;
+}
+var flyGeo = new THREE.BufferGeometry();
+flyGeo.setAttribute('position', new THREE.BufferAttribute(flyPos, 3));
+var flyMat = new THREE.PointsMaterial({ map: glowTex, color: 0xffe98a, size: 1.5, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+var flies = new THREE.Points(flyGeo, flyMat);
+scene.add(flies);
+
+/* ================= the living sky: keyframed day cycle ================= */
+function K(h, top, hor, fog, sun, sunI, hs, hg, hi, stars, cloud){
+  return { h: h, top: new THREE.Color(top), hor: new THREE.Color(hor), fog: new THREE.Color(fog),
+           sun: new THREE.Color(sun), sunI: sunI, hs: new THREE.Color(hs), hg: new THREE.Color(hg),
+           hi: hi, stars: stars, cloud: new THREE.Color(cloud) };
+}
+var KEYS = [
+  K(0.0,  0x050914, 0x0c1424, 0x0a101f, 0x93a7d4, 0.35, 0x2a3a5f, 0x0c1410, 0.20, 1.0,  0x1b2742),
+  K(4.8,  0x0a1128, 0x1c2440, 0x131a2e, 0x93a7d4, 0.30, 0x2c3c60, 0x10160f, 0.22, 0.8,  0x232f4d),
+  K(6.4,  0x46689c, 0xffb066, 0xc98f5f, 0xffb877, 1.5,  0x7d94c4, 0x3d4a33, 0.45, 0.0,  0xffc9a0),
+  K(9.0,  0x3f74ba, 0xbcd9ec, 0xbcd3e4, 0xfff1d4, 2.2,  0x9db8dd, 0x51603f, 0.70, 0.0,  0xffffff),
+  K(13.0, 0x3570b8, 0xcfe7f4, 0xc3dcee, 0xffffff, 2.5,  0xa8c4e4, 0x55663f, 0.80, 0.0,  0xffffff),
+  K(16.5, 0x3d6cae, 0xcfe0da, 0xbfcfc8, 0xffedb8, 2.1,  0x9db8ce, 0x50603c, 0.70, 0.0,  0xfff4e0),
+  K(17.9, 0x37477e, 0xff7e47, 0xd98a5e, 0xff9440, 1.7,  0x6d7fb0, 0x4a4030, 0.50, 0.06, 0xffab7a),
+  K(19.3, 0x1c2547, 0x7a4468, 0x4a3050, 0xb06a8a, 0.5,  0x4a5480, 0x2c2430, 0.30, 0.5,  0x6b4a72),
+  K(21.0, 0x070c1e, 0x101a30, 0x0b1220, 0x93a7d4, 0.35, 0x2a3a5f, 0x0c1410, 0.20, 1.0,  0x26324f),
+  K(24.0, 0x050914, 0x0c1424, 0x0a101f, 0x93a7d4, 0.35, 0x2a3a5f, 0x0c1410, 0.20, 1.0,  0x1b2742)
+];
+var env = {
+  top: new THREE.Color(), hor: new THREE.Color(), fog: new THREE.Color(), sun: new THREE.Color(),
+  hs: new THREE.Color(), hg: new THREE.Color(), cloud: new THREE.Color(), sunI: 0, hi: 0, stars: 0
+};
+function sampleSky(hour){
+  var a = KEYS[0], b = KEYS[KEYS.length - 1];
+  for (var i = 0; i < KEYS.length - 1; i++) {
+    if (hour >= KEYS[i].h && hour <= KEYS[i + 1].h) { a = KEYS[i]; b = KEYS[i + 1]; break; }
+  }
+  var span = Math.max(0.0001, b.h - a.h), t = Math.min(1, Math.max(0, (hour - a.h) / span));
+  env.top.lerpColors(a.top, b.top, t); env.hor.lerpColors(a.hor, b.hor, t);
+  env.fog.lerpColors(a.fog, b.fog, t); env.sun.lerpColors(a.sun, b.sun, t);
+  env.hs.lerpColors(a.hs, b.hs, t); env.hg.lerpColors(a.hg, b.hg, t);
+  env.cloud.lerpColors(a.cloud, b.cloud, t);
+  env.sunI = a.sunI + (b.sunI - a.sunI) * t;
+  env.hi = a.hi + (b.hi - a.hi) * t;
+  env.stars = a.stars + (b.stars - a.stars) * t;
+}
+var sunDir = new THREE.Vector3(), moonDir = new THREE.Vector3();
+function applySky(hour){
+  sampleSky(hour);
+  var theta = Math.PI * (hour - 6) / 12;
+  sunDir.set(Math.cos(theta), Math.sin(theta), 0.38).normalize();
+  moonDir.set(-Math.cos(theta), -Math.sin(theta), -0.3).normalize();
+  skyUniforms.topColor.value.copy(env.top);
+  skyUniforms.horizonColor.value.copy(env.hor);
+  skyUniforms.sunColor.value.copy(env.sun);
+  var sunUp = sunDir.y > -0.06;
+  skyUniforms.sunDir.value.copy(sunUp ? sunDir : moonDir);
+  skyUniforms.sunAmount.value = sunUp ? 1.0 : 0.25;
+  scene.fog.color.copy(env.fog);
+  var lightDir = sunDir.y > -0.02 ? sunDir : moonDir;
+  sunLight.color.copy(env.sun);
+  sunLight.intensity = env.sunI;
+  sunLight.position.copy(player.pos).addScaledVector(lightDir, 170);
+  sunLight.target.position.copy(player.pos);
+  hemi.color.copy(env.hs); hemi.groundColor.copy(env.hg); hemi.intensity = env.hi;
+  starMat.opacity = env.stars * 0.95;
+  flyMat.opacity = env.stars * 0.85;
+  cloudMat.color.copy(env.cloud);
+  sunGlow.position.copy(player.pos).addScaledVector(sunDir, SUN_DIST);
+  sunGlow.material.opacity = Math.max(0, Math.min(0.85, sunDir.y * 2.2)) * (sunUp ? 1 : 0);
+  sunGlow.material.color.copy(env.sun);
+  moon.position.copy(player.pos).addScaledVector(moonDir, SUN_DIST * 0.96);
+  moon.lookAt(camera.position);
+  moonGlow.position.copy(moon.position);
+  moonGlow.material.opacity = env.stars * 0.5;
+  if (pond) pond.material.color.copy(env.hor).lerp(env.top, 0.35);
+}
+
+/* ================= player & input ================= */
+var player = {
+  pos: new THREE.Vector3(0, 0, 10),
+  yaw: 0.8, pitch: -0.02, vel: new THREE.Vector3(),
+  bobPhase: 0, smoothY: 0
+};
+player.pos.y = groundH(player.pos.x, player.pos.z) + CFG.eyeHeight;
+player.smoothY = player.pos.y;
+
+var keys = {};
+var started = false;
+window.addEventListener('keydown', function(e){
+  keys[e.code] = true;
+  if (e.code === 'KeyM') toggleSound();
+  if (e.code === 'Digit1') setHourTarget(6.4);
+  if (e.code === 'Digit2') setHourTarget(12.8);
+  if (e.code === 'Digit3') setHourTarget(17.9);
+  if (e.code === 'Digit4') setHourTarget(0);
+  if (e.code === 'Digit5') document.getElementById('autoBtn').click();
+});
+window.addEventListener('keyup', function(e){ keys[e.code] = false; });
+window.addEventListener('blur', function(){ keys = {}; joyVec.x = 0; joyVec.y = 0; });
+
+var joyVec = { x: 0, y: 0 };
+var joyEl = document.getElementById('joy'), knob = document.getElementById('knob');
+var joyId = null, lookId = null, joyCx = 0, joyCy = 0, lastLX = 0, lastLY = 0;
+var isTouch = false;
+
+canvas.addEventListener('pointerdown', function(e){
+  beginExperience();
+  if (e.pointerType === 'touch') {
+    isTouch = true;
+    if (e.clientX < window.innerWidth * 0.45 && joyId === null) {
+      joyId = e.pointerId; joyCx = e.clientX; joyCy = e.clientY;
+      joyEl.classList.add('live');
+      joyEl.style.left = (joyCx - 59) + 'px'; joyEl.style.top = (joyCy - 59) + 'px'; joyEl.style.bottom = 'auto';
+    } else if (lookId === null) {
+      lookId = e.pointerId; lastLX = e.clientX; lastLY = e.clientY;
+    }
+  } else if (started && document.pointerLockElement !== canvas) {
+    canvas.requestPointerLock();
+  }
+});
+canvas.addEventListener('pointermove', function(e){
+  if (e.pointerId === joyId) {
+    var dx = e.clientX - joyCx, dy = e.clientY - joyCy;
+    var len = Math.sqrt(dx * dx + dy * dy), max = 46;
+    if (len > max) { dx *= max / len; dy *= max / len; }
+    joyVec.x = dx / max; joyVec.y = dy / max;
+    knob.style.transform = 'translate(calc(-50% + ' + dx + 'px), calc(-50% + ' + dy + 'px))';
+  } else if (e.pointerId === lookId) {
+    player.yaw -= (e.clientX - lastLX) * 0.0044;
+    player.pitch -= (e.clientY - lastLY) * 0.0044;
+    player.pitch = Math.max(-1.35, Math.min(1.35, player.pitch));
+    lastLX = e.clientX; lastLY = e.clientY;
+  }
+});
+function endPointer(e){
+  if (e.pointerId === joyId) { joyId = null; joyVec.x = 0; joyVec.y = 0; knob.style.transform = 'translate(-50%,-50%)'; joyEl.classList.remove('live'); }
+  if (e.pointerId === lookId) lookId = null;
+}
+canvas.addEventListener('pointerup', endPointer);
+canvas.addEventListener('pointercancel', endPointer);
+document.addEventListener('mousemove', function(e){
+  if (document.pointerLockElement === canvas) {
+    player.yaw -= e.movementX * 0.0023;
+    player.pitch -= e.movementY * 0.0023;
+    player.pitch = Math.max(-1.35, Math.min(1.35, player.pitch));
+  }
+});
+
+/* ================= time controls & UI ================= */
+var hourNow = CFG.startHour, hourTarget = null, autoCycle = false;
+var clockEl = document.getElementById('clock'), phaseEl = document.getElementById('phase');
+function setHourTarget(h){
+  autoCycle = false; document.getElementById('autoBtn').classList.remove('on');
+  hourTarget = h;
+  var btns = document.querySelectorAll('#dock button[data-hour]');
+  btns.forEach(function(b){ b.classList.toggle('on', Math.abs(parseFloat(b.getAttribute('data-hour')) - h) < 0.01); });
+}
+document.querySelectorAll('#dock button[data-hour]').forEach(function(b){
+  b.addEventListener('click', function(){ setHourTarget(parseFloat(b.getAttribute('data-hour'))); });
+});
+document.getElementById('autoBtn').addEventListener('click', function(){
+  autoCycle = !autoCycle; hourTarget = null;
+  this.classList.toggle('on', autoCycle);
+  if (autoCycle) document.querySelectorAll('#dock button[data-hour]').forEach(function(b){ b.classList.remove('on'); });
+});
+function phaseName(h){
+  if (h < 4.8) return 'Midnight';
+  if (h < 5.8) return 'First light';
+  if (h < 7.6) return 'Sunrise';
+  if (h < 11) return 'Morning';
+  if (h < 15) return 'Midday';
+  if (h < 17.2) return 'Afternoon';
+  if (h < 18.6) return 'Sunset';
+  if (h < 19.8) return 'Dusk';
+  if (h < 22) return 'Nightfall';
+  return 'Midnight';
+}
+function fmtClock(h){
+  var hh = Math.floor(h) % 24, mm = Math.floor((h - Math.floor(h)) * 60);
+  return (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm;
+}
+
+/* ================= ambience: a real wind recording, looped ================= */
+var windAudio = null, soundOn = true;
+function startWind(){
+  if (windAudio) { if (soundOn && windAudio.paused) windAudio.play().catch(function(){}); return; }
+  windAudio = new Audio('assets/wind.mp3');
+  windAudio.loop = true; windAudio.volume = 0.5;
+  windAudio.addEventListener('error', function(){ windAudio = null; });
+  if (soundOn) windAudio.play().catch(function(){});
+}
+function toggleSound(){
+  soundOn = !soundOn;
+  document.getElementById('soundBtn').textContent = 'Sound: ' + (soundOn ? 'on' : 'off');
+  if (windAudio) { if (soundOn) windAudio.play().catch(function(){}); else windAudio.pause(); }
+}
+document.getElementById('soundBtn').addEventListener('click', function(){ beginExperience(); toggleSound(); });
+
+var veil = document.getElementById('veil');
+function beginExperience(){
+  if (!started) { started = true; veil.classList.add('gone'); }
+  startWind();
+}
+document.getElementById('goBtn').addEventListener('click', function(e){
+  e.stopPropagation(); beginExperience();
+  if (!isTouch && document.pointerLockElement !== canvas) canvas.requestPointerLock();
+});
+veil.addEventListener('click', function(){ beginExperience(); });
+
+/* ================= main loop ================= */
+var fwd = new THREE.Vector3(), rgt = new THREE.Vector3(), move = new THREE.Vector3();
+var clockT = new THREE.Clock();
+function animate(){
+  requestAnimationFrame(animate);
+  var dt = Math.min(clockT.getDelta(), 0.05);
+  var t = clockT.elapsedTime;
+
+  /* time flow */
+  if (autoCycle) {
+    hourNow = (hourNow + CFG.autoHoursPerSec * dt) % 24;
+  } else if (hourTarget !== null) {
+    var diff = hourTarget - hourNow;
+    if (diff > 12) diff -= 24; if (diff < -12) diff += 24;
+    var step = CFG.sweepHoursPerSec * dt;
+    if (Math.abs(diff) <= step) { hourNow = (hourTarget + 24) % 24; hourTarget = null; }
+    else hourNow = (hourNow + Math.sign(diff) * step + 24) % 24;
+  }
+
+  /* movement */
+  var ix = 0, iz = 0;
+  if (keys.KeyW || keys.ArrowUp) iz -= 1;
+  if (keys.KeyS || keys.ArrowDown) iz += 1;
+  if (keys.KeyA || keys.ArrowLeft) ix -= 1;
+  if (keys.KeyD || keys.ArrowRight) ix += 1;
+  ix += joyVec.x; iz += joyVec.y;
+  var il = Math.sqrt(ix * ix + iz * iz);
+  if (il > 1) { ix /= il; iz /= il; il = 1; }
+  var running = keys.ShiftLeft || keys.ShiftRight || Math.sqrt(joyVec.x * joyVec.x + joyVec.y * joyVec.y) > 0.92;
+  var speed = running ? CFG.runSpeed : CFG.walkSpeed;
+  fwd.set(-Math.sin(player.yaw), 0, -Math.cos(player.yaw));
+  rgt.set(-fwd.z, 0, fwd.x);
+  move.set(0, 0, 0).addScaledVector(fwd, -iz).addScaledVector(rgt, ix);
+  if (move.lengthSq() > 0) move.normalize();
+  move.multiplyScalar(speed * (il || 0));
+  var blend = Math.min(1, dt * 7);
+  player.vel.x += (move.x - player.vel.x) * blend;
+  player.vel.z += (move.z - player.vel.z) * blend;
+  player.pos.x += player.vel.x * dt;
+  player.pos.z += player.vel.z * dt;
+  var rr = Math.sqrt(player.pos.x * player.pos.x + player.pos.z * player.pos.z);
+  if (rr > CFG.worldRadius) { player.pos.x *= CFG.worldRadius / rr; player.pos.z *= CFG.worldRadius / rr; }
+  var spd = Math.sqrt(player.vel.x * player.vel.x + player.vel.z * player.vel.z);
+  if (!REDUCED && spd > 0.6) player.bobPhase += dt * (running ? 10.5 : 7.5);
+  var targetY = groundH(player.pos.x, player.pos.z) + CFG.eyeHeight + (REDUCED ? 0 : Math.sin(player.bobPhase) * 0.045 * Math.min(1, spd / 3));
+  player.smoothY += (targetY - player.smoothY) * Math.min(1, dt * 11);
+  player.pos.y = player.smoothY;
+  camera.position.copy(player.pos);
+  camera.rotation.set(0, 0, 0);
+  camera.rotateY(player.yaw); camera.rotateX(player.pitch);
+
+  /* world life */
+  for (var c2 = 0; c2 < clouds.length; c2++) {
+    clouds[c2].position.x += clouds[c2].userData.speed * dt;
+    if (clouds[c2].position.x > 430) clouds[c2].position.x = -430;
+  }
+  if (flyMat.opacity > 0.02) {
+    for (var f2 = 0; f2 < FLY_N; f2++) {
+      var sd = flySeed[f2 * 3 + 2];
+      var fx = player.pos.x + flySeed[f2 * 3] + Math.sin(t * 0.6 + sd * 7.0) * 2.4;
+      var fz = player.pos.z + flySeed[f2 * 3 + 1] + Math.cos(t * 0.5 + sd * 5.0) * 2.4;
+      flyPos[f2 * 3] = fx;
+      flyPos[f2 * 3 + 1] = groundH(fx, fz) + 0.7 + Math.sin(t * 1.3 + sd * 9.0) * 0.45;
+      flyPos[f2 * 3 + 2] = fz;
+    }
+    flyGeo.attributes.position.needsUpdate = true;
+  }
+  sky.position.copy(camera.position);
+  stars.position.copy(camera.position);
+
+  applySky(hourNow);
+  clockEl.textContent = fmtClock(hourNow);
+  phaseEl.textContent = phaseName(hourNow);
+
+  renderer.render(scene, camera);
+}
+applySky(hourNow);
+animate();
+
+window.addEventListener('resize', function(){
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+</body>
+</html>
