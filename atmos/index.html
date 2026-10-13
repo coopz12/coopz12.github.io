@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>STRATA - A climb to the edge of space</title>
+<meta name="description" content="STRATA is an interactive climb. Scroll to pilot a glider from the ground to the Karman line, 100 km up, through every layer of the atmosphere.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<canvas id="scene" aria-hidden="true"></canvas>
+<div id="vignette" aria-hidden="true"></div>
+
+<!-- Flight instruments -->
+<header id="hud-top">
+  <div class="brand">
+    <div class="brand-name">STRATA</div>
+    <div class="brand-sub">INTERACTIVE CLIMB, 0 TO 100 KM</div>
+  </div>
+  <div class="instruments">
+    <div class="alt-readout">
+      <span id="alt-value">0.0</span><span class="alt-unit">KM</span>
+    </div>
+    <div class="sub-readouts">
+      <div class="sub-readout">
+        <span class="sub-label">CLIMB</span>
+        <span class="sub-value"><span id="vs-value">0.0</span> KM/MIN</span>
+      </div>
+      <div class="sub-readout">
+        <span class="sub-label">LAYER</span>
+        <span class="sub-value" id="layer-value">TROPOSPHERE</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Altitude rail -->
+<nav id="rail" aria-label="Atmosphere layers">
+  <div class="rail-track">
+    <div class="band band-thermo"><span class="band-name">THERMOSPHERE</span></div>
+    <div class="band band-meso"><span class="band-name">MESOSPHERE</span></div>
+    <div class="band band-strato"><span class="band-name">STRATOSPHERE</span></div>
+    <div class="band band-tropo"><span class="band-name">TROPOSPHERE</span></div>
+    <div id="rail-marker"><span id="rail-alt">0.0</span></div>
+  </div>
+  <div class="rail-ticks" aria-hidden="true">
+    <span style="top:0%">100</span>
+    <span style="top:25%">75</span>
+    <span style="top:50%">50</span>
+    <span style="top:75%">25</span>
+    <span style="top:100%">0</span>
+  </div>
+</nav>
+
+<!-- Layer fact cards -->
+<main id="cards">
+  <article class="card" id="card-tropo" data-layer="0">
+    <div class="card-head">
+      <h2>Troposphere</h2>
+      <span class="card-range">0 TO 12 KM</span>
+    </div>
+    <p>All weather lives in this first thin band. Clouds, storms, wind and rain are packed into the lowest slice of the sky.</p>
+    <p class="card-stat">Airliners cruise at 10 to 12 km, near the ceiling of this layer, where the air runs smooth.</p>
+  </article>
+
+  <article class="card" id="card-strato" data-layer="1">
+    <div class="card-head">
+      <h2>Stratosphere</h2>
+      <span class="card-range">12 TO 50 KM</span>
+    </div>
+    <p>The ozone layer sits here and absorbs ultraviolet sunlight. The air is dry, clear and very thin, with almost no weather at all.</p>
+    <p class="card-stat">Concorde cruised at about 18 km, higher than any airliner flying today.</p>
+  </article>
+
+  <article class="card" id="card-meso" data-layer="2">
+    <div class="card-head">
+      <h2>Mesosphere</h2>
+      <span class="card-range">50 TO 85 KM</span>
+    </div>
+    <p>The coldest layer of the atmosphere. The air is too thin to feel, but still thick enough to burn up meteors falling through it.</p>
+    <p class="card-stat">Near its top the temperature drops to about -90&#176;C, the coldest in the whole atmosphere.</p>
+  </article>
+
+  <article class="card" id="card-thermo" data-layer="3">
+    <div class="card-head">
+      <h2>Thermosphere</h2>
+      <span class="card-range">85 TO 100 KM</span>
+    </div>
+    <p>Here the air thins to almost nothing, a few stray atoms at a time. Auroras flare in this band, lit by charged particles from the Sun.</p>
+    <p class="card-stat">The International Space Station orbits inside this layer, at about 400 km up.</p>
+  </article>
+</main>
+
+<!-- Intro overlay -->
+<section id="intro">
+  <h1>STRATA</h1>
+  <p class="intro-line">A glider climb from the ground to the edge of space, flown entirely by your scroll.</p>
+  <p class="intro-hint"><span class="hint-key">SCROLL</span> TO CLIMB</p>
+</section>
+
+<!-- End panel -->
+<section id="endpanel" aria-hidden="true">
+  <p class="end-kicker">100 KM, KARMAN LINE</p>
+  <h2>Edge of space</h2>
+  <p class="end-body">Past this line, wings stop working and flight becomes orbit. You climbed the whole atmosphere in a single scroll.</p>
+  <dl class="summary">
+    <div><dt>MAX ALTITUDE</dt><dd>100.0 KM</dd></div>
+    <div><dt>LAYERS CROSSED</dt><dd>4</dd></div>
+    <div><dt>FLIGHT TIME</dt><dd id="summary-time">00:00</dd></div>
+  </dl>
+  <button id="fly-again" type="button">Fly again</button>
+</section>
+
+<div id="gl-fallback" hidden>
+  <p>STRATA needs WebGL to fly. Your browser could not start it, so the climb is grounded for now.</p>
+</div>
+
+<div id="scroll-space" aria-hidden="true"></div>
+
+<script src="lib/three.b64.0.js"></script>
+<script src="lib/three.b64.1.js"></script>
+<script src="lib/three-loader.js"></script>
+<script src="lib/gsap.min.js"></script>
+<script src="lib/ScrollTrigger.min.js"></script>
+</body>
+</html>
