@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#070a07">
+<title>COOPZ12 — The Lobby</title>
+<meta name="description" content="Zaine Cooper's build universe as a game menu. Six chapters, one screen, no scrolling.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --accent:#69BE28;
+  --accent-hot:#8ee63f;
+  --ink:#f2f5ec;
+  --ink-dim:rgba(242,245,236,.62);
+  --ink-faint:rgba(242,245,236,.38);
+  --glass:rgba(10,14,10,.42);
+  --line:rgba(242,245,236,.16);
+  --ease:cubic-bezier(.22,1,.36,1);
+  --rail-w:212px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  background:#070a07;color:var(--ink);
+  font-family:"Space Grotesk",system-ui,sans-serif;
+  overflow:hidden;-webkit-font-smoothing:antialiased;
+  overscroll-behavior:none;
+}
+::selection{background:var(--accent);color:#0a0f06}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+
+/* ---------- stage & scenes ---------- */
+.stage{position:fixed;inset:0;overflow:hidden;background:#070a07}
+.scene{position:absolute;inset:0;opacity:0;visibility:hidden;transition:opacity .8s var(--ease),visibility 0s linear .8s}
+.scene.on{opacity:1;visibility:visible;transition:opacity .8s var(--ease)}
+.scene img.bg{
+  position:absolute;inset:-3.5%;width:107%;height:107%;object-fit:cover;
+  transform:scale(1.06);will-change:transform;
+}
+.scene.on img.bg{animation:drift 36s ease-in-out infinite alternate}
+@keyframes drift{
+  from{transform:scale(1.06) translate(0,0)}
+  to{transform:scale(1.13) translate(-1.6%,1.2%)}
+}
+.scene .scrim{position:absolute;inset:0;background:
+  linear-gradient(180deg,rgba(5,8,5,.52) 0%,rgba(5,8,5,0) 22%,rgba(5,8,5,0) 52%,rgba(5,8,5,.78) 100%),
+  linear-gradient(90deg,rgba(5,8,5,.55) 0%,rgba(5,8,5,0) 46%)}
+.scene.bp{background:
+  radial-gradient(120% 90% at 68% 30%,#17457c 0%,#10355e 52%,#0a2547 100%)}
+.scene.bp .grid{position:absolute;inset:0;background:
+  repeating-linear-gradient(0deg,rgba(207,230,255,.05) 0 1px,transparent 1px 44px),
+  repeating-linear-gradient(90deg,rgba(207,230,255,.05) 0 1px,transparent 1px 44px),
+  repeating-linear-gradient(0deg,rgba(207,230,255,.1) 0 1px,transparent 1px 220px),
+  repeating-linear-gradient(90deg,rgba(207,230,255,.1) 0 1px,transparent 1px 220px)}
+.scene.bp svg.schem{position:absolute;right:4vw;top:50%;transform:translateY(-54%);
+  width:min(620px,58vw);height:auto;opacity:.92}
+.grain{position:fixed;inset:-40px;pointer-events:none;z-index:40;opacity:.06;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E")}
+.vignette{position:fixed;inset:0;pointer-events:none;z-index:39;
+  background:radial-gradient(115% 100% at 50% 42%,transparent 58%,rgba(0,0,0,.5) 100%)}
+
+/* transition wipe */
+.wipe{position:fixed;inset:0;z-index:35;pointer-events:none;
+  background:linear-gradient(100deg,var(--accent) 0%,#3f7a14 55%,#0a0f06 130%);
+  transform:translateX(-102%);opacity:.94}
+.wipe.go-r{animation:wipeR .62s var(--ease)}
+.wipe.go-l{animation:wipeL .62s var(--ease)}
+@keyframes wipeR{0%{transform:translateX(-102%)}100%{transform:translateX(102%)}}
+@keyframes wipeL{0%{transform:translateX(102%)}100%{transform:translateX(-102%)}}
+
+/* ---------- HUD ---------- */
+.hud{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:flex-start;
+  justify-content:space-between;padding:22px 30px 0;pointer-events:none}
+.brand{pointer-events:auto;text-decoration:none;display:block}
+.brand .word{font-family:"Unbounded";font-weight:900;font-size:19px;letter-spacing:.14em;line-height:1}
+.brand .word b{color:var(--accent);font-weight:900}
+.brand .sub{font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.34em;
+  color:var(--ink-dim);margin-top:7px;text-transform:uppercase}
+.hud-r{text-align:right;font-family:"Space Mono",monospace}
+.hud-r .clock{font-size:15px;font-weight:700;letter-spacing:.12em}
+.hud-r .loc{font-size:10px;letter-spacing:.3em;color:var(--ink-dim);margin-top:7px;text-transform:uppercase}
+.hud-r .count{margin-top:12px;font-size:11px;letter-spacing:.24em;color:var(--ink-faint)}
+.hud-r .count b{color:var(--ink);font-size:13px}
+
+/* ---------- chapter rail ---------- */
+.rail{position:fixed;left:30px;top:50%;transform:translateY(-50%);z-index:50;
+  display:flex;flex-direction:column;gap:6px}
+.rail button{display:flex;align-items:center;gap:13px;padding:9px 14px 9px 0;text-align:left;
+  border-radius:0 10px 10px 0;position:relative;transition:transform .35s var(--ease)}
+.rail button::before{content:"";position:absolute;left:0;top:50%;translate:0 -50%;
+  width:3px;height:0;background:var(--accent);border-radius:2px;transition:height .4s var(--ease)}
+.rail .no{font-family:"Space Mono",monospace;font-size:11px;font-weight:700;letter-spacing:.14em;
+  color:var(--ink-faint);transition:color .3s;padding-left:14px}
+.rail .lb{font-size:12.5px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--ink-faint);transition:color .3s;white-space:nowrap}
+.rail button:hover .lb,.rail button:hover .no{color:var(--ink)}
+.rail button.on{transform:translateX(6px)}
+.rail button.on::before{height:26px}
+.rail button.on .no{color:var(--accent)}
+.rail button.on .lb{color:var(--ink);font-weight:700}
+
+/* ---------- content block ---------- */
+.panel{position:fixed;left:calc(var(--rail-w) + 44px);bottom:104px;z-index:50;max-width:min(680px,60vw)}
+.panel .kick{font-family:"Space Mono",monospace;font-size:11px;font-weight:700;
+  letter-spacing:.4em;color:var(--accent);text-transform:uppercase;display:flex;align-items:center;gap:12px}
+.panel .kick::after{content:"";height:1px;width:64px;background:linear-gradient(90deg,var(--accent),transparent)}
+.panel h1{font-family:"Unbounded";font-weight:900;line-height:.98;letter-spacing:.01em;
+  font-size:clamp(40px,7.2vw,96px);margin:16px 0 18px;text-wrap:balance;
+  text-shadow:0 6px 44px rgba(0,0,0,.45)}
+.panel p{font-size:clamp(15px,1.35vw,18.5px);line-height:1.55;color:var(--ink-dim);
+  max-width:47ch;text-wrap:pretty}
+.meta{display:flex;align-items:center;gap:14px;margin-top:26px;flex-wrap:wrap}
+.chip{font-family:"Space Mono",monospace;font-size:10.5px;font-weight:700;letter-spacing:.26em;
+  padding:8px 13px;border:1px solid var(--line);border-radius:999px;color:var(--ink);
+  background:var(--glass);backdrop-filter:blur(10px);text-transform:uppercase}
+.chip .dot{display:inline-block;width:6px;height:6px;border-radius:99px;background:var(--accent);
+  margin-right:8px;vertical-align:2px;box-shadow:0 0 10px var(--accent)}
+.cta{display:inline-flex;align-items:center;gap:12px;text-decoration:none;
+  font-family:"Space Mono",monospace;font-size:12.5px;font-weight:700;letter-spacing:.3em;
+  padding:16px 26px;border-radius:14px;color:#0c1206;background:var(--accent);
+  box-shadow:0 12px 34px rgba(105,190,40,.32),inset 0 1px 0 rgba(255,255,255,.45);
+  transition:transform .3s var(--ease),background .3s,box-shadow .3s;text-transform:uppercase}
+.cta:hover{background:var(--accent-hot);transform:translateY(-2px);
+  box-shadow:0 18px 42px rgba(105,190,40,.42),inset 0 1px 0 rgba(255,255,255,.5)}
+.cta:active{transform:translateY(0)}
+.cta .arr{transition:transform .3s var(--ease)}
+.cta:hover .arr{transform:translateX(4px)}
+.panel.swap .kick,.panel.swap h1,.panel.swap p,.panel.swap .meta{
+  animation:rise .65s var(--ease) both}
+.panel.swap h1{animation-delay:.05s}.panel.swap p{animation-delay:.11s}.panel.swap .meta{animation-delay:.17s}
+@keyframes rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+
+/* ghost numeral */
+.ghost{position:fixed;right:26px;bottom:64px;z-index:45;font-family:"Unbounded";font-weight:900;
+  font-size:clamp(120px,19vw,270px);line-height:1;color:transparent;
+  -webkit-text-stroke:1.5px rgba(242,245,236,.17);pointer-events:none;user-select:none}
+
+/* ---------- bottom deck ---------- */
+.deck{position:fixed;left:30px;right:30px;bottom:24px;z-index:50;display:flex;
+  align-items:flex-end;justify-content:space-between;gap:20px}
+.segs{display:flex;gap:6px;flex:1;max-width:520px}
+.seg{flex:1;height:3px;border-radius:2px;background:rgba(242,245,236,.14);overflow:hidden}
+.seg i{display:block;height:100%;width:0;background:var(--accent);border-radius:2px;
+  transition:width .5s var(--ease)}
+.seg.done i{width:38%}
+.seg.on i{width:100%}
+.hint{font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.26em;
+  color:var(--ink-faint);text-transform:uppercase;white-space:nowrap}
+.hint b{color:var(--ink-dim);font-weight:700}
+.navbtns{display:flex;gap:10px}
+.navbtns button{width:46px;height:46px;border-radius:14px;border:1px solid var(--line);
+  background:var(--glass);backdrop-filter:blur(10px);display:grid;place-items:center;
+  font-size:17px;transition:border-color .3s,background .3s,transform .3s var(--ease)}
+.navbtns button:hover{border-color:var(--accent);background:rgba(105,190,40,.14);transform:translateY(-2px)}
+
+/* ---------- responsive ---------- */
+@media (max-width:900px){
+  :root{--rail-w:0px}
+  .scene.bp svg.schem{right:50%;transform:translate(50%,-58%);width:88vw;opacity:.5}
+  .rail{left:0;right:0;top:auto;bottom:86px;transform:none;flex-direction:row;
+    justify-content:center;gap:2px;padding:0 10px}
+  .rail button{padding:8px 7px;border-radius:10px}
+  .rail button::before{display:none}
+  .rail .no{padding-left:0;font-size:12px}
+  .rail .lb{display:none}
+  .rail button.on{transform:none;background:rgba(105,190,40,.16)}
+  .panel{left:22px;right:22px;bottom:158px;max-width:none}
+  .ghost{display:none}
+  .hud{padding:16px 18px 0}
+  .deck{left:18px;right:18px;bottom:16px}
+  .hint{display:none}
+  .brand .sub{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  .scene.on img.bg{animation:none}
+  .wipe{display:none}
+  .panel.swap .kick,.panel.swap h1,.panel.swap p,.panel.swap .meta{animation:none}
+  *{transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<main class="stage" id="stage" aria-label="COOPZ12 chapters">
+
+  <!-- 01 BUILD LOG -->
+  <section class="scene on" data-scene aria-hidden="false">
+    <img class="bg" src="assets/hub.jpg" alt="" fetchpriority="high">
+    <div class="scrim"></div>
+  </section>
+  <!-- 02 ZOMBIES -->
+  <section class="scene" data-scene aria-hidden="true">
+    <img class="bg" src="../zombies/assets/backdrop.jpg" alt="" loading="lazy">
+    <div class="scrim"></div>
+  </section>
+  <!-- 03 HILLSIDE -->
+  <section class="scene" data-scene aria-hidden="true">
+    <img class="bg" src="assets/hillside.jpg" alt="" loading="lazy">
+    <div class="scrim"></div>
+  </section>
+  <!-- 04 HAPPY DAYS -->
+  <section class="scene" data-scene aria-hidden="true">
+    <img class="bg" src="assets/happydays.jpg" alt="" loading="lazy">
+    <div class="scrim"></div>
+  </section>
+  <!-- 05 ARCADE -->
+  <section class="scene" data-scene aria-hidden="true">
+    <img class="bg" src="assets/arcade.jpg" alt="" loading="lazy">
+    <div class="scrim"></div>
+  </section>
+  <!-- 06 BLUEPRINT -->
+  <section class="scene bp" data-scene aria-hidden="true">
+    <div class="grid"></div>
+    <svg class="schem" viewBox="0 0 640 430" fill="none" stroke="#cfe6ff" stroke-width="1.6" aria-hidden="true">
+      <rect x="52" y="42" width="212" height="330" rx="6"/>
+      <rect x="72" y="62" width="172" height="120" rx="4" stroke-dasharray="5 5"/>
+      <circle cx="118" cy="238" r="34"/><circle cx="118" cy="238" r="6"/>
+      <circle cx="202" cy="238" r="34"/><circle cx="202" cy="238" r="6"/>
+      <rect x="72" y="300" width="172" height="44"/>
+      <line x1="72" y1="322" x2="244" y2="322" stroke-dasharray="5 5"/>
+      <path d="M382 268 q10-64 66-64 h84 q56 0 66 64 l14 74 q4 26-18 30 q-20 3-34-16 l-18-26 h-116 l-18 26 q-14 19-34 16 q-22-4-18-30 z"/>
+      <circle cx="438" cy="286" r="17"/><circle cx="540" cy="262" r="7"/><circle cx="560" cy="282" r="7"/>
+      <line x1="52" y1="398" x2="264" y2="398"/><line x1="52" y1="390" x2="52" y2="406"/><line x1="264" y1="390" x2="264" y2="406"/>
+      <line x1="330" y1="42" x2="330" y2="372" stroke-dasharray="3 7"/>
+      <g font-family="Space Mono, monospace" font-size="13" fill="#cfe6ff" stroke="none" letter-spacing="2">
+        <text x="72" y="30">UNIT 01 — TOWER</text>
+        <text x="382" y="196">INPUT — PAD</text>
+        <text x="128" y="392">460 MM</text>
+        <text x="72" y="90" fill="#8ee63f">RX 7700 XT</text>
+        <text x="150" y="330">5800X · 32GB</text>
+      </g>
+    </svg>
+    <div class="scrim"></div>
+  </section>
+
+  <div class="vignette"></div>
+  <div class="grain"></div>
+  <div class="wipe" id="wipe"></div>
+
+  <!-- HUD -->
+  <header class="hud">
+    <a class="brand" href="../" aria-label="COOPZ12 home">
+      <span class="word">COOPZ<b>12</b></span>
+      <span class="sub" style="display:block">Build Universe</span>
+    </a>
+    <div class="hud-r">
+      <div class="clock" id="clock">--:--:--</div>
+      <div class="loc">Marysville · WA</div>
+      <div class="count">CHAPTER <b id="countNow">01</b> / 06</div>
+    </div>
+  </header>
+
+  <!-- chapter rail -->
+  <nav class="rail" id="rail" aria-label="Chapters"></nav>
+
+  <!-- content -->
+  <div class="panel" id="panel">
+    <div class="kick" id="kick"></div>
+    <h1 id="title"></h1>
+    <p id="desc"></p>
+    <div class="meta">
+      <span class="chip"><span class="dot"></span><span id="status"></span></span>
+      <a class="cta" id="cta" href="#">Enter <span class="arr">→</span></a>
+    </div>
+  </div>
+
+  <div class="ghost" id="ghost">01</div>
+
+  <!-- bottom deck -->
+  <div class="deck">
+    <div class="segs" id="segs" aria-hidden="true"></div>
+    <div class="hint" id="hint"><b>Scroll</b> · <b>← →</b> · <b>1–6</b> · <b>Drag</b> to travel &nbsp;·&nbsp; <b>Enter</b> to open</div>
+    <div class="navbtns">
+      <button id="prev" aria-label="Previous chapter">←</button>
+      <button id="next" aria-label="Next chapter">→</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const SCENES = [
+  { id:"build-log", no:"01", label:"Build Log", kick:"Chapter 01 · The Hub",
+    title:"THE BUILD LOG",
+    desc:"Everything I make, logged like a shop book. The PC, the games, the sites, and whatever gets built next.",
+    status:"Updated Oct 2026", href:"../" },
+  { id:"zombies", no:"02", label:"Zombies", kick:"Chapter 02 · Playable Game",
+    title:"HOLD THE ROOM",
+    desc:"A Call of Duty Zombies room-defense game that runs in your browser. Board the windows, buy the perks, survive the rounds.",
+    status:"Playable now", href:"../zombies/" },
+  { id:"hillside", no:"03", label:"Hillside", kick:"Chapter 03 · Godot World",
+    title:"HILLSIDE",
+    desc:"A walkable hillside built in a real game engine. The sky runs from sunrise to midnight while you wander it.",
+    status:"Playable now", href:"../hillside/" },
+  { id:"happy-days", no:"04", label:"Happy Days", kick:"Chapter 04 · Real Business",
+    title:"HAPPY DAYS",
+    desc:"Memories on Magnets. My stepmom's Marysville print shop, rebuilt as a storefront with real prices and real products.",
+    status:"Live storefront", href:"../happydays/" },
+  { id:"amusements", no:"05", label:"Arcade", kick:"Chapter 05 · Arcade Study",
+    title:"AMUSEMENTS",
+    desc:"COOPZ12 Amusements. How far can a web page lean into the arcade before it stops being a web page?",
+    status:"Concept build", href:"../arcade/" },
+  { id:"blueprint", no:"06", label:"Blueprint", kick:"Chapter 06 · Technical Study",
+    title:"DRAWING NO. 002",
+    desc:"The same universe drawn like a schematic. Specs, tolerances and build notes, in cyanotype.",
+    status:"Concept build", href:"../blueprint/" },
+];
+const N = SCENES.length;
+const layers = [...document.querySelectorAll("[data-scene]")];
+const rail = document.getElementById("rail");
+const segs = document.getElementById("segs");
+const panel = document.getElementById("panel");
+const wipe = document.getElementById("wipe");
+const $ = id => document.getElementById(id);
+
+SCENES.forEach((s,i)=>{
+  const b = document.createElement("button");
+  b.innerHTML = `<span class="no">${s.no}</span><span class="lb">${s.label}</span>`;
+  b.setAttribute("aria-label", `Chapter ${s.no}: ${s.label}`);
+  b.addEventListener("click", ()=>go(i, i>cur ? 1 : -1));
+  rail.appendChild(b);
+  const sg = document.createElement("div");
+  sg.className = "seg"; sg.innerHTML = "<i></i>"; segs.appendChild(sg);
+});
+const railBtns = [...rail.children], segEls = [...segs.children];
+const seen = new Set();
+let cur = -1, lockUntil = 0;
+
+function go(i, dir){
+  i = (i + N) % N;
+  if (i === cur) return;
+  const now = performance.now();
+  lockUntil = now + 650;
+  const prev = cur; cur = i; seen.add(i);
+  layers.forEach((el,j)=>{
+    el.classList.toggle("on", j===i);
+    el.setAttribute("aria-hidden", j===i ? "false" : "true");
+  });
+  railBtns.forEach((b,j)=>{
+    b.classList.toggle("on", j===i);
+    if (j===i) b.setAttribute("aria-current","true"); else b.removeAttribute("aria-current");
+  });
+  segEls.forEach((sg,j)=>{ sg.className = "seg" + (j===i ? " on" : (seen.has(j) ? " done" : "")); });
+  const s = SCENES[i];
+  $("kick").textContent = s.kick;
+  $("title").textContent = s.title;
+  $("desc").textContent = s.desc;
+  $("status").textContent = s.status;
+  $("cta").href = s.href;
+  $("ghost").textContent = s.no;
+  $("countNow").textContent = s.no;
+  panel.classList.remove("swap"); void panel.offsetWidth; panel.classList.add("swap");
+  if (prev !== -1 && !matchMedia("(prefers-reduced-motion: reduce)").matches){
+    wipe.classList.remove("go-r","go-l"); void wipe.offsetWidth;
+    wipe.classList.add(dir >= 0 ? "go-r" : "go-l");
+  }
+  history.replaceState(null, "", "#" + s.id);
+}
+const step = d => { if (performance.now() >= lockUntil) go(cur + d, d); };
+
+document.getElementById("next").addEventListener("click", ()=>step(1));
+document.getElementById("prev").addEventListener("click", ()=>step(-1));
+
+addEventListener("wheel", e => {
+  if (Math.abs(e.deltaY) < 18) return;
+  step(e.deltaY > 0 ? 1 : -1);
+}, { passive:true });
+
+addEventListener("keydown", e => {
+  if (e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === "PageDown"){ e.preventDefault(); step(1); }
+  else if (e.key === "ArrowLeft" || e.key === "ArrowUp" || e.key === "PageUp"){ e.preventDefault(); step(-1); }
+  else if (e.key === "Enter"){ location.href = SCENES[cur].href; }
+  else if (e.key === "Home"){ go(0, -1); }
+  else if (e.key === "End"){ go(N-1, 1); }
+  else if (/^[1-6]$/.test(e.key)){ const t = +e.key - 1; go(t, t > cur ? 1 : -1); }
+});
+
+/* touch swipe + mouse drag */
+let sx = 0, sy = 0, dragging = false;
+const stage = document.getElementById("stage");
+stage.addEventListener("touchstart", e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive:true });
+stage.addEventListener("touchend", e => {
+  const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+  if (Math.abs(dx) > 52 && Math.abs(dx) > Math.abs(dy)) step(dx < 0 ? 1 : -1);
+  else if (Math.abs(dy) > 64) step(dy < 0 ? 1 : -1);
+}, { passive:true });
+stage.addEventListener("pointerdown", e => { if (e.pointerType === "mouse"){ sx = e.clientX; dragging = true; } });
+addEventListener("pointerup", e => {
+  if (!dragging) return; dragging = false;
+  const dx = e.clientX - sx;
+  if (Math.abs(dx) > 84) step(dx < 0 ? 1 : -1);
+});
+
+/* mouse parallax on the active backdrop */
+const fine = matchMedia("(pointer: fine)").matches;
+const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+if (fine && !calm){
+  let tx = 0, ty = 0, cx = 0, cy = 0;
+  addEventListener("mousemove", e => {
+    tx = (e.clientX / innerWidth - .5) * -13;
+    ty = (e.clientY / innerHeight - .5) * -9;
+  });
+  (function loop(){
+    cx += (tx - cx) * .045; cy += (ty - cy) * .045;
+    const img = layers[cur] && layers[cur].querySelector("img.bg");
+    if (img) img.style.translate = `${cx}px ${cy}px`;
+    requestAnimationFrame(loop);
+  })();
+}
+
+/* clock */
+const clockEl = document.getElementById("clock");
+const fmt = new Intl.DateTimeFormat("en-US",{ timeZone:"America/Los_Angeles", hour12:false, hour:"2-digit", minute:"2-digit", second:"2-digit" });
+setInterval(()=>{ clockEl.textContent = fmt.format(new Date()) + " PT"; }, 500);
+clockEl.textContent = fmt.format(new Date()) + " PT";
+
+/* preload the remaining backdrops */
+["../zombies/assets/backdrop.jpg","assets/hillside.jpg","assets/happydays.jpg","assets/arcade.jpg"].forEach(u=>{ const im=new Image(); im.src=u; });
+
+/* start from hash */
+const start = Math.max(0, SCENES.findIndex(s => "#" + s.id === location.hash));
+go(start === -1 ? 0 : start, 1);
+cur = start === -1 ? 0 : start;
+</script>
+</body>
+</html>
