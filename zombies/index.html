@@ -478,41 +478,42 @@
     '<circle cx="69" cy="23" r="2.4" fill="#ffb648"/>' +
     '</svg>';
 
-  /* ---------- audio (tiny synth, no assets) ---------- */
-  var audioOn = true, AC = null;
-  function ac(){
-    if(!AC){ try{ AC = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){} }
-    if(AC && AC.state === "suspended") AC.resume();
-    return AC;
+  /* ---------- audio: real recorded SFX (CC0, see assets/sfx/CREDITS.txt) ---------- */
+  var audioOn = true;
+  var SFX_FILES = {
+    shot: "shot.mp3", hit: "hit.mp3", fix: "board-fix.mp3", tear: "board-tear.mp3",
+    brk: "board-break.mp3", buy: "buy.mp3", round: "round.mp3", hurt: "hurt.mp3",
+    kill: ["kill1.mp3", "kill2.mp3"],
+    moan: ["moan1.mp3", "moan2.mp3", "moan3.mp3"],
+    gargle: ["gargle1.mp3", "gargle2.mp3", "gargle3.mp3"]
+  };
+  var lastPlay = {};
+  function sfx(name, vol, rate, throttleMs){
+    if(!audioOn) return;
+    var now = Date.now();
+    if(throttleMs && lastPlay[name] && now - lastPlay[name] < throttleMs) return;
+    lastPlay[name] = now;
+    var f = SFX_FILES[name]; if(!f) return;
+    if(Array.isArray(f)) f = f[Math.floor(Math.random() * f.length)];
+    var a = new Audio("assets/sfx/" + f);
+    a.volume = vol != null ? vol : .8;
+    if(rate) a.playbackRate = rate;
+    var p = a.play(); if(p && p.catch) p.catch(function(){});
   }
-  function tone(freqA, freqB, dur, type, vol){
-    if(!audioOn) return; var ctx = ac(); if(!ctx) return;
-    var o = ctx.createOscillator(), g = ctx.createGain();
-    o.type = type; o.frequency.setValueAtTime(freqA, ctx.currentTime);
-    o.frequency.exponentialRampToValueAtTime(Math.max(freqB,1), ctx.currentTime + dur);
-    g.gain.setValueAtTime(vol, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(.0001, ctx.currentTime + dur);
-    o.connect(g); g.connect(ctx.destination);
-    o.start(); o.stop(ctx.currentTime + dur);
+  function jit(base){ return base * (0.94 + Math.random() * 0.12); }
+  var ambience = null;
+  function startAmbience(){
+    if(ambience) { if(audioOn && ambience.paused) ambience.play().catch(function(){}); return; }
+    ambience = new Audio("assets/sfx/ambience.mp3");
+    ambience.loop = true; ambience.volume = .55;
+    if(audioOn) ambience.play().catch(function(){});
   }
-  function noiseBurst(dur, vol){
-    if(!audioOn) return; var ctx = ac(); if(!ctx) return;
-    var len = Math.floor(ctx.sampleRate * dur);
-    var buf = ctx.createBuffer(1, len, ctx.sampleRate);
-    var d = buf.getChannelData(0);
-    for(var i = 0; i < len; i++) d[i] = (Math.random()*2 - 1) * (1 - i/len);
-    var src = ctx.createBufferSource(); src.buffer = buf;
-    var f = ctx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 1600;
-    var g = ctx.createGain(); g.gain.value = vol;
-    src.connect(f); f.connect(g); g.connect(ctx.destination);
-    src.start();
-  }
-  var sShot = function(){ noiseBurst(.09, .5); tone(150, 60, .07, "square", .12); };
-  var sHit  = function(){ tone(1150, 800, .04, "square", .08); };
-  var sKill = function(){ tone(320, 55, .2, "sawtooth", .16); };
-  var sHurt = function(){ tone(120, 70, .16, "sawtooth", .2); };
-  var sBuy  = function(){ tone(660, 660, .07, "square", .1); setTimeout(function(){ tone(880, 880, .07, "square", .1); }, 80); setTimeout(function(){ tone(1320, 1320, .1, "square", .1); }, 160); };
-  var sRound= function(){ tone(196, 196, .16, "sawtooth", .14); setTimeout(function(){ tone(147, 147, .3, "sawtooth", .14); }, 170); };
+  var sShot = function(){ sfx("shot", .9, jit(1)); };
+  var sHit  = function(){ sfx("hit", .45, jit(1), 70); };
+  var sKill = function(){ sfx("kill", .8, jit(1)); };
+  var sHurt = function(){ sfx("hurt", .65, jit(1), 350); };
+  var sBuy  = function(){ sfx("buy", .8, 1); };
+  var sRound= function(){ sfx("round", .75, 1); };
 
   /* ---------- state ---------- */
   var COSTS = { jug:2500, speed:3000, revive:1500, tap:2000, pap:5000 };
@@ -622,12 +623,14 @@
       if(zb.dead || zb.inside) return;
       if(zone.boards > 0){
         zone.boards--;
+        sfx("tear", .65, jit(1));
         renderBoards(zi);
         if(zone.boards === 0) say("A window is open. That is very bad.");
       } else {
         breach(zb);
       }
     }, breakEvery(S.round) + Math.random() * 500);
+    if(Math.random() < .45) sfx("moan", .5, jit(1));
     S.spawned++;
     return true;
   }
@@ -637,6 +640,7 @@
     var el = zoneEls[zb.zi];
     el.classList.add("breached");
     el.querySelector(".zombie").classList.add("inside");
+    sfx("brk", .85, jit(1)); sfx("gargle", .9, jit(1));
     say("Breach. It is inside. Drop it now.");
     hurtPulse();
     zb.attackTimer = every(function(){
@@ -708,6 +712,7 @@
       if(S.perks.revive){
         S.perks.revive = false;
         S.health = Math.round(S.maxHealth * .6);
+        sfx("round", .5, 1.35);
         announce("Quick Revive", "Back on your feet. Do not waste it.", 2200);
         say("Quick Revive burned. You are up, barely.");
       } else {
@@ -757,6 +762,7 @@
     if(rem) groups.push("|".repeat(rem));
     $("finalTally").textContent = groups.join("  ");
     $("finalStats").textContent = "Points earned: " + S.totalPoints.toLocaleString("en-US") + " · Zombies down: " + S.kills;
+    sfx("round", .8, .62);
     $("gameOver").classList.add("show");
     startBtn.disabled = true;
     startBtn.textContent = "Down";
@@ -820,23 +826,24 @@
         renderBoards(zi);
         var p = stagePos(evt);
         floater(p.x - 8, p.y - 24, "+10", "repair");
-        tone(500, 380, .05, "square", .06);
+        sfx("fix", .75, jit(1));
       }
     });
   });
 
-  startBtn.addEventListener("click", function(){ ac(); startRound(); });
+  startBtn.addEventListener("click", function(){ startAmbience(); startRound(); });
   $("againBtn").addEventListener("click", function(){ resetGame(); });
   $("soundBtn").addEventListener("click", function(){
     audioOn = !audioOn;
     this.textContent = "Sound: " + (audioOn ? "on" : "off");
+    if(ambience){ if(audioOn){ ambience.play().catch(function(){}); } else { ambience.pause(); } }
     if(audioOn) sBuy();
   });
   document.querySelectorAll(".buy").forEach(function(b){
     b.addEventListener("click", function(){
       var k = b.getAttribute("data-buy");
       if(S.perks[k]) return;
-      if(S.points < COSTS[k]){ say("Not enough points for that. The machine does not do credit."); tone(160, 120, .12, "square", .1); return; }
+      if(S.points < COSTS[k]){ say("Not enough points for that. The machine does not do credit."); sfx("fix", .35, .55); return; }
       S.points -= COSTS[k];
       S.perks[k] = true;
       if(k === "jug"){ S.maxHealth = 200; S.health = Math.min(200, S.health + 100); }
