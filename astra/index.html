@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#04060f">
+<title>ASTRA — Deep Field Observatory</title>
+<meta name="description" content="A website you navigate like a star chart. Chart a course, travel the routes, dock at six bodies.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Michroma&family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --accent:#6ee7ff;
+  --accent-dim:rgba(110,231,255,.55);
+  --ink:#eef4ff;
+  --ink-dim:rgba(238,244,255,.6);
+  --ink-faint:rgba(238,244,255,.34);
+  --glass:rgba(7,12,26,.72);
+  --line:rgba(160,200,255,.16);
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{background:#04060f;color:var(--ink);font-family:"Space Grotesk",system-ui,sans-serif;
+  overflow:hidden;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+::selection{background:var(--accent);color:#04121a}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+
+/* ---------- deep space layers ---------- */
+.deepbg{position:fixed;inset:-12%;z-index:0;pointer-events:none;opacity:.5;
+  background:url("assets/nebula.jpg") center/cover;filter:blur(30px) saturate(1.1) brightness(.55);
+  will-change:transform}
+.stars-a,.stars-b{position:fixed;inset:-60%;z-index:1;pointer-events:none;will-change:background-position}
+.stars-a{background-image:
+  radial-gradient(1.4px 1.4px at 22px 34px,rgba(255,255,255,.95) 50%,transparent 51%),
+  radial-gradient(1px 1px at 130px 90px,rgba(255,255,255,.7) 50%,transparent 51%),
+  radial-gradient(1.2px 1.2px at 240px 160px,rgba(190,225,255,.85) 50%,transparent 51%),
+  radial-gradient(.8px .8px at 320px 60px,rgba(255,255,255,.55) 50%,transparent 51%),
+  radial-gradient(1px 1px at 60px 210px,rgba(255,255,255,.6) 50%,transparent 51%);
+  background-size:380px 280px}
+.stars-b{background-image:
+  radial-gradient(1px 1px at 80px 120px,rgba(255,255,255,.5) 50%,transparent 51%),
+  radial-gradient(1.6px 1.6px at 300px 300px,rgba(255,255,255,.8) 50%,transparent 51%),
+  radial-gradient(.9px .9px at 190px 40px,rgba(200,230,255,.5) 50%,transparent 51%),
+  radial-gradient(1.1px 1.1px at 420px 190px,rgba(255,255,255,.65) 50%,transparent 51%);
+  background-size:520px 420px;opacity:.8}
+
+/* ---------- chart viewport ---------- */
+.viewport{position:fixed;inset:0;z-index:2;overflow:hidden;cursor:grab;touch-action:none}
+.viewport.dragging{cursor:grabbing}
+.world{position:absolute;left:0;top:0;width:2600px;height:1700px;transform-origin:0 0;will-change:transform}
+svg.chart{width:2600px;height:1700px;display:block}
+.edge{stroke:rgba(160,200,255,.17);stroke-width:1.4;fill:none}
+.edge.flown{stroke:var(--accent-dim);stroke-width:1.8}
+.edge.route{stroke:var(--accent);stroke-width:2.4;stroke-dasharray:7 9;
+  animation:dashmove 1s linear infinite;filter:drop-shadow(0 0 6px rgba(110,231,255,.7))}
+@keyframes dashmove{to{stroke-dashoffset:-16}}
+.node{cursor:pointer}
+.node .hit{fill:transparent}
+.node .halo{fill:url(#haloGrad);opacity:.5;transition:opacity .3s}
+.node:hover .halo,.node:focus-visible .halo{opacity:1}
+.node .core{fill:#dfeeff;stroke:rgba(110,231,255,.0);transition:fill .3s}
+.node .ring{fill:none;stroke:var(--accent-dim);stroke-width:1.4;opacity:0}
+.node.visited .core{fill:var(--accent)}
+.node.current .core{fill:#fff}
+.node.current .ring{opacity:1;animation:pulse 2.6s ease-out infinite}
+@keyframes pulse{0%{transform:scale(.55);opacity:.95}70%{transform:scale(1.5);opacity:0}100%{opacity:0}}
+.node .ring{transform-origin:center;transform-box:fill-box}
+.node text{pointer-events:none}
+.node .nm{font-family:"Michroma",sans-serif;font-size:25px;letter-spacing:.14em;fill:var(--ink);
+  paint-order:stroke;stroke:rgba(3,6,15,.85);stroke-width:5px}
+.node .cl{font-family:"Space Mono",monospace;font-size:13.5px;letter-spacing:.3em;fill:var(--ink-faint);
+  paint-order:stroke;stroke:rgba(3,6,15,.85);stroke-width:4px;text-transform:uppercase}
+.node.dim .nm{fill:rgba(238,244,255,.55)}
+.node.arrive .ring2{animation:arrive .9s var(--ease)}
+.ring2{fill:none;stroke:var(--accent);stroke-width:2;opacity:0;transform-origin:center;transform-box:fill-box}
+@keyframes arrive{0%{transform:scale(.4);opacity:1}100%{transform:scale(2.6);opacity:0}}
+.deco-star{fill:rgba(220,238,255,.75)}
+.deco-line{stroke:rgba(160,200,255,.07);stroke-width:1.2;fill:none}
+
+/* route tag */
+.rtag{position:fixed;z-index:30;pointer-events:none;font-family:"Space Mono",monospace;
+  font-size:10.5px;letter-spacing:.18em;color:var(--ink);background:var(--glass);
+  border:1px solid var(--line);border-radius:9px;padding:8px 11px;backdrop-filter:blur(8px);
+  opacity:0;transform:translate(-50%,-140%);transition:opacity .25s;white-space:nowrap}
+.rtag.show{opacity:1}
+.rtag b{color:var(--accent)}
+
+/* ---------- HUD ---------- */
+.hud{position:fixed;top:0;left:0;right:0;z-index:40;display:flex;justify-content:space-between;
+  align-items:flex-start;padding:20px 26px 0;pointer-events:none}
+.brand .word{font-family:"Michroma",sans-serif;font-size:19px;letter-spacing:.34em}
+.brand .word b{color:var(--accent);font-weight:400}
+.brand .sub{font-family:"Space Mono",monospace;font-size:9.5px;letter-spacing:.4em;
+  color:var(--ink-dim);margin-top:6px;text-transform:uppercase}
+.coords{text-align:right;font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.14em;color:var(--ink-dim);line-height:1.9}
+.coords b{color:var(--ink);font-weight:700}
+.coords .lab{color:var(--ink-faint);font-size:9.5px;letter-spacing:.3em}
+
+.deck{position:fixed;left:26px;right:26px;bottom:22px;z-index:40;display:flex;
+  justify-content:space-between;align-items:flex-end;gap:16px;pointer-events:none}
+.hint{font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.22em;
+  color:var(--ink-faint);text-transform:uppercase;line-height:2}
+.hint b{color:var(--ink-dim)}
+.log{font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.22em;color:var(--ink-faint);
+  text-transform:uppercase;text-align:right;line-height:2}
+.log b{color:var(--accent)}
+.zoomctl{display:flex;gap:8px;pointer-events:auto}
+.zoomctl button{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);
+  background:var(--glass);backdrop-filter:blur(10px);font-size:17px;display:grid;place-items:center;
+  transition:border-color .3s,transform .3s var(--ease)}
+.zoomctl button:hover{border-color:var(--accent);transform:translateY(-2px)}
+.zoomctl button.wide{width:auto;padding:0 15px;font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.22em}
+
+/* ---------- docking panel ---------- */
+.panel{position:fixed;top:0;right:0;bottom:0;z-index:60;width:min(428px,92vw);
+  background:var(--glass);backdrop-filter:blur(22px);border-left:1px solid var(--line);
+  transform:translateX(104%);transition:transform .65s var(--ease);display:flex;flex-direction:column;
+  box-shadow:-30px 0 80px rgba(0,0,0,.5)}
+body.docked .panel{transform:none}
+.panel .ph{height:196px;flex:none;position:relative;overflow:hidden;background:#0a1122}
+.panel .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.panel .ph::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(7,12,26,.88))}
+.panel .ph .hero-num{position:absolute;inset:0;display:grid;place-items:center;
+  font-family:"Michroma",sans-serif;font-size:76px;color:var(--ink);letter-spacing:.04em;
+  text-shadow:0 10px 44px rgba(0,0,0,.6)}
+.panel .pbody{padding:24px 26px 26px;overflow-y:auto;overscroll-behavior:contain}
+.panel .kick{font-family:"Space Mono",monospace;font-size:10px;font-weight:700;letter-spacing:.36em;
+  color:var(--accent);text-transform:uppercase;display:flex;align-items:center;gap:10px}
+.panel .kick::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--accent-dim),transparent)}
+.panel h2{font-family:"Michroma",sans-serif;font-weight:400;font-size:27px;letter-spacing:.06em;
+  line-height:1.25;margin:13px 0 12px}
+.panel p{font-size:15px;line-height:1.65;color:var(--ink-dim);text-wrap:pretty}
+.stats{margin-top:20px;border-top:1px solid var(--line)}
+.stats .row{display:flex;justify-content:space-between;gap:14px;padding:11px 0;border-bottom:1px solid var(--line)}
+.stats .k{font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.26em;color:var(--ink-faint);text-transform:uppercase;padding-top:2px}
+.stats .v{font-size:14px;font-weight:500;text-align:right}
+.stats .v .tag{font-family:"Space Mono",monospace;font-size:9px;letter-spacing:.18em;color:#04121a;
+  background:var(--accent);border-radius:99px;padding:3px 8px;margin-left:8px;vertical-align:2px;font-weight:700}
+.routes{margin-top:22px}
+.routes h3{font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.3em;color:var(--ink-faint);
+  text-transform:uppercase;margin-bottom:10px;font-weight:400}
+.route-btn{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;
+  padding:13px 15px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;
+  transition:border-color .3s,background .3s,transform .3s var(--ease);background:rgba(160,200,255,.03)}
+.route-btn:hover{border-color:var(--accent);background:rgba(110,231,255,.08);transform:translateX(-3px)}
+.route-btn .rn{font-weight:700;font-size:14px;letter-spacing:.04em}
+.route-btn .rj{font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.2em;color:var(--accent)}
+.closebtn{position:absolute;top:14px;right:14px;z-index:2;width:40px;height:40px;border-radius:12px;
+  border:1px solid var(--line);background:rgba(4,8,18,.55);backdrop-filter:blur(8px);font-size:15px;
+  display:grid;place-items:center;transition:border-color .3s}
+.closebtn:hover{border-color:var(--accent)}
+.panel.swap-in .pbody>*{animation:rise .6s var(--ease) both}
+.panel.swap-in .pbody>*:nth-child(2){animation-delay:.05s}
+.panel.swap-in .pbody>*:nth-child(3){animation-delay:.1s}
+.panel.swap-in .pbody>*:nth-child(4){animation-delay:.15s}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:96px;transform:translate(-50%,16px);z-index:55;
+  font-family:"Space Mono",monospace;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;
+  background:var(--glass);border:1px solid var(--line);border-radius:99px;padding:11px 18px;
+  opacity:0;pointer-events:none;transition:opacity .4s,transform .4s var(--ease);backdrop-filter:blur(10px)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast b{color:var(--accent)}
+
+@media (max-width:820px){
+  .panel{top:auto;left:0;right:0;bottom:0;width:auto;max-height:62dvh;border-left:0;border-top:1px solid var(--line);
+    transform:translateY(105%);border-radius:20px 20px 0 0}
+  body.docked .panel{transform:none}
+  .panel .ph{height:128px}
+  .panel .ph .hero-num{font-size:52px}
+  .hud{padding:15px 16px 0}
+  .brand .word{font-size:15px}
+  .coords{display:none}
+  .deck{left:16px;right:16px;bottom:14px}
+  .hint{display:none}
+  .log{display:none}
+  .toast{bottom:auto;top:76px}
+}
+@media (prefers-reduced-motion:reduce){
+  .edge.route{animation:none}
+  .node.current .ring{animation:none;opacity:.7}
+  .panel{transition-duration:.01ms}
+}
+</style>
+</head>
+<body>
+
+<div class="deepbg" id="deepbg"></div>
+<div class="stars-a" id="starsA"></div>
+<div class="stars-b" id="starsB"></div>
+
+<div class="viewport" id="viewport" role="application" aria-label="Star chart. Drag to pan, scroll to zoom, select a body to chart a course to it.">
+  <div class="world" id="world">
+    <svg class="chart" viewBox="0 0 2600 1700" aria-hidden="false">
+      <defs>
+        <radialGradient id="haloGrad">
+          <stop offset="0%" stop-color="#6ee7ff" stop-opacity=".34"/>
+          <stop offset="55%" stop-color="#6ee7ff" stop-opacity=".1"/>
+          <stop offset="100%" stop-color="#6ee7ff" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <g id="decoLayer"></g>
+      <g id="edgeLayer"></g>
+      <g id="nodeLayer"></g>
+    </svg>
+  </div>
+</div>
+
+<div class="rtag" id="rtag"></div>
+
+<header class="hud">
+  <div class="brand">
+    <div class="word">ASTRA<b>.</b></div>
+    <div class="sub">Deep Field Observatory</div>
+  </div>
+  <div class="coords" aria-hidden="true">
+    <div><span class="lab">RA</span> <b id="raOut">12.00h</b> &nbsp; <span class="lab">DEC</span> <b id="decOut">+0.0°</b></div>
+    <div><span class="lab">CHART SCALE</span> <b id="zoomOut">52%</b></div>
+  </div>
+</header>
+
+<div class="deck">
+  <div class="hint"><b>Drag</b> pan &nbsp;·&nbsp; <b>Scroll</b> zoom &nbsp;·&nbsp; <b>Click a body</b> chart course &nbsp;·&nbsp; <b>←→↑↓</b> jump routes</div>
+  <div class="log" id="logOut">BODIES VISITED <b>1 / 6</b><br>ROUTES FLOWN <b>0</b></div>
+  <div class="zoomctl">
+    <button id="zoomOutBtn" aria-label="Zoom out">−</button>
+    <button id="zoomInBtn" aria-label="Zoom in">+</button>
+    <button id="resetBtn" class="wide">RESET CHART</button>
+  </div>
+</div>
+
+<aside class="panel" id="panel" aria-label="Destination details">
+  <button class="closebtn" id="closePanel" aria-label="Close panel, back to chart">✕</button>
+  <div class="ph" id="panelHead"></div>
+  <div class="pbody">
+    <div class="kick" id="pKick"></div>
+    <h2 id="pTitle"></h2>
+    <p id="pBody"></p>
+    <div class="stats" id="pStats"></div>
+    <div class="routes">
+      <h3>Chart a course</h3>
+      <div id="pRoutes"></div>
+    </div>
+  </div>
+</aside>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= data ================= */
+const NODES = {
+  prime:   { x:1300, y:850,  name:"ASTRA PRIME",   cls:"The Observatory", img:"assets/observatory.jpg",
+    body:"A white dome on a black summit, open to the darkest sky on the continent. Astra Prime is where every chart begins: the telescope, the archive, and the last hot coffee for four hundred miles.",
+    stats:[["Elevation","4,204 m"],["First light","1987"],["Clear nights","287 / year"],["Resident astronomers","14"]] },
+  nebula:  { x:620,  y:420,  name:"VEIL NEBULA",   cls:"Stellar Nursery", img:"assets/nebula.jpg",
+    body:"The expanding shell of a star that tore itself apart eight thousand years ago. Gas moving at 1.5 million kilometres an hour, lit from inside by the newborn cluster it left behind.",
+    stats:[["Distance","1,470 light-years"],["Expansion","1.5M km / hour"],["Catalog","NGC 6960"],["Best viewing","June to September"]] },
+  exo:     { x:870,  y:1220, name:"KEPLER-186F",   cls:"Exoplanet Index", img:"assets/exoplanet.jpg",
+    body:"The first Earth-sized world found inside another star's habitable zone. Its sun is a red dwarf, its noon is a permanent amber dusk, and its seas, if they exist, have never seen a night sky like ours.",
+    stats:[["Distance","582 light-years"],["Orbital period","130 days"],["Radius","1.17 × Earth"],["Status","Habitable zone"]] },
+  lens:    { x:1720, y:470,  name:"THE GREAT LENS", cls:"The Telescope", hero:"8.2 M",
+    body:"Eight point two metres of polished glass and patience. The Great Lens gathers in one hour what the human eye would need nine hundred years to see, then hands it to whoever is on shift.",
+    stats:[["Aperture","8.2 m"],["Light grasp","900 × the eye"],["Mirror mass","16.8 tonnes"],["Cooling","Liquid nitrogen, nightly"]] },
+  missions:{ x:1920, y:1160, name:"MISSION LOG",   cls:"Expeditions", hero:"47",
+    body:"Forty-seven expeditions charted from this dome, from comet chases to a decade-long stare at a single patch of nothing that turned out to contain nine thousand galaxies.",
+    stats:[["Expeditions","47 flown", "ARCHIVE"],["Deep field stare","11 days", "COMPLETE"],["Comet intercepts","6", "COMPLETE"],["Next launch window","March 2027", "QUEUED"]] },
+  visit:   { x:2260, y:740,  name:"NIGHT TICKETS", cls:"Visit the Dome", hero:"287",
+    body:"On clear nights the dome opens to the public. Deck passes for the terrace, dome sessions at the eyepiece, and one astronomer-led night a week that usually ends at sunrise.",
+    stats:[["Deck pass","$24", "BOOK"],["Dome session","$58", "BOOK"],["Astronomer night","$140", "2 LEFT"],["Season","April to October"]] },
+};
+const EDGES = [
+  ["prime","nebula"],["prime","exo"],["prime","lens"],
+  ["nebula","lens"],["lens","visit"],["visit","missions"],
+  ["lens","missions"],["exo","missions"],
+];
+const IDS = Object.keys(NODES);
+const ADJ = {}; IDS.forEach(id => ADJ[id] = []);
+EDGES.forEach(([a,b]) => { ADJ[a].push(b); ADJ[b].push(a); });
+
+/* ================= chart build ================= */
+const NS = "http://www.w3.org/2000/svg";
+const el = (tag, attrs) => { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); return n; };
+const edgeLayer = document.getElementById("edgeLayer");
+const nodeLayer = document.getElementById("nodeLayer");
+const decoLayer = document.getElementById("decoLayer");
+const edgeEls = {};
+EDGES.forEach(([a,b]) => {
+  const A = NODES[a], B = NODES[b];
+  const ln = el("line", { x1:A.x, y1:A.y, x2:B.x, y2:B.y, "class":"edge" });
+  edgeLayer.appendChild(ln);
+  edgeEls[a+"|"+b] = ln; edgeEls[b+"|"+a] = ln;
+});
+/* decorative minor stars + faint deco constellations */
+let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+for (let i = 0; i < 90; i++){
+  decoLayer.appendChild(el("circle", { cx:(rnd()*2600).toFixed(0), cy:(rnd()*1700).toFixed(0),
+    r:(0.8 + rnd()*1.6).toFixed(1), "class":"deco-star", opacity:(0.25 + rnd()*0.6).toFixed(2) }));
+}
+const nodeEls = {};
+IDS.forEach(id => {
+  const n = NODES[id];
+  const g = el("g", { "class":"node dim", tabindex:"0", role:"button",
+    "aria-label": n.name + ", " + n.cls + ". Activate to chart a course." });
+  g.dataset.id = id;
+  const halo = el("circle", { cx:n.x, cy:n.y, r: id==="prime" ? 120 : 92, "class":"halo" });
+  const ring = el("circle", { cx:n.x, cy:n.y, r: id==="prime" ? 26 : 20, "class":"ring" });
+  const ring2 = el("circle", { cx:n.x, cy:n.y, r: id==="prime" ? 26 : 20, "class":"ring2" });
+  const core = el("circle", { cx:n.x, cy:n.y, r: id==="prime" ? 11 : 8, "class":"core" });
+  const hit  = el("circle", { cx:n.x, cy:n.y, r:56, "class":"hit" });
+  const t1 = el("text", { x:n.x, y:n.y + 52, "text-anchor":"middle", "class":"nm" }); t1.textContent = n.name;
+  const t2 = el("text", { x:n.x, y:n.y + 78, "text-anchor":"middle", "class":"cl" }); t2.textContent = n.cls;
+  g.append(halo, ring2, ring, core, hit, t1, t2);
+  nodeLayer.appendChild(g);
+  nodeEls[id] = g;
+});
+
+/* ================= camera ================= */
+const viewport = document.getElementById("viewport");
+const world = document.getElementById("world");
+const deepbg = document.getElementById("deepbg");
+const starsA = document.getElementById("starsA"), starsB = document.getElementById("starsB");
+let vw = innerWidth, vh = innerHeight;
+addEventListener("resize", () => { vw = innerWidth; vh = innerHeight; apply(); });
+const cam = { x: NODES.prime.x, y: NODES.prime.y, k: 0.5 };
+const clampK = k => Math.min(2.4, Math.max(0.3, k));
+function apply(){
+  world.style.transform = `translate(${vw/2}px, ${vh/2}px) scale(${cam.k}) translate(${-cam.x}px, ${-cam.y}px)`;
+  deepbg.style.transform = `translate(${-cam.x * cam.k * 0.012}px, ${-cam.y * cam.k * 0.012}px)`;
+  starsA.style.backgroundPosition = `${-cam.x * cam.k * 0.06}px ${-cam.y * cam.k * 0.06}px`;
+  starsB.style.backgroundPosition = `${-cam.x * cam.k * 0.13}px ${-cam.y * cam.k * 0.13}px`;
+  document.getElementById("raOut").textContent = ((cam.x / 2600) * 24).toFixed(2) + "h";
+  const dec = 90 - (cam.y / 1700) * 180;
+  document.getElementById("decOut").textContent = (dec >= 0 ? "+" : "") + dec.toFixed(1) + "°";
+  document.getElementById("zoomOut").textContent = Math.round(cam.k * 100) + "%";
+}
+const easeIO = t => t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
+let anim = null;
+function tweenCam(to, dur, done){
+  if (anim) cancelAnimationFrame(anim.id);
+  const from = { ...cam }, t0 = performance.now();
+  const stepFn = now => {
+    const t = Math.min(1, (now - t0) / dur), e = easeIO(t);
+    cam.x = from.x + (to.x - from.x) * e;
+    cam.y = from.y + (to.y - from.y) * e;
+    cam.k = from.k + (to.k - from.k) * e;
+    apply();
+    if (t < 1) anim = { id: requestAnimationFrame(stepFn) };
+    else { anim = null; done && done(); }
+  };
+  anim = { id: requestAnimationFrame(stepFn) };
+}
+
+/* ================= navigation logic ================= */
+function bfs(from, to){
+  if (from === to) return [from];
+  const prev = { [from]: null }, q = [from];
+  while (q.length){
+    const c = q.shift();
+    for (const nb of ADJ[c]) if (!(nb in prev)){ prev[nb] = c; if (nb === to){ q.length = 0; break; } q.push(nb); }
+  }
+  const path = []; let c = to;
+  while (c){ path.unshift(c); c = prev[c]; }
+  return path;
+}
+let current = "prime";
+const visited = new Set(["prime"]);
+const flown = new Set();
+let traveling = false;
+function refreshStates(){
+  IDS.forEach(id => {
+    const g = nodeEls[id];
+    g.classList.toggle("visited", visited.has(id));
+    g.classList.toggle("current", id === current);
+    g.classList.toggle("dim", !visited.has(id) && id !== current);
+  });
+  for (const key in edgeEls) edgeEls[key].classList.toggle("flown", flown.has(key));
+  document.getElementById("logOut").innerHTML =
+    `BODIES VISITED <b>${visited.size} / 6</b><br>ROUTES FLOWN <b>${flown.size}</b>`;
+}
+let toastTimer = null;
+function toast(html){
+  const t = document.getElementById("toast");
+  t.innerHTML = html; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2600);
+}
+function flyTo(target){
+  if (traveling || target === current && document.body.classList.contains("docked")) { if (target === current) openPanel(target); return; }
+  if (target === current){ openPanel(target); return; }
+  clearRoutePreview();
+  const path = bfs(current, target);
+  const legs = path.slice(1);
+  traveling = true;
+  closePanel();
+  toast(`COURSE CHARTED · <b>${legs.length} JUMP${legs.length > 1 ? "S" : ""}</b> TO ${NODES[target].name}`);
+  const runLeg = i => {
+    if (i >= legs.length){
+      traveling = false;
+      current = target; visited.add(target);
+      const g = nodeEls[target];
+      g.classList.remove("arrive"); void g.getBoundingClientRect(); g.classList.add("arrive");
+      refreshStates(); openPanel(target);
+      return;
+    }
+    const nid = legs[i], n = NODES[nid];
+    flown.add(path[i] + "|" + nid);
+    const midK = legs.length > 1 && i < legs.length - 1 ? Math.min(cam.k, 0.85) : 1.12;
+    tweenCam({ x:n.x, y:n.y, k:midK }, 640, () => { visited.add(nid); refreshStates(); runLeg(i + 1); });
+  };
+  runLeg(0);
+}
+
+/* ================= panel ================= */
+const panel = document.getElementById("panel");
+function openPanel(id){
+  const n = NODES[id];
+  const head = document.getElementById("panelHead");
+  head.innerHTML = n.img ? `<img src="${n.img}" alt="">` : `<div class="hero-num">${n.hero || ""}</div>`;
+  document.getElementById("pKick").textContent = n.cls;
+  document.getElementById("pTitle").textContent = n.name;
+  document.getElementById("pBody").textContent = n.body;
+  document.getElementById("pStats").innerHTML = n.stats.map(([k,v,tag]) =>
+    `<div class="row"><span class="k">${k}</span><span class="v">${v}${tag ? `<span class="tag">${tag}</span>` : ""}</span></div>`).join("");
+  document.getElementById("pRoutes").innerHTML = ADJ[id].map(nb =>
+    `<button class="route-btn" data-go="${nb}"><span class="rn">${NODES[nb].name}</span><span class="rj">1 JUMP →</span></button>`).join("");
+  document.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => flyTo(b.dataset.go)));
+  document.body.classList.add("docked");
+  panel.classList.remove("swap-in"); void panel.offsetWidth; panel.classList.add("swap-in");
+  if (vw <= 820 && !traveling){
+    tweenCam({ x:n.x, y:n.y + (vh * 0.17) / cam.k, k:Math.max(cam.k, 0.9) }, 450);
+  }
+}
+function closePanel(){ document.body.classList.remove("docked"); }
+document.getElementById("closePanel").addEventListener("click", closePanel);
+
+/* ================= route preview (hover) ================= */
+const rtag = document.getElementById("rtag");
+function clearRoutePreview(){
+  for (const key in edgeEls) edgeEls[key].classList.remove("route");
+  rtag.classList.remove("show");
+}
+function previewRoute(target, evt){
+  if (traveling || target === current) return;
+  const path = bfs(current, target);
+  for (let i = 0; i < path.length - 1; i++) edgeEls[path[i] + "|" + path[i+1]].classList.add("route");
+  const via = path.slice(1, -1).map(id => NODES[id].name).join(" · ");
+  rtag.innerHTML = `<b>${path.length - 1} JUMP${path.length > 2 ? "S" : ""}</b>${via ? " VIA " + via : " · DIRECT"}`;
+  rtag.style.left = evt.clientX + "px"; rtag.style.top = evt.clientY + "px";
+  rtag.classList.add("show");
+}
+
+/* ================= input: pan / zoom / pinch / click ================= */
+const pointers = new Map();
+let dragMoved = 0, lastPinch = 0;
+viewport.addEventListener("pointerdown", e => {
+  pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+  dragMoved = 0;
+  viewport.setPointerCapture(e.pointerId);
+  viewport.classList.add("dragging");
+  if (anim){ cancelAnimationFrame(anim.id); anim = null; traveling = false; }
+});
+viewport.addEventListener("pointermove", e => {
+  if (!pointers.has(e.pointerId)) return;
+  const p = pointers.get(e.pointerId);
+  const dx = e.clientX - p.x, dy = e.clientY - p.y;
+  pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+  if (pointers.size === 1){
+    dragMoved += Math.abs(dx) + Math.abs(dy);
+    cam.x -= dx / cam.k; cam.y -= dy / cam.k; apply();
+  } else if (pointers.size === 2){
+    const [a, b] = [...pointers.values()];
+    const dist = Math.hypot(a.x - b.x, a.y - b.y);
+    if (lastPinch){
+      const mid = { x:(a.x + b.x) / 2, y:(a.y + b.y) / 2 };
+      zoomAt(mid.x, mid.y, cam.k * (dist / lastPinch));
+      dragMoved = 99;
+    }
+    lastPinch = dist;
+  }
+});
+const endPointer = e => {
+  const wasDrag = dragMoved > 7;
+  pointers.delete(e.pointerId);
+  if (pointers.size < 2) lastPinch = 0;
+  if (pointers.size === 0) viewport.classList.remove("dragging");
+  if (!wasDrag){
+    const hitEl = document.elementFromPoint(e.clientX, e.clientY);
+    const g = hitEl && hitEl.closest && hitEl.closest(".node");
+    if (g) flyTo(g.dataset.id);
+  }
+};
+viewport.addEventListener("pointerup", endPointer);
+viewport.addEventListener("pointercancel", endPointer);
+function zoomAt(sx, sy, nk){
+  nk = clampK(nk);
+  const wx = cam.x + (sx - vw/2) / cam.k, wy = cam.y + (sy - vh/2) / cam.k;
+  cam.k = nk;
+  cam.x = wx - (sx - vw/2) / nk; cam.y = wy - (sy - vh/2) / nk;
+  apply();
+}
+viewport.addEventListener("wheel", e => {
+  e.preventDefault();
+  if (anim){ cancelAnimationFrame(anim.id); anim = null; traveling = false; }
+  zoomAt(e.clientX, e.clientY, cam.k * (e.deltaY < 0 ? 1.13 : 0.885));
+}, { passive:false });
+document.getElementById("zoomInBtn").addEventListener("click", () => tweenCam({ ...cam, k: clampK(cam.k * 1.35) }, 380));
+document.getElementById("zoomOutBtn").addEventListener("click", () => tweenCam({ ...cam, k: clampK(cam.k / 1.35) }, 380));
+document.getElementById("resetBtn").addEventListener("click", () => { closePanel(); flyHome(); });
+function flyHome(){
+  traveling = true;
+  tweenCam({ x:NODES.prime.x, y:NODES.prime.y, k:0.62 }, 900, () => { traveling = false; current = "prime"; refreshStates(); });
+}
+
+/* node hover + keyboard */
+IDS.forEach(id => {
+  const g = nodeEls[id];
+  g.addEventListener("mouseenter", e => previewRoute(id, e));
+  g.addEventListener("mousemove", e => { if (rtag.classList.contains("show")){ rtag.style.left = e.clientX + "px"; rtag.style.top = e.clientY + "px"; } });
+  g.addEventListener("mouseleave", clearRoutePreview);
+  g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); flyTo(id); } });
+});
+addEventListener("keydown", e => {
+  if (e.key === "Escape"){ closePanel(); return; }
+  const dirs = { ArrowRight:[1,0], ArrowLeft:[-1,0], ArrowUp:[0,-1], ArrowDown:[0,1] };
+  if (dirs[e.key] && !traveling){
+    e.preventDefault();
+    const [dx, dy] = dirs[e.key], c = NODES[current];
+    let best = null, bestScore = -2;
+    ADJ[current].forEach(nb => {
+      const n = NODES[nb], vx = n.x - c.x, vy = n.y - c.y, L = Math.hypot(vx, vy);
+      const score = (vx * dx + vy * dy) / L;
+      if (score > bestScore){ bestScore = score; best = nb; }
+    });
+    if (best && bestScore > 0.25) flyTo(best);
+  }
+  if (e.key === "+" || e.key === "=") tweenCam({ ...cam, k: clampK(cam.k * 1.3) }, 300);
+  if (e.key === "-") tweenCam({ ...cam, k: clampK(cam.k / 1.3) }, 300);
+  if (e.key === "0") document.getElementById("resetBtn").click();
+});
+
+/* ================= intro ================= */
+refreshStates();
+apply();
+tweenCam({ x:NODES.prime.x, y:NODES.prime.y, k:1.04 }, 1500, () => {
+  openPanel("prime");
+  setTimeout(() => toast("CHART IS LIVE · <b>CLICK ANY BODY</b> TO TRAVEL"), 500);
+});
+</script>
+</body>
+</html>
