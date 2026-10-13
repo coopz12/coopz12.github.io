@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>PERIHELION — A Twenty-Second Orbit</title>
+<meta name="description" content="A twenty-second motion study: a star ignites, three planets find their orbits, a comet slingshots past, and everything locks into alignment. One canvas, one timeline, fully scrubbable.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' fill='%23070608'/%3E%3Ccircle cx='12' cy='12' r='3.4' fill='%23fff3e0'/%3E%3Ccircle cx='12' cy='12' r='8' fill='none' stroke='%23ff6b35' stroke-width='1.4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --base:#070608;
+  --bone:#f2ead9;
+  --dim:#9a8f7d;
+  --faint:rgba(242,234,217,.5);
+  --hair:rgba(242,234,217,.14);
+  --ember:#ff6b35;
+  --ease-out:cubic-bezier(.23,1,.32,1);
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  background:var(--base);
+  color:var(--bone);
+  font-family:var(--mono);
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
+canvas#stage{position:fixed;inset:0;width:100%;height:100%;display:block}
+
+.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:5;
+  display:flex;align-items:baseline;gap:14px;
+  padding:16px 20px;
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);
+  pointer-events:none;
+}
+.topbar .name{color:var(--bone);font-weight:500}
+.topbar .spacer{flex:1}
+
+.actlabel{
+  position:fixed;left:20px;bottom:86px;z-index:5;
+  font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);
+  opacity:0;transition:opacity .3s var(--ease-out);
+  pointer-events:none;
+}
+.actlabel.on{opacity:1}
+.actlabel b{color:var(--ember);font-weight:500}
+
+.bar{
+  position:fixed;left:0;right:0;bottom:0;z-index:6;
+  display:flex;align-items:center;gap:14px;
+  padding:12px 20px calc(12px + env(safe-area-inset-bottom));
+  background:rgba(7,6,8,.82);
+  border-top:1px solid var(--hair);
+}
+.cbtn{
+  font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--dim);border:1px solid var(--hair);
+  height:40px;padding:0 15px;flex:none;
+  display:inline-flex;align-items:center;gap:7px;
+  background:transparent;cursor:pointer;
+  transition:color .18s var(--ease-out),border-color .18s var(--ease-out);
+}
+@media (hover:hover) and (pointer:fine){
+  .cbtn:hover{color:var(--bone);border-color:rgba(242,234,217,.4)}
+}
+.cbtn:active{transform:scale(.96)}
+.cbtn[aria-pressed="true"]{color:var(--ember);border-color:rgba(255,107,53,.55)}
+.cbtn.end{color:var(--ember);border-color:var(--ember)}
+.scrubwrap{flex:1;display:flex;align-items:center;min-width:60px}
+input[type=range].scrub{
+  -webkit-appearance:none;appearance:none;
+  width:100%;height:24px;background:transparent;cursor:pointer;
+}
+input[type=range].scrub::-webkit-slider-runnable-track{height:2px;background:rgba(242,234,217,.22)}
+input[type=range].scrub::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:13px;height:13px;border-radius:50%;
+  background:var(--ember);margin-top:-5.5px;border:none;
+}
+input[type=range].scrub::-moz-range-track{height:2px;background:rgba(242,234,217,.22)}
+input[type=range].scrub::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:var(--ember);border:none}
+.tcode{
+  font-size:11.5px;color:var(--dim);white-space:nowrap;
+  font-variant-numeric:tabular-nums;letter-spacing:.05em;
+}
+.tcode b{color:var(--bone);font-weight:500}
+.hint{font-size:10.5px;color:var(--faint);letter-spacing:.06em;white-space:nowrap}
+@media (max-width:760px){
+  .hint{display:none}
+  .actlabel{bottom:auto;top:54px;left:16px}
+  .topbar{padding:13px 16px}
+  .topbar .spacer + span{display:none}
+  .bar{padding:10px 14px calc(10px + env(safe-area-inset-bottom));gap:10px;flex-wrap:wrap}
+  .scrubwrap{order:5;flex:1 1 100%}
+  .cbtn{padding:0 11px}
+}
+</style>
+</head>
+<body>
+
+<canvas id="stage" aria-label="Animated motion piece: a star ignites, planets orbit, a comet passes, and the system aligns."></canvas>
+
+<header class="topbar">
+  <span class="name">Perihelion</span>
+  <span>A motion study</span>
+  <span class="spacer"></span>
+  <span>20 sec · one timeline</span>
+</header>
+
+<div class="actlabel" id="actLabel" aria-hidden="true"></div>
+
+<footer class="bar">
+  <button class="cbtn" id="playBtn" aria-label="Pause">Pause</button>
+  <div class="scrubwrap">
+    <input type="range" class="scrub" id="scrub" min="0" max="20" step="0.01" value="0" aria-label="Seek through the piece">
+  </div>
+  <div class="tcode"><b id="tCur">00:00.0</b> / 00:20.0</div>
+  <button class="cbtn" id="loopBtn" aria-pressed="false">Loop</button>
+  <button class="cbtn" id="replayBtn">Replay</button>
+  <span class="hint">Space play · ←/→ seek · R replay</span>
+</footer>
+
+<script>
+'use strict';
+/* ================= config ================= */
+const DUR = 20;
+const CFG = {
+  dust: 84,
+  stars: 150,
+  radii: [0.155, 0.235, 0.325],       // orbit radii, fraction of min(vw, vh)
+  planetScale: [0.052, 0.062, 0.072],  // planet radius as fraction of its orbit radius
+  alignStart: 11.0, alignEnd: 13.5,
+  alignAngle: -0.62                    // the syzygy ray
+};
+const RM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ================= easing (values from the animate skill tables) ================= */
+const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+const seg = (t, a, b) => clamp01((t - a) / (b - a));
+const easeOutQuint = t => 1 - Math.pow(1 - t, 5);
+const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+const easeInOut = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const bump = (t, c, w) => { const d = (t - c) / w; return Math.exp(-d * d); };
+const TAU = Math.PI * 2;
+function angNorm(a){ a = a % TAU; return a < 0 ? a + TAU : a; }
+
+/* seeded rng so every frame is a pure function of t (scrub-safe) */
+let _s = 1;
+function srand(n){ _s = n >>> 0 || 1; }
+function rnd(){ _s |= 0; _s = _s + 0x6D2B79F5 | 0; let t = Math.imul(_s ^ _s >>> 15, 1 | _s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }
+
+/* ================= scene data ================= */
+const PLANETS = [
+  { color: '#d9a441', speed:  0.55, start: 2.25, appear: 2.6 },
+  { color: '#7d94b8', speed: -0.34, start: 5.30, appear: 3.2 },
+  { color: '#c47a6d', speed:  0.21, start: 0.65, appear: 3.8 }
+];
+/* alignment targets are resolved once, deterministically */
+const ALIGN = PLANETS.map((p, i) => {
+  const snap = p.start + p.speed * CFG.alignStart;
+  let delta = angNorm(CFG.alignAngle - snap);
+  if (p.speed < 0) delta -= TAU;
+  if (Math.abs(delta) < 1.2) delta += Math.sign(p.speed || 1) * TAU;
+  return { snap, target: snap + delta };
+});
+function planetAngle(i, t){
+  const p = PLANETS[i];
+  if (t < CFG.alignStart) return p.start + p.speed * t;
+  if (t < CFG.alignEnd){
+    const u = easeInOut(seg(t, CFG.alignStart, CFG.alignEnd));
+    return ALIGN[i].snap + (ALIGN[i].target - ALIGN[i].snap) * u;
+  }
+  return ALIGN[i].target + (t - CFG.alignEnd) * 0.05;
+}
+/* accretion dust: fixed seeds, spiral-in paths */
+srand(20261013);
+const DUST = [];
+for (let i = 0; i < CFG.dust; i++){
+  const ring = i % 3;
+  DUST.push({
+    ring,
+    rJit: 0.94 + rnd() * 0.12,
+    startMul: 2.7 + rnd() * 1.7,
+    a0: rnd() * TAU,
+    swirl: (1.4 + rnd() * 1.8) * (PLANETS[ring].speed >= 0 ? 1 : -1),
+    t0: 0.7 + rnd() * 0.9,
+    t1: 3.3 + rnd() * 0.9,
+    size: 0.8 + rnd() * 1.5
+  });
+}
+/* comet path control points, as fractions of viewport */
+const COMET = { p0: [-0.12, 0.02], p1: [0.30, 0.66], p2: [0.74, 0.08], p3: [1.12, 0.52], t0: 6.0, t1: 9.8 };
+function bez(p0, p1, p2, p3, u){
+  const v = 1 - u;
+  return [
+    v*v*v*p0[0] + 3*v*v*u*p1[0] + 3*v*u*u*p2[0] + u*u*u*p3[0],
+    v*v*v*p0[1] + 3*v*v*u*p1[1] + 3*v*u*u*p2[1] + u*u*u*p3[1]
+  ];
+}
+const ACTS = [
+  [0.0,  'Act I',   'Ignition'],
+  [4.1,  'Act II',  'Orbit'],
+  [6.0,  'Act III', 'The Comet'],
+  [11.0, 'Act IV',  'Alignment'],
+  [15.8, 'Act V',   'Perihelion']
+];
+
+/* ================= canvas setup ================= */
+const cv = document.getElementById('stage');
+const ctx = cv.getContext('2d');
+let W = 0, H = 0, S = 0, CX = 0, CY = 0, DPR = 1;
+let starLayer = null, glowSprite = null;
+function buildLayers(){
+  starLayer = document.createElement('canvas');
+  starLayer.width = Math.max(2, W * DPR); starLayer.height = Math.max(2, H * DPR);
+  const g = starLayer.getContext('2d');
+  g.scale(DPR, DPR);
+  srand(777);
+  for (let i = 0; i < CFG.stars; i++){
+    const x = rnd() * W, y = rnd() * H, r = 0.4 + rnd() * 1.1, a = 0.12 + rnd() * 0.5;
+    g.globalAlpha = a;
+    g.fillStyle = '#f2ead9';
+    g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill();
+  }
+  g.globalAlpha = 1;
+  glowSprite = document.createElement('canvas');
+  glowSprite.width = glowSprite.height = 256;
+  const gg = glowSprite.getContext('2d');
+  const grad = gg.createRadialGradient(128, 128, 0, 128, 128, 128);
+  grad.addColorStop(0, 'rgba(255,220,170,0.85)');
+  grad.addColorStop(0.25, 'rgba(255,180,110,0.32)');
+  grad.addColorStop(0.6, 'rgba(255,120,60,0.10)');
+  grad.addColorStop(1, 'rgba(255,110,50,0)');
+  gg.fillStyle = grad;
+  gg.fillRect(0, 0, 256, 256);
+}
+function resize(){
+  DPR = Math.min(2, window.devicePixelRatio || 1);
+  W = window.innerWidth; H = window.innerHeight;
+  cv.width = W * DPR; cv.height = H * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  S = Math.min(W, H);
+  CX = W / 2; CY = H * 0.44;
+  buildLayers();
+}
+window.addEventListener('resize', resize);
+resize();
+
+/* world push-in during the comet act */
+function worldScale(t){
+  const u = seg(t, 5.5, 7.6) - seg(t, 9.6, 12.0);
+  return 1 + 0.12 * easeInOut(clamp01(u));
+}
+
+/* ================= render: a pure function of t ================= */
+function render(t){
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#070608';
+  ctx.fillRect(0, 0, W, H);
+  ctx.drawImage(starLayer, 0, 0, W, H);
+
+  const ws = worldScale(t);
+  ctx.save();
+  ctx.translate(CX, CY);
+  ctx.scale(ws, ws);
+  ctx.translate(-CX, -CY);
+
+  const R = CFG.radii.map(r => r * S);
+  const ignite = easeOutQuint(seg(t, 0, 1.1));
+
+  /* accretion dust */
+  for (const d of DUST){
+    if (t < d.t0 || t > d.t1 + 0.4) continue;
+    const u = easeInOut(seg(t, d.t0, d.t1));
+    const endR = R[d.ring] * d.rJit;
+    const r = endR * (d.startMul + (1 - d.startMul) * u);
+    const a = d.a0 + d.swirl * u;
+    const fadeIn = seg(t, d.t0, d.t0 + 0.35);
+    const fadeOut = 1 - seg(t, d.t1 - 0.3, d.t1 + 0.4);
+    ctx.globalAlpha = 0.75 * fadeIn * fadeOut;
+    ctx.fillStyle = '#e8dcc2';
+    ctx.beginPath();
+    ctx.arc(CX + Math.cos(a) * r, CY + Math.sin(a) * r, d.size, 0, TAU);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  /* orbit rings draw themselves, then settle */
+  for (let i = 0; i < 3; i++){
+    const u = easeOutCubic(seg(t, 1.2 + i * 0.5, 3.4 + i * 0.5));
+    if (u <= 0) continue;
+    const settle = 1 - 0.25 * seg(t, 15.5, 17);
+    ctx.globalAlpha = 0.30 * settle;
+    ctx.strokeStyle = '#f2ead9';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(CX, CY, R[i], PLANETS[i].start - 0.4, PLANETS[i].start - 0.4 + TAU * u);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  /* ignition shock ring */
+  const shock = seg(t, 0.85, 2.3);
+  if (shock > 0 && shock < 1){
+    ctx.globalAlpha = (1 - shock) * 0.45;
+    ctx.strokeStyle = '#ffcf9e';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(CX, CY, easeOutCubic(shock) * R[2] * 1.25, 0, TAU);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  /* the comet: one continuous tail, drawn as layered strokes along the path */
+  if (t > COMET.t0 && t < COMET.t1){
+    const u = easeInOut(seg(t, COMET.t0, COMET.t1));
+    const tailLen = 0.17;
+    const passes = [
+      { w: 6.5, a: 0.07 }, { w: 3.4, a: 0.15 }, { w: 1.6, a: 0.30 }
+    ];
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    for (const p of passes){
+      ctx.globalAlpha = p.a;
+      ctx.strokeStyle = '#ffb98a';
+      ctx.lineWidth = p.w;
+      ctx.beginPath();
+      const steps = 26;
+      for (let k = 0; k <= steps; k++){
+        const uu = u - (k / steps) * tailLen;
+        if (uu < 0) break;
+        const [fx, fy] = bez(COMET.p0, COMET.p1, COMET.p2, COMET.p3, uu);
+        const px = fx * W, py = fy * H;
+        if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    }
+    const [hx, hy] = bez(COMET.p0, COMET.p1, COMET.p2, COMET.p3, u);
+    ctx.globalAlpha = 0.28;
+    ctx.fillStyle = '#ffcf9e';
+    ctx.beginPath();
+    ctx.arc(hx * W, hy * H, 9, 0, TAU);
+    ctx.fill();
+    ctx.globalAlpha = 0.96;
+    ctx.fillStyle = '#fff6e6';
+    ctx.beginPath();
+    ctx.arc(hx * W, hy * H, 3.4, 0, TAU);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  /* planets + trails */
+  const pos = [];
+  for (let i = 0; i < 3; i++){
+    const appear = easeOutQuint(seg(t, PLANETS[i].appear, PLANETS[i].appear + 1.0));
+    const ang = planetAngle(i, t);
+    const x = CX + Math.cos(ang) * R[i];
+    const y = CY + Math.sin(ang) * R[i];
+    pos.push([x, y]);
+    if (appear <= 0) continue;
+    const trailFade = 1 - seg(t, 15.3, 16.4);
+    if (trailFade > 0){
+      for (let k = 13; k >= 1; k--){
+        const a2 = planetAngle(i, Math.max(0, t - k * 0.07));
+        ctx.globalAlpha = 0.20 * (1 - k / 14) * appear * trailFade;
+        ctx.fillStyle = PLANETS[i].color;
+        ctx.beginPath();
+        ctx.arc(CX + Math.cos(a2) * R[i], CY + Math.sin(a2) * R[i], Math.max(0.6, R[i] * CFG.planetScale[i] * (1 - k / 16)), 0, TAU);
+        ctx.fill();
+      }
+    }
+    const pr = R[i] * CFG.planetScale[i] * (0.9 + 0.1 * appear);
+    ctx.globalAlpha = appear;
+    ctx.fillStyle = PLANETS[i].color;
+    ctx.beginPath();
+    ctx.arc(x, y, pr, 0, TAU);
+    ctx.fill();
+    ctx.globalAlpha = appear * 0.9;
+    ctx.fillStyle = 'rgba(255,246,230,0.85)';
+    ctx.beginPath();
+    ctx.arc(x - pr * 0.28, y - pr * 0.28, pr * 0.32, 0, TAU);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  /* syzygy line + lock flashes */
+  const lineU = seg(t, 13.4, 14.7);
+  if (lineU > 0){
+    const a = CFG.alignAngle;
+    const fade = 1 - 0.45 * seg(t, 17.5, 19.5);
+    ctx.globalAlpha = 0.5 * fade * easeOutCubic(lineU);
+    ctx.strokeStyle = '#ff6b35';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(CX - Math.cos(a) * R[0] * 0.4, CY - Math.sin(a) * R[0] * 0.4);
+    ctx.lineTo(CX + Math.cos(a) * R[2] * 1.28 * easeOutCubic(lineU), CY + Math.sin(a) * R[2] * 1.28 * easeOutCubic(lineU));
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+  for (let i = 0; i < 3; i++){
+    const lt = 13.5 + i * 0.13;
+    const u = seg(t, lt, lt + 0.85);
+    if (u <= 0 || u >= 1) continue;
+    ctx.globalAlpha = (1 - u) * 0.65;
+    ctx.strokeStyle = PLANETS[i].color;
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.arc(pos[i][0], pos[i][1], 6 + easeOutCubic(u) * 30, 0, TAU);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  /* the star */
+  const flare = 1
+    + 0.55 * bump(t, 7.8, 0.55)
+    + 0.40 * bump(t, 13.6, 0.42)
+    + 0.22 * bump(t, 16.4, 0.6);
+  const glowR = S * 0.30 * ignite * flare;
+  if (glowR > 1){
+    ctx.globalAlpha = 0.9 * ignite;
+    ctx.drawImage(glowSprite, CX - glowR, CY - glowR, glowR * 2, glowR * 2);
+    ctx.globalAlpha = 1;
+  }
+  const coreR = S * 0.016 * (0.35 + 0.65 * ignite) * (1 + 0.12 * bump(t, 13.6, 0.42));
+  if (coreR > 0.3){
+    ctx.fillStyle = '#fff3e0';
+    ctx.beginPath();
+    ctx.arc(CX, CY, coreR, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(CX, CY, coreR * 0.45, 0, TAU);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  /* wordmark lockup */
+  drawWordmark(t);
+}
+
+let wordmarkCache = { size: 0, widths: [], total: 0 };
+function drawWordmark(t){
+  const u0 = seg(t, 15.8, 16.4);
+  if (u0 <= 0) return;
+  const word = 'PERIHELION';
+  const size = Math.max(30, Math.min(80, S * 0.078));
+  const track = size * 0.17;
+  ctx.font = '800 ' + size + 'px Syne, sans-serif';
+  if (wordmarkCache.size !== size){
+    const widths = [];
+    let total = 0;
+    for (const ch of word){ const w = ctx.measureText(ch).width; widths.push(w); total += w + track; }
+    wordmarkCache = { size, widths, total: total - track };
+  }
+  const baseY = H * 0.80;
+  let x = CX - wordmarkCache.total / 2;
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i < word.length; i++){
+    const e = easeOutQuint(seg(t, 15.8 + i * 0.045, 16.7 + i * 0.045));
+    if (e > 0){
+      ctx.globalAlpha = e;
+      ctx.fillStyle = '#f2ead9';
+      ctx.fillText(word[i], x, baseY + (1 - e) * 26);
+    }
+    x += wordmarkCache.widths[i] + track;
+  }
+  ctx.globalAlpha = 1;
+  /* rule + subtitle */
+  const ruleU = easeOutCubic(seg(t, 16.9, 17.9));
+  if (ruleU > 0){
+    const wHalf = wordmarkCache.total * 0.5 * ruleU;
+    ctx.globalAlpha = 0.85;
+    ctx.strokeStyle = '#ff6b35';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(CX - wHalf, baseY + size * 0.62);
+    ctx.lineTo(CX + wHalf, baseY + size * 0.62);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+  const subU = seg(t, 17.5, 18.5);
+  if (subU > 0){
+    ctx.globalAlpha = 0.75 * subU;
+    ctx.fillStyle = '#9a8f7d';
+    ctx.font = '500 ' + Math.max(10, S * 0.016) + 'px "IBM Plex Mono", monospace';
+    try { ctx.letterSpacing = '5px'; } catch (e) {}
+    ctx.textAlign = 'center';
+    ctx.fillText('A TWENTY-SECOND ORBIT', CX, baseY + size * 0.62 + 30);
+    ctx.textAlign = 'left';
+    try { ctx.letterSpacing = '0px'; } catch (e) {}
+    ctx.globalAlpha = 1;
+  }
+}
+
+/* ================= playback ================= */
+const playBtn = document.getElementById('playBtn');
+const replayBtn = document.getElementById('replayBtn');
+const loopBtn = document.getElementById('loopBtn');
+const scrub = document.getElementById('scrub');
+const tCur = document.getElementById('tCur');
+const actLabel = document.getElementById('actLabel');
+let t = 0, playing = false, loop = false, lastTs = null, curAct = -1, scrubbing = false;
+
+function fmt(v){
+  const m = Math.floor(v / 60), s = v - m * 60;
+  return '00:' + String(Math.floor(s)).padStart(2, '0') + '.' + Math.floor((s % 1) * 10);
+}
+function setAct(tt){
+  let idx = 0;
+  for (let i = 0; i < ACTS.length; i++) if (tt >= ACTS[i][0]) idx = i;
+  if (idx !== curAct){
+    curAct = idx;
+    actLabel.innerHTML = '<b>' + ACTS[idx][1] + '</b>&nbsp;&nbsp;' + ACTS[idx][2];
+    actLabel.classList.add('on');
+  }
+}
+function syncUI(){
+  tCur.textContent = fmt(t);
+  if (!scrubbing) scrub.value = t;
+  playBtn.textContent = playing ? 'Pause' : 'Play';
+  playBtn.setAttribute('aria-label', playing ? 'Pause' : 'Play');
+  replayBtn.classList.toggle('end', !playing && t >= DUR - 0.001);
+  setAct(t);
+}
+function seek(nt){
+  t = Math.max(0, Math.min(DUR, nt));
+  render(t);
+  syncUI();
+}
+function setPlaying(p){
+  playing = p;
+  lastTs = null;
+  syncUI();
+}
+function frame(ts){
+  if (!playing) return;
+  if (lastTs === null) lastTs = ts;
+  const dt = Math.min(0.05, (ts - lastTs) / 1000);
+  lastTs = ts;
+  t += dt;
+  if (t >= DUR){
+    if (loop){ t = t - DUR; }
+    else { t = DUR; setPlaying(false); render(t); syncUI(); return; }
+  }
+  render(t);
+  syncUI();
+  requestAnimationFrame(frame);
+}
+function play(){
+  if (t >= DUR - 0.001) t = 0;
+  setPlaying(true);
+  requestAnimationFrame(frame);
+}
+playBtn.addEventListener('click', () => { playing ? setPlaying(false) : play(); });
+replayBtn.addEventListener('click', () => { seek(0); play(); });
+loopBtn.addEventListener('click', () => {
+  loop = !loop;
+  loopBtn.setAttribute('aria-pressed', String(loop));
+  if (loop && !playing && t >= DUR - 0.001) play();
+});
+scrub.addEventListener('input', () => { seek(parseFloat(scrub.value)); });
+scrub.addEventListener('pointerdown', () => { scrubbing = true; });
+window.addEventListener('pointerup', () => { scrubbing = false; });
+document.addEventListener('visibilitychange', () => { if (document.hidden && playing) setPlaying(false); });
+document.addEventListener('keydown', e => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const tag = (e.target && e.target.tagName) || '';
+  if (tag === 'INPUT' && e.key !== ' ') return;
+  if (e.key === ' '){
+    if (tag === 'BUTTON') return;
+    e.preventDefault();
+    playing ? setPlaying(false) : play();
+  }
+  else if (e.key === 'ArrowRight'){ seek(t + 1); }
+  else if (e.key === 'ArrowLeft'){ seek(t - 1); }
+  else if (e.key.toLowerCase() === 'r'){ seek(0); play(); }
+});
+
+/* ================= init ================= */
+const startT = parseFloat(new URLSearchParams(location.search).get('t') || 'NaN');
+if (!Number.isNaN(startT)) seek(Math.max(0, Math.min(DUR, startT)));
+else seek(0);
+if (RM){
+  seek(DUR);
+  setPlaying(false);
+} else {
+  let started = false;
+  const begin = () => { if (!started){ started = true; play(); } };
+  if (document.fonts && document.fonts.ready){
+    document.fonts.ready.then(() => setTimeout(begin, 60));
+    setTimeout(begin, 700);
+  } else setTimeout(begin, 120);
+}
+</script>
+</body>
+</html>
