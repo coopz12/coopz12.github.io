@@ -14,8 +14,8 @@
   --accent:#6ee7ff;
   --accent-dim:rgba(110,231,255,.55);
   --ink:#f2f7ff;
-  --ink-dim:rgba(242,247,255,.64);
-  --ink-faint:rgba(242,247,255,.36);
+  --ink-dim:rgba(242,247,255,.66);
+  --ink-faint:rgba(242,247,255,.38);
   --glass:rgba(6,11,24,.74);
   --line:rgba(160,200,255,.16);
   --ease:cubic-bezier(.22,1,.36,1);
@@ -26,7 +26,7 @@ body{background:#04060f;color:var(--ink);font-family:"Space Grotesk",system-ui,s
   overflow:hidden;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
 ::selection{background:var(--accent);color:#04121a}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
-:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 
 /* ---------- far space (screen-fixed parallax) ---------- */
 .deepbg{position:fixed;inset:-12%;z-index:0;pointer-events:none;opacity:.42;
@@ -50,55 +50,62 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 /* ---------- chart world ---------- */
 .viewport{position:fixed;inset:0;z-index:2;overflow:hidden;cursor:grab;touch-action:none}
 .viewport.dragging{cursor:grabbing}
-.world{position:absolute;left:0;top:0;width:2600px;height:1700px;transform-origin:0 0;will-change:transform}
-.world .galaxy{position:absolute;inset:0;width:2600px;height:1700px;object-fit:cover;
-  filter:brightness(.96) saturate(1.06)}
-.world .veil{position:absolute;inset:0;background:
-  radial-gradient(120% 90% at 50% 42%,transparent 55%,rgba(2,4,10,.5) 100%),
-  linear-gradient(180deg,rgba(2,4,10,.22),transparent 22%,transparent 80%,rgba(2,4,10,.3))}
-svg.chart{position:absolute;inset:0;width:2600px;height:1700px;display:block}
+.world{position:absolute;left:0;top:0;width:5200px;height:3400px;transform-origin:0 0;will-change:transform}
+.galaxyField{position:absolute;left:1300px;top:850px;width:2600px;height:1700px;object-fit:cover;
+  filter:brightness(.97) saturate(1.06)}
+.veil{position:absolute;inset:0;background:
+  radial-gradient(120% 90% at 50% 50%,transparent 58%,rgba(2,4,10,.42) 100%);
+  box-shadow:inset 0 0 340px rgba(2,4,10,.55)}
+svg.chart{position:absolute;inset:0;width:5200px;height:3400px;display:block;pointer-events:none}
+svg.cometSvg{position:absolute;inset:0;width:5200px;height:3400px;display:block;pointer-events:none;z-index:5}
+.nodeLayer{position:absolute;inset:0;z-index:4}
 
 /* star lanes */
 .lane-glow{stroke-width:10;fill:none;opacity:.06}
-.lane-core{stroke-width:1.6;fill:none;stroke-opacity:.28}
+.lane-core{stroke-width:1.6;fill:none;stroke-opacity:.3}
 .lane-flow{stroke-width:3.2;fill:none;stroke:var(--accent);stroke-linecap:round;
   stroke-dasharray:0.1 17;opacity:0}
 .lane.flown .lane-glow{opacity:.15}
-.lane.flown .lane-core{stroke-opacity:.5}
+.lane.flown .lane-core{stroke-opacity:.52}
 .lane.flown .lane-flow{opacity:.75;animation:dashflow 1.15s linear infinite}
 .lane.route .lane-glow{opacity:.22}
-.lane.route .lane-core{stroke-opacity:.7}
-.lane.route .lane-flow{opacity:1;stroke-dasharray:11 9;animation:dashflow .55s linear infinite;
+.lane.route .lane-core{stroke-opacity:.72}
+.lane.route .lane-flow{opacity:1;stroke-dasharray:11 9;animation:dashroute .55s linear infinite;
   filter:drop-shadow(0 0 5px rgba(110,231,255,.8))}
 @keyframes dashflow{to{stroke-dashoffset:-17.1}}
-.lane.route .lane-flow{animation-name:dashroute}
 @keyframes dashroute{to{stroke-dashoffset:-20}}
-
-/* bodies */
-.node{cursor:pointer}
-.node .hit{fill:transparent}
-.node .halo{opacity:.55;transition:opacity .35s}
-.node:hover .halo,.node:focus-visible .halo{opacity:1}
-.node .sphere{transition:filter .4s}
-.node.dim .spherewrap{filter:saturate(.3) brightness(.62)}
-.node .spherewrap{transition:filter .4s}
-.node .ring{fill:none;stroke:var(--accent-dim);stroke-width:1.6;opacity:0;
-  transform-origin:center;transform-box:fill-box}
-.node.current .ring{opacity:1;animation:pulse 2.8s ease-out infinite}
-@keyframes pulse{0%{transform:scale(.6);opacity:.95}70%{transform:scale(1.45);opacity:0}100%{opacity:0}}
-.node .ring2{fill:none;stroke:var(--accent);stroke-width:2.4;opacity:0;
-  transform-origin:center;transform-box:fill-box}
-.node.arrive .ring2{animation:arrive .95s var(--ease)}
-@keyframes arrive{0%{transform:scale(.4);opacity:1}100%{transform:scale(2.8);opacity:0}}
-.node .spark{transform-origin:center;transform-box:fill-box;animation:spin 26s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.node text{pointer-events:none}
-.node .nm{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:28px;letter-spacing:.17em;
-  fill:var(--ink);paint-order:stroke;stroke:rgba(2,4,11,.9);stroke-width:6px}
-.node .cl{font-family:"IBM Plex Mono",monospace;font-size:13px;letter-spacing:.34em;
-  fill:rgba(242,247,255,.55);paint-order:stroke;stroke:rgba(2,4,11,.9);stroke-width:4px;text-transform:uppercase}
-.node.dim .nm{fill:rgba(242,247,255,.62)}
 .deco-star{fill:rgba(224,240,255,.8)}
+
+/* ---------- bodies (photographic) ---------- */
+.bnode{position:absolute;transform:translate(-50%,-50%);z-index:4;padding:0;text-align:center}
+.bnode .orb{position:relative;border-radius:50%;overflow:hidden;margin:0 auto;
+  border:1px solid rgba(255,255,255,.3);
+  transition:transform .45s var(--ease)}
+.bnode .orb img{width:100%;height:100%;object-fit:cover;display:block;
+  transition:filter .5s,transform .6s var(--ease)}
+.bnode .orb::after{content:"";position:absolute;inset:0;border-radius:50%;
+  background:radial-gradient(88% 88% at 50% 46%,transparent 68%,rgba(1,3,9,.42) 100%);
+  box-shadow:inset 0 0 34px rgba(1,3,9,.5)}
+.bnode:hover .orb{transform:scale(1.045)}
+.bnode:hover .orb img{transform:scale(1.06)}
+.bnode.dim .orb img{filter:saturate(.6) brightness(.88)}
+.bnode .selring,.bnode .selring2,.bnode .ping{position:absolute;border-radius:50%;pointer-events:none;
+  left:50%;top:0;transform:translateX(-50%)}
+.bnode .selring{border:1px solid var(--accent);opacity:0}
+.bnode .selring2{border:1px dashed rgba(110,231,255,.5);opacity:0}
+.bnode.current .selring{opacity:.95}
+.bnode.current .selring2{opacity:.8;animation:spin 22s linear infinite}
+@keyframes spin{to{transform:translateX(-50%) rotate(360deg)}}
+.bnode .ping{border:2px solid var(--accent);opacity:0}
+.bnode.arrive .ping{animation:pingA .95s var(--ease)}
+@keyframes pingA{0%{transform:translateX(-50%) scale(.55);opacity:1}100%{transform:translateX(-50%) scale(1.9);opacity:0}}
+.bnode .blabel{position:absolute;left:50%;transform:translateX(-50%);width:340px;pointer-events:none}
+.bnode .blabel .nm{display:block;font-weight:700;font-size:27px;letter-spacing:.16em;color:var(--ink);
+  text-shadow:0 2px 14px rgba(0,0,0,.92),0 0 3px rgba(0,0,0,.9)}
+.bnode .blabel .cl{display:block;font-family:"IBM Plex Mono",monospace;font-size:12.5px;
+  letter-spacing:.34em;color:rgba(242,247,255,.62);text-transform:uppercase;margin-top:7px;
+  text-shadow:0 2px 10px rgba(0,0,0,.92)}
+.bnode.dim .blabel .nm{color:rgba(242,247,255,.66)}
 
 /* warp streaks */
 #warp{position:fixed;inset:0;z-index:3;pointer-events:none;opacity:0;transition:opacity .35s}
@@ -106,7 +113,7 @@ svg.chart{position:absolute;inset:0;width:2600px;height:1700px;display:block}
 /* route tag */
 .rtag{position:fixed;z-index:30;pointer-events:none;font-family:"IBM Plex Mono",monospace;
   font-size:10.5px;letter-spacing:.16em;color:var(--ink);background:var(--glass);
-  border:1px solid var(--line);border-radius:9px;padding:8px 11px;backdrop-filter:blur(8px);
+  border:1px solid var(--line);border-radius:3px;padding:8px 11px;backdrop-filter:blur(8px);
   opacity:0;transform:translate(-50%,-150%);transition:opacity .25s;white-space:nowrap}
 .rtag.show{opacity:1}
 .rtag b{color:var(--accent)}
@@ -114,47 +121,51 @@ svg.chart{position:absolute;inset:0;width:2600px;height:1700px;display:block}
 /* ---------- frame + HUD ---------- */
 .frame{position:fixed;inset:12px;z-index:39;pointer-events:none}
 .frame i{position:absolute;width:22px;height:22px;border:1px solid rgba(160,200,255,.35)}
-.frame i:nth-child(1){top:0;left:0;border-right:0;border-bottom:0;border-radius:6px 0 0 0}
-.frame i:nth-child(2){top:0;right:0;border-left:0;border-bottom:0;border-radius:0 6px 0 0}
-.frame i:nth-child(3){bottom:0;left:0;border-right:0;border-top:0;border-radius:0 0 0 6px}
-.frame i:nth-child(4){bottom:0;right:0;border-left:0;border-top:0;border-radius:0 0 6px 0}
+.frame i:nth-child(1){top:0;left:0;border-right:0;border-bottom:0}
+.frame i:nth-child(2){top:0;right:0;border-left:0;border-bottom:0}
+.frame i:nth-child(3){bottom:0;left:0;border-right:0;border-top:0}
+.frame i:nth-child(4){bottom:0;right:0;border-left:0;border-top:0}
 .hud{position:fixed;top:0;left:0;right:0;z-index:40;display:flex;justify-content:space-between;
   align-items:flex-start;padding:26px 34px 0;pointer-events:none}
-.brand .word{font-weight:700;font-size:21px;letter-spacing:.42em;display:flex;align-items:center;gap:13px}
+.brand .word{font-weight:700;font-size:21px;letter-spacing:.42em;display:flex;align-items:center;gap:13px;
+  text-shadow:0 2px 16px rgba(0,0,0,.85)}
 .brand .word .dot{width:8px;height:8px;border-radius:99px;background:var(--accent);
   box-shadow:0 0 12px var(--accent);animation:blink 3.2s ease-in-out infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
 .brand .word b{color:var(--accent);font-weight:700}
 .brand .sub{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.42em;
-  color:var(--ink-dim);margin-top:7px;text-transform:uppercase}
+  color:var(--ink-dim);margin-top:7px;text-transform:uppercase;text-shadow:0 2px 12px rgba(0,0,0,.85)}
 .status{text-align:center;font-family:"IBM Plex Mono",monospace;font-size:10.5px;
-  letter-spacing:.3em;color:var(--ink-dim);text-transform:uppercase;padding-top:6px}
+  letter-spacing:.3em;color:var(--ink-dim);text-transform:uppercase;padding-top:6px;
+  text-shadow:0 2px 12px rgba(0,0,0,.9)}
 .status b{color:var(--ink);font-weight:600}
 .coords{text-align:right;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.13em;
-  color:var(--ink-dim);line-height:1.95}
+  color:var(--ink-dim);line-height:1.95;text-shadow:0 2px 12px rgba(0,0,0,.9)}
 .coords b{color:var(--ink);font-weight:600}
 .coords .lab{color:var(--ink-faint);font-size:9.5px;letter-spacing:.28em}
 
 .deck{position:fixed;left:34px;right:34px;bottom:26px;z-index:40;display:flex;
-  justify-content:space-between;align-items:flex-end;gap:16px;pointer-events:none}
-.hint{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.24em;
-  color:var(--ink-faint);text-transform:uppercase;line-height:2.05}
+  justify-content:space-between;align-items:flex-end;gap:14px;pointer-events:none}
+.chip{background:rgba(4,7,16,.55);backdrop-filter:blur(8px);border:1px solid rgba(160,200,255,.1);
+  border-radius:10px;padding:9px 13px}
+.hint{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.22em;
+  color:var(--ink-faint);text-transform:uppercase;line-height:2}
 .hint b{color:var(--ink-dim);font-weight:500}
-.log{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.24em;
-  color:var(--ink-faint);text-transform:uppercase;text-align:right;line-height:2.05}
+.log{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.22em;
+  color:var(--ink-faint);text-transform:uppercase;text-align:right;line-height:2}
 .log b{color:var(--accent);font-weight:600}
 .zoomctl{display:flex;gap:8px;pointer-events:auto}
-.zoomctl button{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);
+.zoomctl button{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);
   background:var(--glass);backdrop-filter:blur(10px);font-size:17px;display:grid;place-items:center;
   transition:border-color .3s,transform .3s var(--ease)}
 .zoomctl button:hover{border-color:var(--accent);transform:translateY(-2px)}
 .zoomctl button.wide{width:auto;padding:0 15px;font-family:"IBM Plex Mono",monospace;
-  font-size:9.5px;letter-spacing:.24em}
+  font-size:9.5px;letter-spacing:.22em}
 
 /* flight computer */
-.flightlog{position:fixed;left:50%;bottom:100px;transform:translate(-50%,14px);z-index:55;
-  min-width:min(430px,86vw);background:var(--glass);border:1px solid var(--line);border-radius:14px;
-  backdrop-filter:blur(14px);padding:13px 18px 14px;opacity:0;pointer-events:none;
+.flightlog{position:fixed;left:50%;bottom:104px;transform:translate(-50%,14px);z-index:55;
+  min-width:min(430px,86vw);background:rgba(5,8,15,.92);border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:3px;padding:13px 18px 14px;opacity:0;pointer-events:none;
   transition:opacity .4s,transform .4s var(--ease)}
 .flightlog.show{opacity:1;transform:translate(-50%,0)}
 .flightlog .fl-top{display:flex;justify-content:space-between;gap:18px;font-family:"IBM Plex Mono",monospace;
@@ -163,62 +174,68 @@ svg.chart{position:absolute;inset:0;width:2600px;height:1700px;display:block}
 .flightlog .fl-route{font-weight:600;font-size:14.5px;letter-spacing:.05em;margin-top:6px;white-space:nowrap;
   overflow:hidden;text-overflow:ellipsis}
 .flightlog .fl-bar{display:flex;gap:5px;margin-top:11px}
-.flightlog .fl-bar i{flex:1;height:3px;border-radius:99px;background:rgba(160,200,255,.18)}
+.flightlog .fl-bar i{flex:1;height:3px;background:rgba(160,200,255,.18)}
 .flightlog .fl-bar i.done{background:var(--accent);box-shadow:0 0 8px rgba(110,231,255,.7)}
 .flightlog .fl-bar i.now{background:var(--accent);animation:blink 0.8s ease-in-out infinite}
 
-/* ---------- docking panel ---------- */
-.panel{position:fixed;top:0;right:0;bottom:0;z-index:60;width:min(430px,92vw);
-  background:var(--glass);backdrop-filter:blur(24px);border-left:1px solid var(--line);
+/* ---------- survey plate panel ---------- */
+.panel{position:fixed;top:0;right:0;bottom:0;z-index:60;width:min(432px,94vw);
+  background:#05080f;border-left:1px solid #31456b;
   transform:translateX(104%);transition:transform .65s var(--ease);display:flex;flex-direction:column;
-  box-shadow:-30px 0 80px rgba(0,0,0,.55)}
+  box-shadow:-30px 0 80px rgba(0,0,0,.6)}
 body.docked .panel{transform:none}
-.panel .ph{height:198px;flex:none;position:relative;overflow:hidden;background:#0a1122}
-.panel .ph img{width:100%;height:100%;object-fit:cover;display:block}
-.panel .ph::after{content:"";position:absolute;inset:0;
-  background:linear-gradient(180deg,rgba(6,11,24,.12) 30%,rgba(6,11,24,.92))}
-.panel .ph .hero-num{position:absolute;inset:0;display:grid;place-items:center;
-  font-weight:700;font-size:80px;letter-spacing:.02em;color:var(--ink);
-  text-shadow:0 12px 44px rgba(0,0,0,.65)}
-.panel .pbody{padding:24px 26px 26px;overflow-y:auto;overscroll-behavior:contain}
-.panel .kick{font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:600;letter-spacing:.36em;
-  color:var(--accent);text-transform:uppercase;display:flex;align-items:center;gap:10px}
-.panel .kick::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--accent-dim),transparent)}
-.panel h2{font-weight:700;font-size:27px;letter-spacing:.05em;line-height:1.22;margin:13px 0 12px}
-.panel p{font-size:15px;line-height:1.66;color:var(--ink-dim);text-wrap:pretty}
-.stats{margin-top:20px;border-top:1px solid var(--line)}
-.stats .row{display:flex;justify-content:space-between;gap:14px;padding:11px 0;border-bottom:1px solid var(--line)}
-.stats .k{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.24em;
-  color:var(--ink-faint);text-transform:uppercase;padding-top:3px}
-.stats .v{font-size:14px;font-weight:500;text-align:right}
-.stats .v .tag{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.16em;color:#04121a;
-  background:var(--accent);border-radius:99px;padding:3px 8px;margin-left:8px;vertical-align:2px;font-weight:600}
-.routes{margin-top:22px}
-.routes h3{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.3em;
-  color:var(--ink-faint);text-transform:uppercase;margin-bottom:10px;font-weight:400}
-.route-btn{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;
-  padding:13px 15px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;
-  transition:border-color .3s,background .3s,transform .3s var(--ease);background:rgba(160,200,255,.03)}
-.route-btn:hover{border-color:var(--accent);background:rgba(110,231,255,.08);transform:translateX(-3px)}
-.route-btn .rn{font-weight:600;font-size:14px;letter-spacing:.04em;display:flex;align-items:center;gap:10px}
-.route-btn .rn .cdot{width:9px;height:9px;border-radius:99px;flex:none;box-shadow:0 0 8px currentColor}
-.route-btn .rj{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.18em;color:var(--accent);text-align:right}
-.closebtn{position:absolute;top:14px;right:14px;z-index:2;width:40px;height:40px;border-radius:12px;
-  border:1px solid var(--line);background:rgba(4,8,18,.55);backdrop-filter:blur(8px);font-size:15px;
-  display:grid;place-items:center;transition:border-color .3s}
-.closebtn:hover{border-color:var(--accent)}
-.panel.swap-in .pbody>*{animation:rise .6s var(--ease) both}
+.pstrip{display:flex;justify-content:space-between;align-items:center;flex:none;
+  padding:11px 14px 11px 20px;border-bottom:1px solid var(--line);
+  font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.3em;color:var(--ink-faint);
+  text-transform:uppercase}
+.pstrip b{color:var(--ink-dim);font-weight:500}
+.closebtn{width:34px;height:34px;border:1px solid var(--line);font-size:13px;display:grid;place-items:center;
+  transition:border-color .3s,background .3s}
+.closebtn:hover{border-color:var(--accent);background:rgba(110,231,255,.08)}
+.panel .ph{flex:none;position:relative}
+.panel .ph img{width:100%;height:206px;object-fit:cover;display:block}
+.pcap{display:flex;justify-content:space-between;gap:12px;padding:9px 20px;
+  border-bottom:1px solid var(--line);font-family:"IBM Plex Mono",monospace;font-size:9px;
+  letter-spacing:.22em;color:var(--ink-faint);text-transform:uppercase}
+.pcap b{color:var(--ink-dim);font-weight:500}
+.panel .pbody{padding:22px 26px 8px;overflow-y:auto;overscroll-behavior:contain}
+.panel .kick{font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:600;letter-spacing:.34em;
+  color:var(--accent);text-transform:uppercase}
+.panel h2{font-weight:700;font-size:28px;letter-spacing:.04em;line-height:1.2;margin:11px 0 11px}
+.panel p{font-size:14.5px;line-height:1.68;color:var(--ink-dim);text-wrap:pretty}
+.psec{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.32em;
+  color:var(--ink-faint);text-transform:uppercase;margin:24px 0 4px;display:flex;align-items:center;gap:10px}
+.psec::after{content:"";flex:1;height:1px;background:var(--line)}
+.stats .row{display:flex;justify-content:space-between;gap:14px;padding:10px 0;
+  border-bottom:1px dotted rgba(160,200,255,.22)}
+.stats .k{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.22em;
+  color:var(--ink-faint);text-transform:uppercase;padding-top:2px}
+.stats .v{font-size:13.5px;font-weight:500;text-align:right}
+.stats .v .tag{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.14em;
+  color:var(--accent);margin-left:9px;font-weight:600}
+.fp-row{display:flex;align-items:baseline;gap:10px;width:100%;text-align:left;padding:12px 2px;
+  border-bottom:1px solid rgba(160,200,255,.1);transition:background .25s,padding-left .25s var(--ease)}
+.fp-row:hover{background:rgba(110,231,255,.06);padding-left:8px}
+.fp-row .fi{font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:var(--ink-faint);letter-spacing:.14em}
+.fp-row .rn{font-weight:600;font-size:14.5px;letter-spacing:.03em;display:flex;align-items:center;gap:9px;white-space:nowrap}
+.fp-row .rn .cdot{width:8px;height:8px;border-radius:99px;flex:none}
+.fp-row .lead{flex:1;border-bottom:1px dotted rgba(160,200,255,.3);transform:translateY(-3px);min-width:14px}
+.fp-row .rj{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.16em;color:var(--accent);white-space:nowrap}
+.pfoot{flex:none;border-top:1px solid var(--line);padding:11px 20px;display:flex;justify-content:space-between;
+  font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.24em;color:var(--ink-faint);text-transform:uppercase}
+.pfoot .sig{color:var(--accent);letter-spacing:.1em}
+.panel.swap-in .pbody>*{animation:rise .55s var(--ease) both}
 .panel.swap-in .pbody>*:nth-child(2){animation-delay:.05s}
 .panel.swap-in .pbody>*:nth-child(3){animation-delay:.1s}
 .panel.swap-in .pbody>*:nth-child(4){animation-delay:.15s}
-@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.panel.swap-in .pbody>*:nth-child(5){animation-delay:.2s}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 
 @media (max-width:820px){
-  .panel{top:auto;left:0;right:0;bottom:0;width:auto;max-height:62dvh;border-left:0;
-    border-top:1px solid var(--line);transform:translateY(105%);border-radius:20px 20px 0 0}
+  .panel{top:auto;left:0;right:0;bottom:0;width:auto;max-height:64dvh;border-left:0;
+    border-top:1px solid #31456b;transform:translateY(105%)}
   body.docked .panel{transform:none}
-  .panel .ph{height:126px}
-  .panel .ph .hero-num{font-size:54px}
+  .panel .ph img{height:132px}
   .hud{padding:19px 20px 0}
   .brand .word{font-size:16px}
   .status{display:none}
@@ -231,8 +248,7 @@ body.docked .panel{transform:none}
 }
 @media (prefers-reduced-motion:reduce){
   .lane.flown .lane-flow,.lane.route .lane-flow{animation:none}
-  .node.current .ring,.node .spark,.brand .word .dot{animation:none}
-  .node.current .ring{opacity:.7}
+  .bnode.current .selring2,.brand .word .dot{animation:none}
   .panel{transition-duration:.01ms}
 }
 </style>
@@ -245,15 +261,15 @@ body.docked .panel{transform:none}
 
 <div class="viewport" id="viewport" role="application" aria-label="Star chart of the Astra observatory region. Drag to pan, scroll to zoom, select a body to chart a course to it.">
   <div class="world" id="world">
-    <img class="galaxy" src="assets/galaxy.jpg" alt="" draggable="false">
+    <img class="galaxyField" src="assets/galaxy-f.jpg" alt="" draggable="false">
     <div class="veil"></div>
-    <svg class="chart" viewBox="0 0 2600 1700">
+    <svg class="chart" viewBox="0 0 5200 3400">
       <defs id="defsRoot"></defs>
       <g id="decoLayer"></g>
       <g id="edgeLayer"></g>
-      <g id="cometLayer"></g>
-      <g id="nodeLayer"></g>
     </svg>
+    <div class="nodeLayer" id="nodeLayer"></div>
+    <svg class="cometSvg" viewBox="0 0 5200 3400"><g id="cometLayer"></g></svg>
   </div>
 </div>
 
@@ -274,8 +290,8 @@ body.docked .panel{transform:none}
 </header>
 
 <div class="deck">
-  <div class="hint"><b>Drag</b> pan &nbsp;·&nbsp; <b>Scroll</b> zoom &nbsp;·&nbsp; <b>Click a body</b> chart course &nbsp;·&nbsp; <b>←→↑↓</b> jump routes</div>
-  <div class="log" id="logOut">BODIES VISITED <b>1 / 6</b><br>ROUTES FLOWN <b>0</b></div>
+  <div class="hint chip"><b>Drag</b> pan &nbsp;·&nbsp; <b>Scroll</b> zoom &nbsp;·&nbsp; <b>Click a body</b> chart course &nbsp;·&nbsp; <b>←→↑↓</b> jump routes</div>
+  <div class="log chip" id="logOut">BODIES VISITED <b>1 / 6</b><br>ROUTES FLOWN <b>0</b></div>
   <div class="zoomctl">
     <button id="zoomOutBtn" aria-label="Zoom out">−</button>
     <button id="zoomInBtn" aria-label="Zoom in">+</button>
@@ -289,46 +305,53 @@ body.docked .panel{transform:none}
   <div class="fl-bar" id="flBar"></div>
 </div>
 
-<aside class="panel" id="panel" aria-label="Destination details">
-  <button class="closebtn" id="closePanel" aria-label="Close panel, back to chart">✕</button>
-  <div class="ph" id="panelHead"></div>
+<aside class="panel" id="panel" aria-label="Survey plate">
+  <div class="pstrip">
+    <span>ASTRA SURVEY · <b id="pPlate">PLATE 01 / 06</b></span>
+    <button class="closebtn" id="closePanel" aria-label="Close plate, back to chart">✕</button>
+  </div>
+  <div class="ph">
+    <img id="pImg" src="" alt="">
+    <div class="pcap"><b id="pCap"></b><span id="pCoords"></span></div>
+  </div>
   <div class="pbody">
     <div class="kick" id="pKick"></div>
     <h2 id="pTitle"></h2>
     <p id="pBody"></p>
+    <div class="psec">Telemetry</div>
     <div class="stats" id="pStats"></div>
-    <div class="routes">
-      <h3>Chart a course</h3>
-      <div id="pRoutes"></div>
-    </div>
+    <div class="psec">Flight plan</div>
+    <div id="pRoutes"></div>
   </div>
+  <div class="pfoot"><span>Signal <span class="sig" id="pSig"></span></span><span>Logged to survey</span></div>
 </aside>
 
 <script>
 /* ================= data ================= */
+const WORLD_W = 5200, WORLD_H = 3400;
 const NODES = {
-  prime:   { x:1300, y:850,  r:30, kind:"star",   name:"ASTRA PRIME",   cls:"The Observatory",
-    col:{ l:"#fff3d6", m:"#ffd98c", d:"#a8741f" }, img:"assets/observatory.jpg",
+  prime:   { x:2600, y:1700, d:206, name:"ASTRA PRIME",   cls:"The Observatory", plate:"01", sig:5,
+    col:"#ffd98c", orb:"assets/observatory.jpg", opos:"50% 50%", cap:"Dome at first light · Survey cam 01",
     body:"A white dome on a black summit, open to the darkest sky on the continent. Astra Prime is where every chart begins: the telescope, the archive, and the last hot coffee for four hundred miles.",
     stats:[["Elevation","4,204 m"],["First light","1987"],["Clear nights","287 / year"],["Resident astronomers","14"]] },
-  nebula:  { x:620,  y:420,  r:24, kind:"star",   name:"VEIL NEBULA",   cls:"Stellar Nursery",
-    col:{ l:"#e9dcff", m:"#a678ff", d:"#41217d" }, img:"assets/nebula.jpg",
+  nebula:  { x:1920, y:1270, d:166, name:"VEIL NEBULA",   cls:"Stellar Nursery", plate:"02", sig:4,
+    col:"#a678ff", orb:"assets/nebula.jpg", opos:"46% 46%", cap:"False-color composite · NGC 6960",
     body:"The expanding shell of a star that tore itself apart eight thousand years ago. Gas moving at 1.5 million kilometres an hour, lit from inside by the newborn cluster it left behind.",
     stats:[["Distance","1,470 light-years"],["Expansion","1.5M km / hour"],["Catalog","NGC 6960"],["Best viewing","June to September"]] },
-  exo:     { x:870,  y:1220, r:25, kind:"planet", name:"KEPLER-186F",   cls:"Exoplanet Index",
-    col:{ l:"#d9fff3", m:"#3ecfa4", d:"#0b5a46" }, img:"assets/exoplanet.jpg",
+  exo:     { x:2170, y:2070, d:172, name:"KEPLER-186F",   cls:"Exoplanet Index", plate:"03", sig:3,
+    col:"#3ecfa4", orb:"assets/exoplanet.jpg", opos:"50% 84%", cap:"Planet limb at terminator · Transit survey",
     body:"The first Earth-sized world found inside another star's habitable zone. Its sun is a red dwarf, its noon is a permanent amber dusk, and its seas, if they exist, have never seen a night sky like ours.",
     stats:[["Distance","582 light-years"],["Orbital period","130 days"],["Radius","1.17 × Earth"],["Status","Habitable zone"]] },
-  lens:    { x:1720, y:470,  r:24, kind:"star",   name:"THE GREAT LENS", cls:"The Telescope",
-    col:{ l:"#fff7db", m:"#ffd76a", d:"#9c6a17" }, hero:"8.2 M",
+  lens:    { x:3020, y:1320, d:162, name:"THE GREAT LENS", cls:"The Telescope", plate:"04", sig:5,
+    col:"#ffd76a", orb:"assets/star-amber.jpg", opos:"50% 50%", cap:"Target star · Coronagraph feed",
     body:"Eight point two metres of polished glass and patience. The Great Lens gathers in one hour what the human eye would need nine hundred years to see, then hands it to whoever is on shift.",
     stats:[["Aperture","8.2 m"],["Light grasp","900 × the eye"],["Mirror mass","16.8 tonnes"],["Cooling","Liquid nitrogen, nightly"]] },
-  missions:{ x:1920, y:1160, r:22, kind:"star",   name:"MISSION LOG",   cls:"Expeditions",
-    col:{ l:"#ffffff", m:"#bcd7ff", d:"#44659c" }, hero:"47",
+  missions:{ x:3220, y:2010, d:152, name:"MISSION LOG",   cls:"Expeditions", plate:"05", sig:4,
+    col:"#bcd7ff", orb:"assets/cluster.jpg", opos:"50% 50%", cap:"Expedition index · Cluster M13 field",
     body:"Forty-seven expeditions charted from this dome, from comet chases to a decade-long stare at a single patch of nothing that turned out to contain nine thousand galaxies.",
     stats:[["Expeditions","47 flown","ARCHIVE"],["Deep field stare","11 days","COMPLETE"],["Comet intercepts","6","COMPLETE"],["Next launch window","March 2027","QUEUED"]] },
-  visit:   { x:2260, y:740,  r:24, kind:"planet", name:"NIGHT TICKETS", cls:"Visit the Dome",
-    col:{ l:"#ffe3ec", m:"#ff9db8", d:"#7e3350" }, hero:"287",
+  visit:   { x:3560, y:1590, d:182, name:"NIGHT TICKETS", cls:"Visit the Dome", plate:"06", sig:4,
+    col:"#ff9db8", orb:"assets/ringed.jpg", opos:"50% 50%", cap:"Public night target · Ring plane crossing",
     body:"On clear nights the dome opens to the public. Deck passes for the terrace, dome sessions at the eyepiece, and one astronomer-led night a week that usually ends at sunrise.",
     stats:[["Deck pass","$24","BOOK"],["Dome session","$58","BOOK"],["Astronomer night","$140","2 LEFT"],["Season","April to October"]] },
 };
@@ -341,43 +364,21 @@ const IDS = Object.keys(NODES);
 const ADJ = {}; IDS.forEach(id => ADJ[id] = []);
 EDGES.forEach(([a,b]) => { ADJ[a].push(b); ADJ[b].push(a); });
 const dist = (a,b) => Math.hypot(NODES[a].x - NODES[b].x, NODES[a].y - NODES[b].y);
+const raOf = x => ((x / WORLD_W) * 24).toFixed(2) + "h";
+const decOf = y => { const d = 90 - (y / WORLD_H) * 180; return (d >= 0 ? "+" : "") + d.toFixed(1) + "°"; };
 
 /* ================= chart build ================= */
 const NS = "http://www.w3.org/2000/svg";
 const el = (tag, attrs) => { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); return n; };
 const defs = document.getElementById("defsRoot");
 const edgeLayer = document.getElementById("edgeLayer");
-const nodeLayer = document.getElementById("nodeLayer");
 const decoLayer = document.getElementById("decoLayer");
 const cometLayer = document.getElementById("cometLayer");
-
-/* per-body gradients */
-IDS.forEach(id => {
-  const c = NODES[id].col;
-  const g = el("radialGradient", { id:"sg-" + id, cx:"35%", cy:"30%", r:"78%" });
-  g.innerHTML = `<stop offset="0%" stop-color="${c.l}"/><stop offset="42%" stop-color="${c.m}"/>` +
-    `<stop offset="80%" stop-color="${c.d}"/><stop offset="100%" stop-color="#05070f"/>`;
-  defs.appendChild(g);
-  const sh = el("radialGradient", { id:"sh-" + id, cx:"30%", cy:"26%", r:"76%" });
-  sh.innerHTML = `<stop offset="52%" stop-color="rgba(2,4,12,0)"/><stop offset="86%" stop-color="rgba(2,4,12,.38)"/>` +
-    `<stop offset="100%" stop-color="rgba(2,4,12,.72)"/>`;
-  defs.appendChild(sh);
-  const h = el("radialGradient", { id:"hg-" + id });
-  h.innerHTML = `<stop offset="0%" stop-color="${c.m}" stop-opacity=".5"/><stop offset="55%" stop-color="${c.m}" stop-opacity=".13"/>` +
-    `<stop offset="100%" stop-color="${c.m}" stop-opacity="0"/>`;
-  defs.appendChild(h);
-});
-const cg = el("radialGradient", { id:"cometGlow" });
-cg.innerHTML = `<stop offset="0%" stop-color="#ffffff" stop-opacity=".95"/><stop offset="35%" stop-color="#6ee7ff" stop-opacity=".55"/>` +
-  `<stop offset="100%" stop-color="#6ee7ff" stop-opacity="0"/>`;
-defs.appendChild(cg);
-
-/* star lanes */
 const laneEls = {};
 EDGES.forEach(([a,b]) => {
   const A = NODES[a], B = NODES[b];
   const lg = el("linearGradient", { id:`lg-${a}-${b}`, gradientUnits:"userSpaceOnUse", x1:A.x, y1:A.y, x2:B.x, y2:B.y });
-  lg.innerHTML = `<stop offset="0%" stop-color="${A.col.m}"/><stop offset="100%" stop-color="${B.col.m}"/>`;
+  lg.innerHTML = `<stop offset="0%" stop-color="${A.col}"/><stop offset="100%" stop-color="${B.col}"/>`;
   defs.appendChild(lg);
   const g = el("g", { "class":"lane" });
   g.append(
@@ -388,62 +389,45 @@ EDGES.forEach(([a,b]) => {
   edgeLayer.appendChild(g);
   laneEls[a+"|"+b] = g; laneEls[b+"|"+a] = g;
 });
-
-/* ambient field stars */
 let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-for (let i = 0; i < 210; i++){
-  decoLayer.appendChild(el("circle", { cx:(rnd()*2600).toFixed(0), cy:(rnd()*1700).toFixed(0),
+for (let i = 0; i < 380; i++){
+  decoLayer.appendChild(el("circle", { cx:(rnd()*WORLD_W).toFixed(0), cy:(rnd()*WORLD_H).toFixed(0),
     r:(0.7 + rnd()*1.7).toFixed(1), "class":"deco-star", opacity:(0.2 + rnd()*0.65).toFixed(2) }));
 }
-for (let i = 0; i < 12; i++){
-  const x = (rnd()*2500 + 50).toFixed(0), y = (rnd()*1600 + 50).toFixed(0), s = 7 + rnd()*8;
-  const p = el("path", { d:`M ${x} ${+y - s} L ${x} ${+y + s} M ${+x - s} ${y} L ${+x + s} ${y}`,
-    stroke:"rgba(225,242,255,.5)", "stroke-width":1.3, fill:"none" });
-  decoLayer.appendChild(p);
+for (let i = 0; i < 18; i++){
+  const x = (rnd()*(WORLD_W-100) + 50).toFixed(0), y = (rnd()*(WORLD_H-100) + 50).toFixed(0), s = 7 + rnd()*8;
+  decoLayer.appendChild(el("path", { d:`M ${x} ${+y - s} L ${x} ${+y + s} M ${+x - s} ${y} L ${+x + s} ${y}`,
+    stroke:"rgba(225,242,255,.5)", "stroke-width":1.3, fill:"none" }));
 }
-
-/* bodies */
-const nodeEls = {};
-IDS.forEach(id => {
-  const n = NODES[id], R = n.r;
-  const g = el("g", { "class":"node dim", tabindex:"0", role:"button",
-    "aria-label": n.name + ", " + n.cls + ". Activate to chart a course." });
-  g.dataset.id = id;
-  const wrap = el("g", { "class":"spherewrap" });
-  wrap.appendChild(el("circle", { cx:n.x, cy:n.y, r:R * 4.1, fill:`url(#hg-${id})`, "class":"halo" }));
-  if (n.kind === "planet"){
-    wrap.appendChild(el("ellipse", { cx:n.x, cy:n.y, rx:R * 1.85, ry:R * 0.52,
-      transform:`rotate(-16 ${n.x} ${n.y})`, fill:"none", stroke:n.col.m, "stroke-width":1.7, opacity:.6 }));
-    wrap.appendChild(el("circle", { cx:n.x + R * 1.5, cy:n.y - R * 0.62, r:3.4, fill:n.col.l, opacity:.9 }));
-  } else {
-    const spark = el("g", { "class":"spark" });
-    const s1 = R * 2.1, s2 = R * 1.25;
-    spark.appendChild(el("path", { d:`M ${n.x} ${n.y - s1} L ${n.x} ${n.y + s1} M ${n.x - s1} ${n.y} L ${n.x + s1} ${n.y}`,
-      stroke:n.col.m, "stroke-width":2, opacity:.5, fill:"none" }));
-    spark.appendChild(el("path", { d:`M ${n.x - s2 * .7} ${n.y - s2 * .7} L ${n.x + s2 * .7} ${n.y + s2 * .7} M ${n.x + s2 * .7} ${n.y - s2 * .7} L ${n.x - s2 * .7} ${n.y + s2 * .7}`,
-      stroke:n.col.m, "stroke-width":1.4, opacity:.3, fill:"none" }));
-    wrap.appendChild(spark);
-  }
-  wrap.appendChild(el("circle", { cx:n.x, cy:n.y, r:R, fill:`url(#sg-${id})`, "class":"sphere" }));
-  wrap.appendChild(el("circle", { cx:n.x, cy:n.y, r:R, fill:`url(#sh-${id})` }));
-  wrap.appendChild(el("circle", { cx:n.x - R * .34, cy:n.y - R * .38, r:R * .26, fill:"#ffffff", opacity:.5 }));
-  g.append(wrap,
-    el("circle", { cx:n.x, cy:n.y, r:R + 13, "class":"ring2" }),
-    el("circle", { cx:n.x, cy:n.y, r:R + 13, "class":"ring" }),
-    el("circle", { cx:n.x, cy:n.y, r:58, "class":"hit" }));
-  const t1 = el("text", { x:n.x, y:n.y + R + 40, "text-anchor":"middle", "class":"nm" }); t1.textContent = n.name;
-  const t2 = el("text", { x:n.x, y:n.y + R + 66, "text-anchor":"middle", "class":"cl" }); t2.textContent = n.cls;
-  g.append(t1, t2);
-  nodeLayer.appendChild(g);
-  nodeEls[id] = g;
-});
-
-/* comet */
+const cg = el("radialGradient", { id:"cometGlow" });
+cg.innerHTML = `<stop offset="0%" stop-color="#ffffff" stop-opacity=".95"/><stop offset="35%" stop-color="#6ee7ff" stop-opacity=".55"/>` +
+  `<stop offset="100%" stop-color="#6ee7ff" stop-opacity="0"/>`;
+defs.appendChild(cg);
 const comet = el("g", { opacity:0 });
-comet.appendChild(el("circle", { r:26, fill:"url(#cometGlow)" }));
-comet.appendChild(el("circle", { r:5.5, fill:"#ffffff" }));
+comet.appendChild(el("circle", { r:30, fill:"url(#cometGlow)" }));
+comet.appendChild(el("circle", { r:6, fill:"#ffffff" }));
 cometLayer.appendChild(comet);
 function setComet(x, y, on){ comet.setAttribute("transform", `translate(${x} ${y})`); comet.setAttribute("opacity", on ? 1 : 0); }
+
+/* bodies as HTML */
+const nodeLayer = document.getElementById("nodeLayer");
+const nodeEls = {};
+IDS.forEach(id => {
+  const n = NODES[id];
+  const b = document.createElement("button");
+  b.className = "bnode dim"; b.dataset.id = id;
+  b.style.left = n.x + "px"; b.style.top = n.y + "px";
+  b.setAttribute("aria-label", n.name + ", " + n.cls + ". Activate to chart a course.");
+  b.innerHTML =
+    `<span class="ping" style="width:${n.d + 30}px;height:${n.d + 30}px;top:-15px"></span>` +
+    `<span class="selring" style="width:${n.d + 16}px;height:${n.d + 16}px;top:-8px"></span>` +
+    `<span class="selring2" style="width:${n.d + 34}px;height:${n.d + 34}px;top:-17px"></span>` +
+    `<span class="orb" style="width:${n.d}px;height:${n.d}px;display:block;box-shadow:0 0 ${Math.round(n.d * .55)}px ${n.col}44, 0 0 22px ${n.col}30">` +
+      `<img src="${n.orb}" alt="" draggable="false" style="object-position:${n.opos}"></span>` +
+    `<span class="blabel" style="top:${n.d + 16}px"><span class="nm">${n.name}</span><span class="cl">${n.cls}</span></span>`;
+  nodeLayer.appendChild(b);
+  nodeEls[id] = b;
+});
 
 /* ================= camera ================= */
 const viewport = document.getElementById("viewport");
@@ -451,16 +435,21 @@ const world = document.getElementById("world");
 const deepbg = document.getElementById("deepbg");
 const starsA = document.getElementById("starsA"), starsB = document.getElementById("starsB");
 let vw = innerWidth, vh = innerHeight;
-const cam = { x: NODES.prime.x, y: NODES.prime.y, k: 0.5 };
-const clampK = k => Math.min(2.4, Math.max(0.3, k));
+const cam = { x: NODES.prime.x, y: NODES.prime.y, k: 0.32 };
+const kMin = () => Math.max(vw / 4400, vh / 2900);
+const clampK = k => Math.min(2.4, Math.max(kMin(), k));
+function clampCam(){
+  const hw = vw / 2 / cam.k, hh = vh / 2 / cam.k;
+  cam.x = hw * 2 >= WORLD_W ? WORLD_W / 2 : Math.min(WORLD_W - hw, Math.max(hw, cam.x));
+  cam.y = hh * 2 >= WORLD_H ? WORLD_H / 2 : Math.min(WORLD_H - hh, Math.max(hh, cam.y));
+}
 function apply(){
   world.style.transform = `translate(${vw/2}px, ${vh/2}px) scale(${cam.k}) translate(${-cam.x}px, ${-cam.y}px)`;
   deepbg.style.transform = `translate(${-cam.x * cam.k * 0.012}px, ${-cam.y * cam.k * 0.012}px)`;
   starsA.style.backgroundPosition = `${-cam.x * cam.k * 0.06}px ${-cam.y * cam.k * 0.06}px`;
   starsB.style.backgroundPosition = `${-cam.x * cam.k * 0.13}px ${-cam.y * cam.k * 0.13}px`;
-  document.getElementById("raOut").textContent = ((cam.x / 2600) * 24).toFixed(2) + "h";
-  const dec = 90 - (cam.y / 1700) * 180;
-  document.getElementById("decOut").textContent = (dec >= 0 ? "+" : "") + dec.toFixed(1) + "°";
+  document.getElementById("raOut").textContent = raOf(cam.x);
+  document.getElementById("decOut").textContent = decOf(cam.y);
   document.getElementById("zoomOut").textContent = Math.round(cam.k * 100) + "%";
 }
 const easeIO = t => t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
@@ -476,7 +465,7 @@ function tweenCam(to, dur, done, onFrame){
     apply();
     if (onFrame) onFrame(e);
     if (t < 1) anim = { id: requestAnimationFrame(stepFn) };
-    else { anim = null; done && done(); }
+    else { anim = null; clampCam(); apply(); done && done(); }
   };
   anim = { id: requestAnimationFrame(stepFn) };
 }
@@ -537,7 +526,10 @@ function refreshStates(){
     g.classList.toggle("current", id === current);
     g.classList.toggle("dim", !visited.has(id) && id !== current);
   });
-  for (const key in laneEls) laneEls[key].classList.toggle("flown", flown.has(key) || flown.has(key.split("|").reverse().join("|")));
+  for (const key in laneEls){
+    const rev = key.split("|").reverse().join("|");
+    laneEls[key].classList.toggle("flown", flown.has(key) || flown.has(rev));
+  }
   document.getElementById("logOut").innerHTML =
     `BODIES VISITED <b>${visited.size} / 6</b><br>ROUTES FLOWN <b>${flown.size}</b>`;
   document.getElementById("statusOut").innerHTML = traveling
@@ -571,7 +563,7 @@ function flyTo(target){
       setComet(0, 0, false);
       current = target; visited.add(target);
       const g = nodeEls[target];
-      g.classList.remove("arrive"); void g.getBoundingClientRect(); g.classList.add("arrive");
+      g.classList.remove("arrive"); void g.offsetWidth; g.classList.add("arrive");
       refreshStates();
       showFlight("DOCKED", NODES[target].name, legs.length, legs.length, -1);
       hideFlight(1900);
@@ -592,17 +584,22 @@ function flyTo(target){
 const panel = document.getElementById("panel");
 function openPanel(id){
   const n = NODES[id];
-  document.getElementById("panelHead").innerHTML = n.img
-    ? `<img src="${n.img}" alt="">` : `<div class="hero-num">${n.hero || ""}</div>`;
-  document.getElementById("pKick").textContent = n.cls;
+  document.getElementById("pPlate").textContent = `PLATE ${n.plate} / 06`;
+  document.getElementById("pImg").src = n.orb;
+  document.getElementById("pCap").textContent = n.cap;
+  document.getElementById("pCoords").textContent = `RA ${raOf(n.x)} · DEC ${decOf(n.y)}`;
+  document.getElementById("pKick").textContent = `BODY ${n.plate} — ${n.cls}`;
   document.getElementById("pTitle").textContent = n.name;
   document.getElementById("pBody").textContent = n.body;
   document.getElementById("pStats").innerHTML = n.stats.map(([k,v,tag]) =>
-    `<div class="row"><span class="k">${k}</span><span class="v">${v}${tag ? `<span class="tag">${tag}</span>` : ""}</span></div>`).join("");
-  document.getElementById("pRoutes").innerHTML = ADJ[id].map(nb => {
+    `<div class="row"><span class="k">${k}</span><span class="v">${v}${tag ? `<span class="tag">▪ ${tag}</span>` : ""}</span></div>`).join("");
+  document.getElementById("pRoutes").innerHTML = ADJ[id].map((nb, i) => {
     const m = NODES[nb];
-    return `<button class="route-btn" data-go="${nb}"><span class="rn"><span class="cdot" style="background:${m.col.m};color:${m.col.m}"></span>${m.name}</span><span class="rj">1 JUMP · ${(dist(id, nb) / 100).toFixed(1)} LY →</span></button>`;
+    return `<button class="fp-row" data-go="${nb}"><span class="fi">R${i + 1}</span>` +
+      `<span class="rn"><span class="cdot" style="background:${m.col}"></span>${m.name}</span>` +
+      `<span class="lead"></span><span class="rj">1 JUMP · ${(dist(id, nb) / 100).toFixed(1)} LY →</span></button>`;
   }).join("");
+  document.getElementById("pSig").textContent = "▮".repeat(n.sig) + "▯".repeat(5 - n.sig);
   document.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => flyTo(b.dataset.go)));
   document.body.classList.add("docked");
   panel.classList.remove("swap-in"); void panel.offsetWidth; panel.classList.add("swap-in");
@@ -631,7 +628,7 @@ function previewRoute(target, evt){
 
 /* ================= input ================= */
 const pointers = new Map();
-let dragMoved = 0, lastPinch = 0;
+let dragMoved = 0, lastPinch = 0, upInfo = { t: 0, d: 0 };
 function cancelFlight(){
   if (anim){ cancelAnimationFrame(anim.id); anim = null; }
   if (traveling){ traveling = false; warpTarget = 0; setComet(0, 0, false); hideFlight(300); refreshStates(); }
@@ -639,18 +636,18 @@ function cancelFlight(){
 viewport.addEventListener("pointerdown", e => {
   pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
   dragMoved = 0;
-  viewport.setPointerCapture(e.pointerId);
   viewport.classList.add("dragging");
   cancelFlight();
 });
-viewport.addEventListener("pointermove", e => {
+addEventListener("pointermove", e => {
   if (!pointers.has(e.pointerId)) return;
   const p = pointers.get(e.pointerId);
   const dx = e.clientX - p.x, dy = e.clientY - p.y;
   pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
   if (pointers.size === 1){
     dragMoved += Math.abs(dx) + Math.abs(dy);
-    cam.x -= dx / cam.k; cam.y -= dy / cam.k; apply();
+    cam.x -= dx / cam.k; cam.y -= dy / cam.k;
+    clampCam(); apply();
   } else if (pointers.size === 2){
     const [a, b] = [...pointers.values()];
     const d = Math.hypot(a.x - b.x, a.y - b.y);
@@ -663,24 +660,21 @@ viewport.addEventListener("pointermove", e => {
   }
 });
 const endPointer = e => {
-  const wasDrag = dragMoved > 7;
   pointers.delete(e.pointerId);
   if (pointers.size < 2) lastPinch = 0;
-  if (pointers.size === 0) viewport.classList.remove("dragging");
-  if (!wasDrag){
-    const hitEl = document.elementFromPoint(e.clientX, e.clientY);
-    const g = hitEl && hitEl.closest && hitEl.closest(".node");
-    if (g) flyTo(g.dataset.id);
+  if (pointers.size === 0){
+    viewport.classList.remove("dragging");
+    upInfo = { t: performance.now(), d: dragMoved };
   }
 };
-viewport.addEventListener("pointerup", endPointer);
-viewport.addEventListener("pointercancel", endPointer);
+addEventListener("pointerup", endPointer);
+addEventListener("pointercancel", endPointer);
 function zoomAt(sx, sy, nk){
   nk = clampK(nk);
   const wx = cam.x + (sx - vw/2) / cam.k, wy = cam.y + (sy - vh/2) / cam.k;
   cam.k = nk;
   cam.x = wx - (sx - vw/2) / nk; cam.y = wy - (sy - vh/2) / nk;
-  apply();
+  clampCam(); apply();
 }
 viewport.addEventListener("wheel", e => {
   e.preventDefault();
@@ -691,14 +685,18 @@ document.getElementById("zoomInBtn").addEventListener("click", () => tweenCam({ 
 document.getElementById("zoomOutBtn").addEventListener("click", () => tweenCam({ ...cam, k: clampK(cam.k / 1.35) }, 380));
 document.getElementById("resetBtn").addEventListener("click", () => {
   closePanel(); cancelFlight(); traveling = true;
-  tweenCam({ x:NODES.prime.x, y:NODES.prime.y, k:0.62 }, 900, () => { traveling = false; current = "prime"; refreshStates(); });
+  tweenCam({ x:NODES.prime.x, y:NODES.prime.y, k:Math.max(0.55, kMin()) }, 900,
+    () => { traveling = false; current = "prime"; refreshStates(); });
 });
 IDS.forEach(id => {
   const g = nodeEls[id];
+  g.addEventListener("click", () => {
+    if (performance.now() - upInfo.t < 400 && upInfo.d > 7) return;
+    flyTo(id);
+  });
   g.addEventListener("mouseenter", e => previewRoute(id, e));
   g.addEventListener("mousemove", e => { if (rtag.classList.contains("show")){ rtag.style.left = e.clientX + "px"; rtag.style.top = e.clientY + "px"; } });
   g.addEventListener("mouseleave", clearRoutePreview);
-  g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); flyTo(id); } });
 });
 addEventListener("keydown", e => {
   if (e.key === "Escape"){ closePanel(); return; }
@@ -718,9 +716,10 @@ addEventListener("keydown", e => {
   if (e.key === "-") tweenCam({ ...cam, k: clampK(cam.k / 1.3) }, 300);
   if (e.key === "0") document.getElementById("resetBtn").click();
 });
-addEventListener("resize", () => { vw = innerWidth; vh = innerHeight; sizeWarp(); apply(); });
+addEventListener("resize", () => { vw = innerWidth; vh = innerHeight; sizeWarp(); clampCam(); apply(); });
 
 /* ================= intro ================= */
+cam.k = clampK(0.32);
 refreshStates();
 apply();
 tweenCam({ x:NODES.prime.x, y:NODES.prime.y, k:1.04 }, 1500, () => {
