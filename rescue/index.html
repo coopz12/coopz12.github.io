@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cascade Alpine Rescue, Dispatch Console</title>
+<style>
+  :root{
+    --pine-950:#0e130f;
+    --pine-900:#131a15;
+    --pine-850:#18211a;
+    --pine-800:#1e2a21;
+    --pine-700:#2a3a2e;
+    --line:rgba(232,236,231,.09);
+    --line-strong:rgba(232,236,231,.18);
+    --paper:#e9ede6;
+    --paper-dim:#aeb8ac;
+    --paper-faint:#7e8a7d;
+    --rescue:#f06423;
+    --rescue-dark:#c24e18;
+    --amber:#e3a63d;
+    --ok:#69b07c;
+    --danger:#e0524a;
+    --water:#7fa8b8;
+    --radius:10px;
+    --radius-sm:6px;
+    --mono:ui-monospace,"SF Mono","Cascadia Mono",Consolas,monospace;
+    --sans:"Avenir Next","Segoe UI",system-ui,-apple-system,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:var(--sans);
+    background:var(--pine-950);
+    color:var(--paper);
+    -webkit-font-smoothing:antialiased;
+    overflow:hidden;
+  }
+  ::selection{background:var(--rescue);color:#fff}
+  button{font-family:inherit;cursor:pointer}
+  button:focus-visible,[tabindex]:focus-visible,input:focus-visible{outline:2px solid var(--rescue);outline-offset:2px}
+  .num{font-variant-numeric:tabular-nums}
+
+  /* ---------- App shell ---------- */
+  .app{height:100dvh;display:grid;grid-template-rows:54px minmax(0,1fr) 148px}
+
+  /* ---------- Top bar ---------- */
+  header{
+    display:flex;align-items:center;gap:18px;padding:0 16px;
+    background:var(--pine-900);border-bottom:1px solid var(--line-strong);
+  }
+  .brand{display:flex;align-items:center;gap:11px;min-width:0}
+  .brand-mark{
+    width:32px;height:32px;flex:none;border-radius:var(--radius-sm);
+    background:var(--rescue);display:grid;place-items:center;
+  }
+  .brand-mark svg{width:20px;height:20px}
+  .brand h1{font-size:15px;font-weight:700;letter-spacing:.01em;white-space:nowrap}
+  .brand p{font-size:11px;color:var(--paper-faint);white-space:nowrap}
+  .top-stats{display:flex;gap:22px;margin-left:auto;align-items:center}
+  .top-stat{text-align:right}
+  .top-stat b{display:block;font-size:14px;font-weight:650}
+  .top-stat span{font-size:10.5px;color:var(--paper-faint)}
+  .top-stat b.warn{color:var(--amber)}
+  .top-stat b.hot{color:var(--rescue)}
+  .clock{
+    font-family:var(--mono);font-size:15px;color:var(--paper);
+    border:1px solid var(--line-strong);border-radius:var(--radius-sm);
+    padding:6px 10px;background:var(--pine-850);white-space:nowrap;
+  }
+  .clock small{color:var(--paper-faint);font-size:10px;margin-left:5px}
+
+  /* ---------- Main grid ---------- */
+  main{display:grid;grid-template-columns:296px minmax(0,1fr) 336px;min-height:0}
+
+  /* ---------- Incident queue ---------- */
+  .queue{background:var(--pine-900);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+  .queue-head{padding:12px 14px 10px;border-bottom:1px solid var(--line)}
+  .queue-head-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .queue-head h2{font-size:13px;font-weight:650}
+  .queue-head h2 span{color:var(--paper-faint);font-weight:500;margin-left:5px}
+  .new-call{
+    background:var(--pine-800);color:var(--paper);border:1px solid var(--line-strong);
+    border-radius:var(--radius-sm);font-size:12px;font-weight:600;padding:6px 10px;
+    transition:transform .12s ease-out,background .12s ease-out;
+  }
+  .new-call:hover{background:var(--pine-700)}
+  .new-call:active{transform:scale(.96)}
+  .search{
+    width:100%;background:var(--pine-950);border:1px solid var(--line);color:var(--paper);
+    border-radius:var(--radius-sm);padding:7px 10px;font-size:12.5px;font-family:inherit;margin-bottom:10px;
+  }
+  .search::placeholder{color:var(--paper-faint)}
+  .filters{display:flex;gap:6px;flex-wrap:wrap}
+  .filter{
+    background:transparent;color:var(--paper-dim);border:1px solid var(--line-strong);
+    border-radius:999px;font-size:11.5px;font-weight:600;padding:5px 11px;
+    transition:background .12s ease-out,color .12s ease-out;
+  }
+  .filter:hover{color:var(--paper)}
+  .filter[aria-pressed="true"]{background:var(--paper);color:var(--pine-950);border-color:var(--paper)}
+  .queue-list{overflow-y:auto;flex:1;scrollbar-width:thin;scrollbar-color:var(--pine-700) transparent}
+  .incident{
+    width:100%;text-align:left;background:transparent;border:none;border-bottom:1px solid var(--line);
+    padding:12px 14px;color:var(--paper);display:block;
+    transition:background .12s ease-out;
+  }
+  .incident:hover{background:var(--pine-850)}
+  .incident[aria-selected="true"]{background:var(--pine-800);box-shadow:inset 3px 0 0 var(--rescue)}
+  .incident-top{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+  .prio{font-family:var(--mono);font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:4px;flex:none}
+  .prio.p1{background:var(--danger);color:#fff}
+  .prio.p2{background:var(--amber);color:#241a04}
+  .prio.p3{background:var(--pine-700);color:var(--paper-dim)}
+  .incident-id{font-family:var(--mono);font-size:11px;color:var(--paper-faint)}
+  .incident-age{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--paper-dim)}
+  .incident h3{font-size:13.5px;font-weight:650;line-height:1.3;text-wrap:balance}
+  .incident-loc{font-size:12px;color:var(--paper-dim);margin-top:2px}
+  .incident-meta{display:flex;gap:12px;margin-top:7px;font-size:11px;color:var(--paper-faint)}
+  .status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:1px}
+  .st-await{background:var(--rescue)} .st-route{background:var(--amber)} .st-scene{background:var(--ok)} .st-done{background:var(--paper-faint)} .st-mon{background:var(--water)}
+  .queue-empty{padding:22px 14px;color:var(--paper-dim);font-size:13px;line-height:1.5}
+  .queue-empty button{margin-top:10px;background:var(--rescue);border:none;color:#fff;font-weight:650;font-size:12.5px;padding:8px 12px;border-radius:var(--radius-sm)}
+
+  /* ---------- Map ---------- */
+  .map-zone{position:relative;background:#22301f;min-width:0;overflow:hidden}
+  .map-viewport{position:absolute;inset:0}
+  .map-world{position:absolute;inset:0;transform-origin:50% 50%;transition:transform .25s cubic-bezier(.23,1,.32,1)}
+  .map-world svg{width:100%;height:100%;display:block}
+  .marker{
+    position:absolute;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;
+    border:2px solid #fff;font-family:var(--mono);font-size:12px;font-weight:700;color:#fff;
+    display:grid;place-items:center;z-index:3;
+    transition:transform .15s ease-out,box-shadow .15s ease-out;
+  }
+  .marker:hover{transform:scale(1.12)}
+  .marker:active{transform:scale(.96)}
+  .marker.m-p1{background:var(--danger)} .marker.m-p2{background:var(--amber);color:#241a04} .marker.m-p3{background:#5d7263}
+  .marker.m-done{background:var(--ok)}
+  .marker[aria-pressed="true"]{box-shadow:0 0 0 3px var(--pine-950),0 0 0 5px #fff;transform:scale(1.15)}
+  .marker.dim{opacity:.25}
+  @media (prefers-reduced-motion: no-preference){
+    .marker.pulse::after{
+      content:"";position:absolute;inset:-2px;border-radius:50%;border:2px solid var(--danger);
+      animation:pulse 2s ease-out infinite;
+    }
+    @keyframes pulse{0%{transform:scale(1);opacity:.9}70%{transform:scale(1.7);opacity:0}100%{opacity:0}}
+  }
+  .map-tools{
+    position:absolute;top:12px;left:12px;z-index:5;display:flex;flex-direction:column;gap:6px;
+  }
+  .map-tools .tool-group{background:rgba(14,19,15,.88);border:1px solid var(--line-strong);border-radius:var(--radius-sm);overflow:hidden;display:flex;flex-direction:column}
+  .map-tools button{
+    width:36px;height:36px;background:transparent;border:none;color:var(--paper);font-size:17px;line-height:1;
+  }
+  .map-tools button:hover{background:var(--pine-700)}
+  .layer-box{
+    position:absolute;top:12px;right:12px;z-index:5;background:rgba(14,19,15,.88);
+    border:1px solid var(--line-strong);border-radius:var(--radius-sm);padding:9px 12px;
+  }
+  .layer-box p{font-size:10.5px;color:var(--paper-faint);font-weight:650;margin-bottom:6px}
+  .layer-box label{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--paper-dim);padding:2.5px 0;cursor:pointer}
+  .layer-box input{accent-color:var(--rescue);width:14px;height:14px}
+  .wx-card{
+    position:absolute;left:12px;bottom:12px;z-index:5;background:rgba(14,19,15,.9);
+    border:1px solid var(--line-strong);border-radius:var(--radius);padding:11px 13px;max-width:290px;
+  }
+  .wx-card h3{font-size:12px;font-weight:650;margin-bottom:7px}
+  .wx-card h3 span{color:var(--amber);font-weight:650}
+  .wx-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;font-size:11.5px}
+  .wx-grid dt{color:var(--paper-faint)} .wx-grid dd{font-family:var(--mono);text-align:right}
+  .wx-note{font-size:11px;color:var(--paper-dim);margin-top:8px;line-height:1.45;text-wrap:pretty}
+  .coords-readout{
+    position:absolute;right:12px;bottom:12px;z-index:5;font-family:var(--mono);font-size:11px;
+    color:var(--paper-dim);background:rgba(14,19,15,.85);border:1px solid var(--line);
+    border-radius:var(--radius-sm);padding:5px 9px;
+  }
+
+  /* ---------- Detail panel ---------- */
+  .detail{background:var(--pine-900);border-left:1px solid var(--line);min-height:0;display:flex;flex-direction:column}
+  .detail-inner{padding:16px;overflow-y:auto;flex:1;scrollbar-width:thin;scrollbar-color:var(--pine-700) transparent}
+  .detail-foot{padding:12px 16px 14px;border-top:1px solid var(--line-strong);background:var(--pine-900)}
+  .detail-foot .dispatch-btn{margin-top:0}
+  .detail-foot:empty{display:none}
+  .detail .incident-top{margin-bottom:8px}
+  .detail h2{font-size:19px;font-weight:700;line-height:1.25;text-wrap:balance}
+  .detail-loc{color:var(--paper-dim);font-size:13px;margin-top:3px}
+  .fact-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius-sm);overflow:hidden;margin:14px 0}
+  .fact{background:var(--pine-850);padding:9px 11px}
+  .fact dt{font-size:10.5px;color:var(--paper-faint);font-weight:600;margin-bottom:3px}
+  .fact dd{font-size:13px;font-weight:600}
+  .fact dd.mono{font-family:var(--mono);font-size:12px;font-weight:500}
+  .detail h4{font-size:12px;font-weight:650;color:var(--paper-dim);margin:16px 0 8px}
+  .notes{font-size:13px;line-height:1.55;color:var(--paper);text-wrap:pretty}
+  .timeline{list-style:none}
+  .timeline li{display:flex;gap:10px;padding:5px 0;font-size:12.5px;color:var(--paper-faint);align-items:baseline}
+  .timeline li.done{color:var(--paper)}
+  .timeline li.now{color:var(--paper);font-weight:600}
+  .timeline .t-dot{width:9px;height:9px;border-radius:50%;border:2px solid var(--pine-700);flex:none;transform:translateY(1px)}
+  .timeline li.done .t-dot{background:var(--ok);border-color:var(--ok)}
+  .timeline li.now .t-dot{background:var(--rescue);border-color:var(--rescue)}
+  .timeline time{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--paper-faint)}
+  .team-pick{display:flex;flex-direction:column;gap:6px}
+  .team-option{
+    display:flex;align-items:center;gap:10px;text-align:left;width:100%;
+    background:var(--pine-850);border:1px solid var(--line);border-radius:var(--radius-sm);
+    padding:9px 11px;color:var(--paper);transition:border-color .12s ease-out,background .12s ease-out;
+  }
+  .team-option:hover{border-color:var(--line-strong)}
+  .team-option[aria-pressed="true"]{border-color:var(--rescue);background:var(--pine-800)}
+  .team-option:disabled{opacity:.45;cursor:not-allowed}
+  .team-option b{font-size:13px}
+  .team-option span{font-size:11.5px;color:var(--paper-dim);display:block}
+  .team-option .eta{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--paper-dim);text-align:right}
+  .dispatch-btn{
+    width:100%;margin-top:12px;background:var(--rescue);color:#fff;border:none;
+    border-radius:var(--radius-sm);font-size:14px;font-weight:700;padding:12px;
+    transition:transform .12s ease-out,background .12s ease-out;
+  }
+  .dispatch-btn:hover{background:var(--rescue-dark)}
+  .dispatch-btn:active{transform:scale(.97)}
+  .dispatch-btn:disabled{background:var(--pine-700);color:var(--paper-faint);cursor:not-allowed}
+  .dispatch-btn.secondary{background:var(--pine-800);border:1px solid var(--line-strong);color:var(--paper)}
+  .dispatch-btn.secondary:hover{background:var(--pine-700)}
+
+  /* ---------- Bottom strip ---------- */
+  .bottom{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);border-top:1px solid var(--line-strong);background:var(--pine-900);min-height:0}
+  .teams{padding:10px 14px;border-right:1px solid var(--line);overflow:hidden}
+  .teams h2,.log h2{font-size:12px;font-weight:650;color:var(--paper-dim);margin-bottom:8px}
+  .team-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .team-card{background:var(--pine-850);border:1px solid var(--line);border-radius:var(--radius-sm);padding:8px 10px}
+  .team-card-top{display:flex;align-items:center;gap:7px}
+  .team-card b{font-size:12.5px}
+  .team-card .members{font-size:11px;color:var(--paper-faint);margin-top:3px;line-height:1.4}
+  .log{padding:10px 14px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--pine-700) transparent}
+  .log ul{list-style:none}
+  .log li{display:flex;gap:9px;font-size:11.5px;padding:3px 0;color:var(--paper-dim);line-height:1.4}
+  .log time{font-family:var(--mono);color:var(--paper-faint);flex:none}
+  .log li b{color:var(--paper);font-weight:600}
+
+  .toast{
+    position:fixed;left:50%;bottom:164px;transform:translateX(-50%) translateY(8px);z-index:20;
+    background:var(--paper);color:var(--pine-950);font-size:13px;font-weight:600;
+    padding:10px 16px;border-radius:var(--radius-sm);opacity:0;pointer-events:none;
+    transition:opacity .18s ease-out,transform .18s ease-out;
+    box-shadow:0 8px 24px rgba(0,0,0,.4);
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media (max-width:1080px){
+    .app{grid-template-rows:54px minmax(0,1fr) auto}
+    main{grid-template-columns:250px minmax(0,1fr) 300px}
+    .top-stats .hide-m{display:none}
+    .bottom{grid-template-columns:1fr;max-height:220px;overflow-y:auto}
+    .teams{border-right:none;border-bottom:1px solid var(--line)}
+    .team-row{grid-template-columns:repeat(2,1fr)}
+  }
+  @media (max-width:760px){
+    body{overflow:auto}
+    .app{height:auto;display:block}
+    header{flex-wrap:wrap;height:auto;padding:10px 12px;row-gap:8px}
+    .top-stats{gap:14px;margin-left:0}
+    main{display:block}
+    .queue{border-right:none;border-bottom:1px solid var(--line)}
+    .queue-list{max-height:300px}
+    .map-zone{height:420px;position:relative}
+    .detail{border-left:none}
+    .bottom{display:block}
+    .wx-card{display:none}
+    .toast{bottom:20px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"><path d="M3 19 L9.5 7 L13 13 L15.5 9 L21 19 Z"/><path d="M9.5 7 L11 10 L8 10 Z" fill="#fff" stroke="none"/></svg>
+      </div>
+      <div>
+        <h1>Cascade Alpine Rescue</h1>
+        <p>Dispatch console, North Sector</p>
+      </div>
+    </div>
+    <div class="top-stats">
+      <div class="top-stat hide-m"><b class="hot num" id="stat-open">4 open</b><span>incidents</span></div>
+      <div class="top-stat hide-m"><b class="num">2 of 4</b><span>teams in field</span></div>
+      <div class="top-stat"><b class="warn num">28 mph NW</b><span>wind at 7,000 ft</span></div>
+      <div class="clock num"><span id="clock">--:--:--</span><small>PT</small></div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Queue -->
+    <section class="queue" aria-label="Incident queue">
+      <div class="queue-head">
+        <div class="queue-head-row">
+          <h2>Incident queue <span id="queue-count"></span></h2>
+          <button class="new-call" id="new-call" type="button">+ Simulate call</button>
+        </div>
+        <input class="search" id="search" type="search" placeholder="Search name, place, or ID" aria-label="Search incidents">
+        <div class="filters" role="group" aria-label="Filter incidents">
+          <button class="filter" data-filter="all" aria-pressed="true" type="button">All</button>
+          <button class="filter" data-filter="urgent" aria-pressed="false" type="button">Urgent</button>
+          <button class="filter" data-filter="active" aria-pressed="false" type="button">Active</button>
+          <button class="filter" data-filter="done" aria-pressed="false" type="button">Resolved</button>
+        </div>
+      </div>
+      <div class="queue-list" id="queue-list" role="listbox" aria-label="Incidents"></div>
+    </section>
+
+    <!-- Map -->
+    <section class="map-zone" aria-label="Operations map">
+      <div class="map-viewport">
+        <div class="map-world" id="map-world">
+          <svg viewBox="0 0 800 560" preserveAspectRatio="none" aria-hidden="true">
+            <rect width="800" height="560" fill="#243420"/>
+            <g id="layer-contours" fill="none" stroke="#43563c" stroke-width="1.4">
+              <path d="M-20 120 C150 60, 300 150, 470 90 C620 40, 740 90, 830 60"/>
+              <path d="M-20 170 C150 110, 310 200, 480 140 C630 90, 750 140, 830 110"/>
+              <path d="M-20 230 C160 170, 320 260, 490 200 C640 150, 760 200, 830 170"/>
+              <path d="M-20 300 C170 240, 330 320, 500 265 C650 215, 770 265, 830 235"/>
+              <path d="M-20 380 C180 320, 340 390, 510 340 C660 295, 780 340, 830 310"/>
+              <path d="M-20 460 C190 400, 350 460, 520 415 C670 375, 790 415, 830 385"/>
+              <path d="M120 560 C180 420, 140 300, 220 180 C280 90, 260 30, 300 -20"/>
+              <path d="M220 560 C270 430, 240 310, 310 190 C360 105, 350 40, 390 -20"/>
+              <path d="M560 560 C540 440, 590 330, 560 210 C540 130, 580 50, 560 -20"/>
+              <path d="M660 560 C640 430, 690 320, 660 200 C640 120, 680 40, 660 -20"/>
+            </g>
+            <g fill="#2e4529">
+              <path d="M60 60 L760 40 L780 200 L700 320 L760 520 L80 540 L30 300 Z" opacity=".45"/>
+            </g>
+            <g id="layer-weather" opacity=".5">
+              <path d="M520 30 L800 20 L800 210 L640 190 L540 120 Z" fill="#5b7186"/>
+              <text x="556" y="52" fill="#cfe0ea" font-family="monospace" font-size="13">SNOW CELL</text>
+              <text x="556" y="71" fill="#cfe0ea" font-family="monospace" font-size="11">ETA 41 MIN</text>
+            </g>
+            <path d="M90 560 C160 470, 210 430, 250 350 C285 280, 380 250, 430 190 C470 145, 560 130, 640 96" fill="none" stroke="#7fa8b8" stroke-width="5" opacity=".55" stroke-linecap="round"/>
+            <g id="layer-trails" fill="none" stroke="#d8d2bd" stroke-width="2" stroke-dasharray="7 6" opacity=".8">
+              <path d="M400 502 C392 440, 392 385, 398 330"/>
+              <path d="M398 330 C440 275, 495 240, 548 214"/>
+              <path d="M398 330 C330 312, 260 300, 190 268"/>
+              <path d="M548 214 C595 192, 630 155, 652 118"/>
+              <path d="M400 502 C500 495, 620 452, 700 382"/>
+            </g>
+            <g font-family="monospace" fill="#cfd6c9">
+              <path d="M356 336 L372 356 L340 356 Z" fill="#cfd6c9"/>
+              <text x="252" y="344" font-size="13" font-weight="bold">SAHALE ARM</text>
+              <text x="276" y="376" font-size="11">7,610 FT</text>
+              <path d="M540 188 L556 208 L524 208 Z" fill="#cfd6c9"/>
+              <text x="446" y="180" font-size="12">CASCADE PASS</text>
+              <path d="M668 88 L684 108 L652 108 Z" fill="#cfd6c9"/>
+              <text x="540" y="98" font-size="12">HIDDEN LAKE</text>
+              <text x="596" y="398" font-size="12">HEATHER MEADOWS</text>
+              <text x="540" y="506" font-size="11">BAKER LAKE RD</text>
+            </g>
+            <g id="route-layer" fill="none" stroke="#f06423" stroke-width="3.5" stroke-linecap="round"></g>
+            <g>
+              <rect x="378" y="502" width="44" height="30" rx="4" fill="#0e130f" stroke="#e9ede6" stroke-width="1.4"/>
+              <text x="400" y="521" text-anchor="middle" font-family="monospace" font-size="11" fill="#e9ede6">BASE</text>
+            </g>
+          </svg>
+          <div id="markers"></div>
+        </div>
+      </div>
+
+      <div class="map-tools">
+        <div class="tool-group">
+          <button id="zoom-in" type="button" aria-label="Zoom map in">+</button>
+          <button id="zoom-out" type="button" aria-label="Zoom map out">−</button>
+          <button id="zoom-reset" type="button" aria-label="Reset map zoom" style="font-size:12px">1:1</button>
+        </div>
+      </div>
+
+      <div class="layer-box">
+        <p>Map layers</p>
+        <label><input type="checkbox" data-layer="layer-contours" checked> Contours</label>
+        <label><input type="checkbox" data-layer="layer-trails" checked> Trails</label>
+        <label><input type="checkbox" data-layer="layer-weather" checked> Weather cell</label>
+      </div>
+
+      <div class="wx-card">
+        <h3>Weather window <span>closes 15:40</span></h3>
+        <dl class="wx-grid">
+          <dt>Wind</dt><dd>NW 28, gusts 41</dd>
+          <dt>Temp 7,000 ft</dt><dd>29°F</dd>
+          <dt>Freezing level</dt><dd>5,800 ft</dd>
+          <dt>Avalanche</dt><dd>Moderate ATL</dd>
+        </dl>
+        <p class="wx-note">Snow cell reaches Cascade Pass in about 41 minutes. Any team still above treeline after 15:40 needs a shelter plan.</p>
+      </div>
+
+      <div class="coords-readout num" id="coords">48.4721° N, 121.0584° W</div>
+    </section>
+
+    <!-- Detail -->
+    <aside class="detail" aria-label="Incident detail">
+      <div class="detail-inner" id="detail"></div>
+      <div class="detail-foot" id="detail-foot"></div>
+    </aside>
+  </main>
+
+  <div class="bottom">
+    <section class="teams" aria-label="Field teams">
+      <h2>Field teams</h2>
+      <div class="team-row" id="team-row"></div>
+    </section>
+    <section class="log" aria-label="Radio log">
+      <h2>Radio log</h2>
+      <ul id="radio-log"></ul>
+    </section>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const TEAMS = [
+  {id:"summit1", name:"Summit 1", lead:"M. Chen", size:4, base:"Base camp", skills:"Rope, medical", status:"Ready", eta:"55 min"},
+  {id:"summit2", name:"Summit 2", lead:"J. Reyes", size:5, base:"Cascade Pass TH", skills:"Rope, litter", status:"En route", eta:"On 2416"},
+  {id:"medic1", name:"Medic 1", lead:"P. Nair", size:3, base:"Heather Meadows", skills:"Medical, sled", status:"On scene", eta:"On 2415"},
+  {id:"summit3", name:"Summit 3", lead:"T. Okafor", size:4, base:"East staging", skills:"Search, drone", status:"Ready", eta:"35 min"},
+];
+
+let incidents = [
+  {id:"2417", prio:1, title:"Broken ankle, climber cannot walk", loc:"Sahale Arm, below the glacier", x:49.8, y:56.8, ageMin:38, status:"await",
+   party:"2 climbers", subject:"D. Whitaker, 34", contact:"Satellite messenger", coords:"48.4721 N, 121.0584 W", elev:"7,420 ft",
+   notes:"Fall on steep snow at the glacier edge. Ankle splinted, pain managed, partner has a tarp up. Both have headlamps and one liter of water between them. Wind is picking up at their location.",
+   team:null, timeline:[["Reported by partner via satellite", "13:52"],["Triaged P1 by duty officer","13:57"]]},
+  {id:"2416", prio:2, title:"Overdue hiker, 3 hours past plan", loc:"Cascade Pass trail", x:72.3, y:39.6, ageMin:124, status:"route",
+   party:"Solo hiker", subject:"R. Alvarez, 47", contact:"Cell, last ping 11:20", coords:"48.4610 N, 121.0210 W", elev:"5,390 ft",
+   notes:"Filed a trip plan for Cascade Pass and back by 11:00. Car still at the trailhead. Last phone ping put her a mile below the pass. Experienced hiker, carries a paper map, no satellite device.",
+   team:"summit2", timeline:[["Reported by spouse","12:15"],["Triaged P2","12:22"],["Summit 2 dispatched","12:31"],["Summit 2 passed mile 2 marker","13:44"]]},
+  {id:"2415", prio:2, title:"Snowboarder separated from group", loc:"Heather Meadows", x:90.5, y:65.7, ageMin:96, status:"scene",
+   party:"1 of a group of 4", subject:"J. Park, 19", contact:"Through group leader", coords:"48.4490 N, 120.9940 W", elev:"4,860 ft",
+   notes:"Rode out of bounds in flat light and lost the group. Found by Medic 1 near the creek drainage, cold and disoriented but walking. Warming in progress, sled carry likely for the last half mile.",
+   team:"medic1", timeline:[["Reported by group leader","12:44"],["Medic 1 dispatched","12:50"],["Medic 1 on scene","13:38"]]},
+  {id:"2414", prio:3, title:"Lost at trail junction, phone at 12%", loc:"Hidden Lake Lookout trail", x:80, y:22.9, ageMin:57, status:"await",
+   party:"Solo hiker", subject:"S. Nguyen, 28", contact:"Cell, texts only", coords:"48.4950 N, 121.0030 W", elev:"6,150 ft",
+   notes:"Took the climbers path instead of the main trail on descent. Staying put on dispatch advice. Has a jacket and snacks, no headlamp. Drone search is the fastest first look once Summit 3 is free to roll.",
+   team:null, timeline:[["Self reported by text","13:33"],["Talked into staying put","13:36"]]},
+  {id:"2413", prio:3, title:"Car slid off trailhead road", loc:"Baker Lake Road, mile 9", x:77.5, y:84.3, ageMin:210, status:"mon",
+   party:"2 occupants", subject:"Unnamed, via sheriff", contact:"County dispatch", coords:"48.4310 N, 121.0890 W", elev:"2,940 ft",
+   notes:"Vehicle in the ditch on ice, no injuries, tow already called by the county. Rescue is monitoring only unless the weather traps them. No team needed unless the tow falls through.",
+   team:null, timeline:[["Relayed by county dispatch","10:20"],["Tow confirmed en route","11:05"]]},
+];
+
+const STATUS = {
+  await:{label:"Awaiting dispatch", cls:"st-await"},
+  route:{label:"Team en route", cls:"st-route"},
+  scene:{label:"Team on scene", cls:"st-scene"},
+  mon:{label:"Monitoring", cls:"st-mon"},
+  done:{label:"Resolved", cls:"st-done"},
+};
+const NEXT = {
+  await:{btn:"Dispatch team", to:"route", verb:"dispatched to"},
+  route:{btn:"Mark team on scene", to:"scene", verb:"arrived on scene for"},
+  scene:{btn:"Close incident", to:"done", verb:"closed"},
+  mon:{btn:"Close incident", to:"done", verb:"closed"},
+};
+
+let selectedId = "2417";
+let pickedTeam = null;
+let filter = "all";
+let query = "";
+let zoom = 1;
+let logEntries = [
+  ["13:57","Dispatch","2417 triaged P1. Ankle injury, Sahale Arm."],
+  ["13:44","Summit 2","Passed mile 2, sign of a single set of prints heading up."],
+  ["13:38","Medic 1","On scene at Heather Meadows. Patient cold, talking, warming started."],
+  ["13:36","Dispatch","2414 advised to stay put and save phone battery."],
+];
+
+const $ = s => document.querySelector(s);
+const queueEl = $("#queue-list"), detailEl = $("#detail"), markersEl = $("#markers"),
+      teamRowEl = $("#team-row"), logEl = $("#radio-log"), toastEl = $("#toast");
+
+function teamById(id){ return TEAMS.find(t=>t.id===id); }
+function fmtAge(min){ return min >= 60 ? Math.floor(min/60)+"h "+String(min%60).padStart(2,"0")+"m" : min+"m"; }
+function nowTime(){
+  return new Date().toLocaleTimeString("en-US",{hour12:false,hour:"2-digit",minute:"2-digit"});
+}
+function toast(msg){
+  toastEl.textContent = msg; toastEl.classList.add("show");
+  clearTimeout(toastEl._t); toastEl._t = setTimeout(()=>toastEl.classList.remove("show"), 2600);
+}
+function addLog(who, msg){
+  logEntries.unshift([nowTime().slice(0,5), who, msg]);
+  renderLog();
+}
+function visibleIncidents(){
+  return incidents.filter(i=>{
+    if(filter==="urgent" && i.prio!==1) return false;
+    if(filter==="active" && i.status==="done") return false;
+    if(filter==="done" && i.status!=="done") return false;
+    if(query && !(i.title+" "+i.loc+" "+i.id+" "+i.subject).toLowerCase().includes(query)) return false;
+    return true;
+  });
+}
+
+function renderQueue(){
+  const list = visibleIncidents();
+  $("#queue-count").textContent = "("+list.length+")";
+  $("#stat-open").textContent = incidents.filter(i=>i.status!=="done").length + " open";
+  if(!list.length){
+    queueEl.innerHTML = '<div class="queue-empty">No incidents match. Clear the search or pick a different filter.<br><button type="button" id="clear-f">Show all incidents</button></div>';
+    $("#clear-f").addEventListener("click", ()=>{ filter="all"; query=""; $("#search").value="";
+      document.querySelectorAll(".filter").forEach(f=>f.setAttribute("aria-pressed", f.dataset.filter==="all" ? "true":"false")); renderAll(); });
+    return;
+  }
+  queueEl.innerHTML = list.map(i=>{
+    const s = STATUS[i.status];
+    return '<button type="button" class="incident" role="option" data-id="'+i.id+'" aria-selected="'+(i.id===selectedId)+'">'+
+      '<span class="incident-top"><span class="prio p'+i.prio+'">P'+i.prio+'</span>'+
+      '<span class="incident-id">INC '+i.id+'</span>'+
+      '<span class="incident-age num" data-age="'+i.id+'">'+fmtAge(i.ageMin)+'</span></span>'+
+      '<h3>'+i.title+'</h3><p class="incident-loc">'+i.loc+'</p>'+
+      '<span class="incident-meta"><span><span class="status-dot '+s.cls+'"></span>'+s.label+'</span><span>'+i.party+'</span></span></button>';
+  }).join("");
+  queueEl.querySelectorAll(".incident").forEach(el=>el.addEventListener("click", ()=>select(el.dataset.id)));
+}
+
+function renderMarkers(){
+  const vis = new Set(visibleIncidents().map(i=>i.id));
+  markersEl.innerHTML = incidents.map(i=>{
+    const cls = i.status==="done" ? "m-done" : "m-p"+i.prio;
+    const pulse = i.prio===1 && i.status!=="done" ? " pulse" : "";
+    const dim = vis.has(i.id) ? "" : " dim";
+    const label = i.status==="done" ? "✓" : i.id.slice(2);
+    return '<button type="button" class="marker '+cls+pulse+dim+'" data-id="'+i.id+'" style="left:'+i.x+'%;top:'+i.y+'%" aria-pressed="'+(i.id===selectedId)+'" aria-label="Incident '+i.id+', '+i.title+'">'+label+'</button>';
+  }).join("");
+  markersEl.querySelectorAll(".marker").forEach(el=>el.addEventListener("click", ()=>select(el.dataset.id)));
+}
+
+function renderRoute(){
+  const i = incidents.find(x=>x.id===selectedId);
+  const layer = document.getElementById("route-layer");
+  if(!i || !i.team || i.status==="done"){ layer.innerHTML=""; return; }
+  const mx = i.x*8, my = i.y*5.6, midx = Math.round((400+mx)/2);
+  layer.innerHTML = '<path d="M400 517 C '+midx+' 505, '+midx+' '+my+', '+mx+' '+my+'" stroke-dasharray="2 9"/>';
+}
+
+function renderDetail(){
+  const i = incidents.find(x=>x.id===selectedId);
+  if(!i){ detailEl.innerHTML = '<p class="notes">Pick an incident from the queue.</p>'; $("#detail-foot").innerHTML=""; return; }
+  const s = STATUS[i.status];
+  const assigned = i.team ? teamById(i.team) : null;
+  const steps = ["Reported","Triaged","Team assigned","En route","On scene","Closed"];
+  const reached = i.status==="await" ? 2 : i.status==="route" ? 4 : i.status==="scene" ? 5 : i.status==="mon" ? 2 : 6;
+  const tl = i.timeline.map(t=>'<li class="done"><span class="t-dot"></span>'+t[0]+'<time>'+t[1]+'</time></li>').join("");
+  const future = steps.slice(i.status==="mon" ? 2 : reached).filter(x=>!["Reported","Triaged"].includes(x) || reached<2)
+    .map(x=>'<li><span class="t-dot"></span>'+x+'</li>').join("");
+
+  let teamHtml = "";
+  if(i.status==="await" || i.status==="mon"){
+    teamHtml = '<h4>Assign a team</h4><div class="team-pick">' + TEAMS.map(t=>{
+      const busy = t.status!=="Ready";
+      const selTeam = pickedTeam===t.id;
+      return '<button type="button" class="team-option" data-team="'+t.id+'" aria-pressed="'+selTeam+'" '+(busy?"disabled":"")+'>'+
+        '<span><b>'+t.name+'</b><span>'+t.lead+" · "+t.size+" people · "+t.skills+'</span></span>'+
+        '<span class="eta">'+(busy ? t.status : t.eta)+'</span></button>';
+    }).join("") + "</div>";
+  } else if(assigned){
+    teamHtml = '<h4>Assigned team</h4><div class="team-pick"><div class="team-option" aria-pressed="true"><span><b>'+assigned.name+'</b><span>'+assigned.lead+" · "+assigned.size+" people · "+assigned.skills+'</span></span><span class="eta">'+STATUS[i.status].label+'</span></div></div>';
+  }
+
+  const next = NEXT[i.status];
+  let btn = "";
+  if(i.status==="done"){
+    btn = '<button class="dispatch-btn" disabled type="button">Incident resolved</button>';
+  } else if(i.status==="await" || i.status==="mon"){
+    btn = '<button class="dispatch-btn" id="act" type="button" '+(pickedTeam?"":"disabled")+'>'+(pickedTeam ? "Dispatch "+teamById(pickedTeam).name : "Pick a ready team first")+'</button>';
+  } else {
+    btn = '<button class="dispatch-btn secondary" id="act" type="button">'+next.btn+'</button>';
+  }
+
+  detailEl.innerHTML =
+    '<div class="incident-top"><span class="prio p'+i.prio+'">P'+i.prio+'</span><span class="incident-id">INC '+i.id+'</span>'+
+    '<span class="incident-age num">Open '+fmtAge(i.ageMin)+'</span></div>'+
+    '<h2>'+i.title+'</h2><p class="detail-loc">'+i.loc+'</p>'+
+    '<p style="margin-top:9px;font-size:12.5px"><span class="status-dot '+s.cls+'"></span>'+s.label+'</p>'+
+    '<dl class="fact-grid">'+
+    '<div class="fact"><dt>Subject</dt><dd>'+i.subject+'</dd></div>'+
+    '<div class="fact"><dt>Party</dt><dd>'+i.party+'</dd></div>'+
+    '<div class="fact"><dt>Coordinates</dt><dd class="mono">'+i.coords+'</dd></div>'+
+    '<div class="fact"><dt>Elevation</dt><dd class="num">'+i.elev+'</dd></div>'+
+    '<div class="fact"><dt>Contact</dt><dd>'+i.contact+'</dd></div>'+
+    '<div class="fact"><dt>Weather there</dt><dd>'+(i.prio===1 ? "Wind rising" : "Holding")+'</dd></div>'+
+    '</dl>'+
+    '<h4>Situation notes</h4><p class="notes">'+i.notes+'</p>'+
+    teamHtml +
+    '<h4>Timeline</h4><ul class="timeline">'+tl+future+'</ul>';
+  $("#detail-foot").innerHTML = btn;
+
+  detailEl.querySelectorAll(".team-option[data-team]").forEach(el=>{
+    el.addEventListener("click", ()=>{ pickedTeam = el.dataset.team; renderDetail(); });
+  });
+  const act = $("#act");
+  if(act) act.addEventListener("click", ()=>advance(i));
+}
+
+function advance(i){
+  if(i.status==="await" || i.status==="mon"){
+    const t = teamById(pickedTeam);
+    i.team = t.id; t.status = "En route";
+    i.status = "route";
+    i.timeline.push([t.name+" dispatched", nowTime().slice(0,5)]);
+    addLog("Dispatch", t.name+" "+NEXT.await.verb+" INC "+i.id+", "+i.loc+".");
+    toast(t.name+" dispatched to INC "+i.id);
+    pickedTeam = null;
+  } else if(i.status==="route"){
+    const t = teamById(i.team); t.status = "On scene"; i.status = "scene";
+    i.timeline.push([t.name+" on scene", nowTime().slice(0,5)]);
+    addLog(t.name, "On scene, INC "+i.id+". Starting patient care.");
+    toast(t.name+" on scene, INC "+i.id);
+  } else if(i.status==="scene"){
+    const t = teamById(i.team); t.status = "Ready"; i.status = "done";
+    i.timeline.push(["Incident closed", nowTime().slice(0,5)]);
+    addLog("Dispatch", "INC "+i.id+" closed. "+t.name+" back in service.");
+    toast("INC "+i.id+" resolved");
+  }
+  renderAll();
+}
+
+function renderTeams(){
+  teamRowEl.innerHTML = TEAMS.map(t=>{
+    const dot = t.status==="Ready" ? "st-scene" : t.status==="En route" ? "st-route" : "st-await";
+    const on = incidents.find(i=>i.team===t.id && i.status!=="done");
+    return '<div class="team-card"><div class="team-card-top"><span class="status-dot '+dot+'"></span><b>'+t.name+'</b>'+
+      '<span style="margin-left:auto;font-size:11px;color:var(--paper-dim)">'+t.status+'</span></div>'+
+      '<p class="members">'+t.lead+" · "+t.size+" people · "+t.skills+(on ? "<br>On INC "+on.id+", "+on.loc : "<br>"+t.base)+'</p></div>';
+  }).join("");
+}
+
+function renderLog(){
+  logEl.innerHTML = logEntries.slice(0,7).map(e=>'<li><time>'+e[0]+'</time><span><b>'+e[1]+':</b> '+e[2]+'</span></li>').join("");
+}
+
+function renderAll(){ renderQueue(); renderMarkers(); renderRoute(); renderDetail(); renderTeams(); renderLog(); }
+function select(id){ selectedId = id; pickedTeam = null; renderAll();
+  const i = incidents.find(x=>x.id===id);
+  $("#coords").textContent = i.coords.replace(" N, ", "° N, ")+"° W";
+}
+
+/* Controls */
+document.querySelectorAll(".filter").forEach(f=>f.addEventListener("click", ()=>{
+  filter = f.dataset.filter;
+  document.querySelectorAll(".filter").forEach(x=>x.setAttribute("aria-pressed", x===f ? "true":"false"));
+  renderQueue(); renderMarkers();
+}));
+$("#search").addEventListener("input", e=>{ query = e.target.value.trim().toLowerCase(); renderQueue(); renderMarkers(); });
+document.querySelectorAll("[data-layer]").forEach(cb=>cb.addEventListener("change", ()=>{
+  document.getElementById(cb.dataset.layer).style.display = cb.checked ? "" : "none";
+}));
+$("#zoom-in").addEventListener("click", ()=>{ zoom = Math.min(1.8, +(zoom+0.2).toFixed(2)); $("#map-world").style.transform = "scale("+zoom+")"; });
+$("#zoom-out").addEventListener("click", ()=>{ zoom = Math.max(0.8, +(zoom-0.2).toFixed(2)); $("#map-world").style.transform = "scale("+zoom+")"; });
+$("#zoom-reset").addEventListener("click", ()=>{ zoom = 1; $("#map-world").style.transform = "scale(1)"; });
+
+let callNum = 0;
+$("#new-call").addEventListener("click", ()=>{
+  callNum++;
+  const fresh = {id:String(2418+callNum-1), prio:2, title:"Hiker with chest pain at camp", loc:"Doubtful Lake overlook", x:65, y:53.6, ageMin:0, status:"await",
+    party:"3 campers", subject:"Unnamed, 52", contact:"Cell, 2 bars", coords:"48.4655 N, 121.0412 W", elev:"6,480 ft",
+    notes:"Camped group called it in. Patient is awake, chest pain started after the climb to camp, history of heart trouble in the family. Group has a tent and stove, can shelter him while a team walks in.",
+    team:null, timeline:[["Reported by campmate",""+nowTime().slice(0,5)]]};
+  incidents.unshift(fresh);
+  addLog("Dispatch","New call, INC "+fresh.id+". Chest pain, Doubtful Lake overlook.");
+  select(fresh.id);
+  toast("New incident INC "+fresh.id+" added to the queue");
+});
+
+/* Clock and ages */
+function tick(){
+  $("#clock").textContent = new Date().toLocaleTimeString("en-US",{hour12:false});
+}
+tick(); setInterval(tick, 1000);
+setInterval(()=>{ incidents.forEach(i=>{ if(i.status!=="done") i.ageMin++; });
+  document.querySelectorAll("[data-age]").forEach(el=>{
+    const i = incidents.find(x=>x.id===el.dataset.age); if(i) el.textContent = fmtAge(i.ageMin);
+  });
+}, 60000);
+
+renderAll();
+</script>
+</body>
+</html>
