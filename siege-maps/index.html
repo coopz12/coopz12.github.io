@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#080D11">
+<meta name="description" content="BREACH / VECTOR Siege Maps: an unofficial fan made study console for Rainbow Six Siege maps, rooms, bomb sites and pro style site playbooks.">
+<title>BREACH / VECTOR: Siege Maps</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23080D11'/%3E%3Cpath d='M6 6 L26 16 L6 26 Z' fill='%23D6F36A'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#080D11;--surface:#10181E;--raised:#17222A;--hover:#1C2A32;--border:#2A3942;--text:#EDF3F2;--muted:#91A3AB;--faint:#60737D;--accent:#D6F36A;--attack:#58B6DE;--defense:#E5A16B;--danger:#EA7777;--success:#73CFA9;--blueprint:#12242B;--rail:216px;--insp:300px;--head:58px;--foot:28px}
+*{box-sizing:border-box}html,body{overflow-x:clip}html{height:100%}
+body{margin:0;height:100dvh;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+::selection{background:var(--accent);color:#080D11}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:#2A3942;border:2px solid var(--bg)}::-webkit-scrollbar-track{background:var(--bg)}
+button,input{font:inherit;color:inherit}button{cursor:pointer}
+:focus{outline:none}:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+a{color:var(--accent)}
+.skip{position:absolute;left:-9999px;top:0;background:var(--accent);color:#080D11;padding:10px 14px;z-index:200;font-weight:700}.skip:focus{left:8px;top:8px}
+.app{display:grid;grid-template-rows:var(--head) 1fr var(--foot);height:100dvh}
+header.top{display:flex;align-items:center;gap:14px;padding:0 14px;background:var(--surface);border-bottom:1px solid var(--border);min-width:0}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text);min-width:0}
+.brand b{font-size:19px;letter-spacing:.05em;white-space:nowrap}
+.brand span{color:var(--muted);font-size:12px;white-space:nowrap}
+.top-meta{margin-left:auto;display:flex;gap:12px;align-items:center;font-family:ui-monospace,Consolas,monospace;font-size:11px;color:var(--muted);white-space:nowrap}
+.top-meta b{color:var(--text)}
+.shell{display:grid;grid-template-columns:var(--rail) minmax(0,1fr) var(--insp);min-height:0}
+nav.rail{background:var(--surface);border-right:1px solid var(--border);padding:12px 10px;display:flex;flex-direction:column;gap:6px;overflow:auto}
+.navbtn{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;background:transparent;border:1px solid transparent;padding:10px;color:var(--muted);font-weight:600;font-size:13px;min-height:44px}
+.navbtn:hover{background:var(--hover);color:var(--text)}
+.navbtn[aria-current="page"]{background:var(--raised);color:var(--text);border-color:var(--border);box-shadow:inset 3px 0 0 var(--accent)}
+.navbtn small{display:block;font-family:ui-monospace,Consolas,monospace;font-size:10px;color:var(--faint);font-weight:400}
+.rail-search{width:100%;background:var(--bg);border:1px solid var(--border);padding:10px 11px;min-height:44px}
+.rail-search::placeholder{color:var(--faint)}
+.filterrow{display:flex;gap:6px;flex-wrap:wrap;padding:2px 0 6px}
+.fbtn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:6px 9px;font-size:12px;font-weight:600;min-height:34px}
+.fbtn[aria-pressed="true"]{background:var(--accent);color:#080D11;border-color:var(--accent)}
+.maplist{display:flex;flex-direction:column;gap:4px;overflow:auto}
+.mapitem{display:flex;justify-content:space-between;gap:8px;width:100%;text-align:left;background:transparent;border:1px solid transparent;padding:9px 10px;color:var(--text);font-size:13px;min-height:40px}
+.mapitem:hover{background:var(--hover)}
+.mapitem[aria-current="true"]{background:var(--raised);border-color:var(--border)}
+.mapitem .pool{font-family:ui-monospace,Consolas,monospace;font-size:10px;color:var(--muted);white-space:nowrap}
+.rail-note{margin-top:auto;font-size:11px;color:var(--faint);padding:8px;line-height:1.5}
+main{min-width:0;min-height:0;overflow:auto;background:var(--bg)}
+.view{display:none}.view.active{display:block}
+.view-head{padding:18px 20px 12px}.view-head h1{font-size:28px;line-height:1.1;margin:0;letter-spacing:.02em;text-wrap:balance}
+.view-head p{margin:6px 0 0;color:var(--muted);max-width:70ch;font-size:13px}
+.notice{margin:12px 20px 0;background:var(--blueprint);border:1px solid var(--border);padding:11px 13px;font-size:13px;color:var(--muted)}
+.notice b{color:var(--text)}
+.grid-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;padding:14px 20px 20px}
+.mcard{background:var(--surface);border:1px solid var(--border);padding:14px;text-align:left;color:var(--text);min-height:132px}
+.mcard:hover{background:var(--hover)}
+.mcard h2{margin:0 0 4px;font-size:17px}
+.mcard p{margin:0;color:var(--muted);font-size:12px;line-height:1.5}
+.mcard .sites{margin-top:10px;font-size:12px;color:var(--text);line-height:1.6}
+.poolchip{display:inline-block;border:1px solid var(--border);padding:3px 7px;font-family:ui-monospace,Consolas,monospace;font-size:10px;color:var(--accent);margin-bottom:8px}
+.poolchip.ranked{color:var(--attack)}.poolchip.out{color:var(--muted)}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:0 20px 10px}
+.seg{display:flex;border:1px solid var(--border);background:var(--surface)}
+.seg button{background:transparent;border:0;color:var(--muted);padding:8px 12px;font-weight:600;font-size:13px;min-height:40px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#080D11}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;background:var(--raised);border:1px solid var(--border);color:var(--text);padding:9px 13px;font-weight:600;font-size:13px;min-height:40px;transition:transform 120ms ease-out,background 120ms ease-out}
+.btn:hover{background:var(--hover)}.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#080D11}
+.btn.small{min-height:34px;padding:6px 10px;font-size:12px}
+.schematic-wrap{margin:0 20px 14px;background:var(--surface);border:1px solid var(--border);padding:12px}
+.schematic-wrap svg{width:100%;height:auto;display:block}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);padding:10px 2px 0;font-family:ui-monospace,Consolas,monospace}
+.legend i{display:inline-block;width:12px;height:12px;vertical-align:-1px;margin-right:5px;border:1px solid var(--border)}
+.room{cursor:pointer}
+.room rect{fill:var(--raised);stroke:var(--border);stroke-width:1.5}
+.room:hover rect{fill:var(--hover)}
+.room.site rect{fill:#22331f;stroke:var(--accent);stroke-width:2}
+.room.sel rect{stroke:var(--accent);stroke-width:3}
+.room text{fill:var(--text);font-size:12px;font-weight:600;pointer-events:none}
+.room .sub{fill:var(--muted);font-size:10px;font-weight:400}
+.playbook{margin:0 20px 20px;background:var(--surface);border:1px solid var(--border);padding:16px}
+.playbook h2{margin:0 0 4px;font-size:20px}.playbook h3{font-size:13px;margin:20px 0 8px;color:var(--muted);font-family:ui-monospace,Consolas,monospace;letter-spacing:.06em}
+.playbook p,.playbook li{font-size:13px;color:var(--muted)}.playbook p b,.playbook li b{color:var(--text)}
+.ops{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.op{border:1px solid var(--border);padding:10px 12px;background:var(--bg)}
+.op b{color:var(--text)}.op .role{color:var(--accent);font-family:ui-monospace,Consolas,monospace;font-size:11px;display:block}
+.checklist label{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;cursor:pointer}
+.checklist input{width:20px;height:20px;accent-color:var(--accent);flex:none;margin-top:1px}
+aside.insp{background:var(--surface);border-left:1px solid var(--border);overflow:auto;padding:14px;min-height:0}
+aside.insp h2{font-size:15px;margin:2px 0 8px}aside.insp h3{font-size:12px;margin:16px 0 6px;color:var(--muted);font-family:ui-monospace,Consolas,monospace;letter-spacing:.06em}
+aside.insp p,aside.insp li{font-size:13px;color:var(--muted)}aside.insp p b,aside.insp li b{color:var(--text)}
+aside.insp ul{margin:0;padding-left:18px}
+footer.foot{display:flex;align-items:center;gap:12px;padding:0 14px;background:var(--surface);border-top:1px solid var(--border);font-family:ui-monospace,Consolas,monospace;font-size:11px;color:var(--faint);white-space:nowrap;overflow:hidden}
+footer.foot .ok{color:var(--success)}
+.searchres{margin:0 20px 20px}.searchres button{display:flex;justify-content:space-between;width:100%;background:var(--surface);border:1px solid var(--border);border-bottom:0;padding:11px 12px;color:var(--text);text-align:left;min-height:44px}
+.searchres button:last-child{border-bottom:1px solid var(--border)}
+.quiz{margin:0 20px 20px;background:var(--surface);border:1px solid var(--border);padding:18px;max-width:720px}
+.quiz .q{font-size:20px;font-weight:700;margin:6px 0 14px;text-wrap:balance}
+.quizopts{display:grid;gap:8px}.quizopts button{text-align:left;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:12px;min-height:48px;font-weight:600}
+.quizopts button.correct{border-color:var(--success);color:var(--success)}.quizopts button.wrong{border-color:var(--danger);color:var(--danger)}
+.bottomnav{display:none}
+.flag{display:inline-block;background:#2b1d12;border:1px solid #6b4a2a;color:var(--defense);padding:3px 7px;font-size:11px;font-weight:700;margin-left:6px;vertical-align:2px}
+@media (max-width:900px){
+.shell{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}
+nav.rail{display:none}
+aside.insp{display:none;border-left:0;border-top:1px solid var(--border)}
+aside.insp.open{display:block}
+.app{grid-template-rows:var(--head) 1fr 52px var(--foot)}
+.bottomnav{display:flex;background:var(--surface);border-top:1px solid var(--border)}
+.bottomnav button{flex:1;background:transparent;border:0;color:var(--muted);font-weight:700;font-size:13px;min-height:52px}
+.bottomnav button[aria-current="true"]{color:var(--accent)}
+.top-meta .hide-m{display:none}.brand span{display:none}.ops{grid-template-columns:1fr}
+.view-head h1{font-size:24px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="app">
+<header class="top">
+<a class="brand" href="#/maps"><b>BREACH / VECTOR</b><span>Siege Maps</span></a>
+<div class="top-meta"><span class="hide-m">Y11S3.2</span><span>Data: <b>27 Oct 2026</b></span><span class="hide-m">Unofficial fan project</span></div>
+</header>
+<div class="shell">
+<nav class="rail" aria-label="Maps">
+<button class="navbtn" data-nav="maps" aria-current="page">Maps<small>26 indexed, 12 in depth</small></button>
+<button class="navbtn" data-nav="learn">Learn mode<small>Room and site quiz</small></button>
+<input class="rail-search" id="railSearch" type="search" placeholder="Search rooms, e.g. CCTV" aria-label="Search rooms">
+<div class="filterrow" role="group" aria-label="Pool filter">
+<button class="fbtn" data-filter="All" aria-pressed="true">All</button>
+<button class="fbtn" data-filter="Pro" aria-pressed="false">Pro</button>
+<button class="fbtn" data-filter="Ranked" aria-pressed="false">Ranked</button>
+<button class="fbtn" data-filter="Out" aria-pressed="false">Out</button>
+</div>
+<div class="maplist" id="mapList"></div>
+<div class="rail-note">Schematics are original diagrams drawn from researched room names. They show study layout, not exact in game geometry. Top view links open the picture page in a new tab. No game pictures are copied into this site.</div>
+</nav>
+<main id="main">
+<section class="view active" id="view-maps" aria-label="Map list"></section>
+<section class="view" id="view-map" aria-label="Map study"></section>
+<section class="view" id="view-learn" aria-label="Learn mode"></section>
+</main>
+<aside class="insp" id="inspector" aria-label="Inspector"></aside>
+</div>
+<nav class="bottomnav" aria-label="Sections">
+<button data-nav="maps" aria-current="true">Maps</button>
+<button data-nav="learn">Learn</button>
+<button id="inspToggle">Inspector</button>
+</nav>
+<footer class="foot"><span class="ok">STUDY CONSOLE</span><span>Unofficial fan project. Not affiliated with Ubisoft.</span><span>Schematic layout, not exact geometry.</span></footer>
+</div>
+<script>
+"use strict";
+/* DATA. Room strings: name|x|y|w|h in 12x8 grid units. Only confident callouts used. */
+const TOPVIEWS={bank:"https://siterep.gg/maps/bank/",border:"https://siterep.gg/maps/border/",chalet:"https://siterep.gg/maps/chalet/",clubhouse:"https://siterep.gg/maps/clubhouse/",consulate:"https://siterep.gg/maps/consulate/",kafe:"https://siterep.gg/maps/kafe-dostoyevsky/",lair:"https://siterep.gg/maps/lair/",nighthaven:"https://siterep.gg/maps/nighthaven-labs/",oregon:"https://siterep.gg/maps/oregon/",coastline:"https://siterep.gg/maps/coastline/",villa:"https://www.r6prep.com/defender/site-setups/villa",kanal:"https://siegestrats.com/maps/kanal/callouts"};
+function R(s){const p=s.split("|");return{name:p[0],x:+p[1],y:+p[2],w:+p[3],h:+p[4]}}
+const CORE=[
+{id:"bank",name:"Bank",pool:"Pro",loc:"Los Angeles, USA",size:"Large",diff:"Medium",lean:"Defense lean",partial:false,floors:[
+{label:"B",rooms:["CCTV Room|0|0|4|3","Lockers|4|0|4|3","Server Room|8|0|4|3","Vault|0|3|4|3","Tunnel|4|3|4|3","Red Hallway|8|3|4|3","Blue Stairs|0|6|6|2","Garage|6|6|6|2"].map(R),stairs:[[11,7]],hatches:[[6,1]]},
+{label:"1F",rooms:["Lobby|0|0|4|4","Open Area|4|0|4|3","Staff Room|8|0|4|3","Tellers' Office|0|4|4|4","Archives|4|4|4|4","Security Room|8|4|4|2","Jewelry Front|8|6|4|2","Side Alley|0|6|4|1"].map(R),stairs:[[0,7]],hatches:[[5,1]]},
+{label:"2F",rooms:["CEO Office|0|0|4|3","Executive Lounge|4|0|4|3","CEO Hallway|8|0|4|3","Stock Trading Room|0|3|4|3","Janitor Closet|4|3|4|3","Offices|8|3|4|3","Skylight|0|6|6|2","Executive Hallway|6|6|6|2"].map(R),stairs:[[11,7]],hatches:[[2,1]]}],
+sites:[["CEO Office","Executive Lounge","2F"],["Open Area","Staff Room","1F"],["Tellers' Office","Archives","1F"],["CCTV Room","Lockers","B"]]},
+{id:"border",name:"Border",pool:"Pro",loc:"Arizona / Mexico border",size:"Medium",diff:"Medium",lean:"Balanced",partial:false,floors:[
+{label:"2F",rooms:["Armory Lockers|0|0|4|3","Archives|4|0|4|3","Offices|8|0|4|3","Bathroom|0|3|4|3","Break Room|4|3|4|3","East Stairs|8|3|4|3","Armory Desk|0|6|6|2","Hallway|6|6|6|2"].map(R),stairs:[[11,7]],hatches:[[2,1]]},
+{label:"1F",rooms:["Workshop|0|0|4|3","Ventilation Room|4|0|4|3","Customs Inspection|8|0|4|3","Supply Room|0|3|4|3","Tellers|4|3|4|3","Bathroom|8|3|4|3","Security Room|0|6|4|2","Waiting Room|4|6|4|2","Passport Check|8|6|4|2","Detention|0|7|12|1"].map(R),stairs:[[11,0]],hatches:[[5,4]]}],
+sites:[["Armory Lockers","Archives","2F"],["Workshop","Ventilation Room","1F"],["Customs Inspection","Supply Room","1F"],["Tellers","Bathroom","1F"]]},
+{id:"chalet",name:"Chalet",pool:"Pro",loc:"French Alps",size:"Medium",diff:"Medium",lean:"Attack lean",partial:false,floors:[
+{label:"2F",rooms:["Master Bedroom|0|0|4|3","Office|4|0|4|3","Library|8|0|4|3","Bedroom Hallway|0|3|6|2","Bathroom|6|3|6|2","West Stairs|0|5|6|3","East Stairs|6|5|6|3"].map(R),stairs:[[11,7]],hatches:[[2,1]]},
+{label:"1F",rooms:["Bar|0|0|4|3","Gaming Room|4|0|4|3","Kitchen|8|0|4|3","Dining Room|0|3|4|3","Fireplace|4|3|4|3","Living Room|8|3|4|3","Main Entrance|0|6|6|2","Snowmobile Hall|6|6|6|2"].map(R),stairs:[[0,7]],hatches:[[6,1]]},
+{label:"B",rooms:["Wine Cellar|0|0|6|4","Snowmobile Garage|6|0|6|4","Storage|0|4|6|2","Boiler Room|6|4|6|2","Garage Hallway|0|6|12|2"].map(R),stairs:[[11,7]],hatches:[[3,2]]}],
+sites:[["Master Bedroom","Office","2F"],["Bar","Gaming Room","1F"],["Kitchen","Dining Room","1F"],["Wine Cellar","Snowmobile Garage","B"]]},
+{id:"clubhouse",name:"Clubhouse",pool:"Pro",loc:"Germany",size:"Medium",diff:"Medium",lean:"Defense lean",partial:false,floors:[
+{label:"2F",rooms:["Gym|0|0|4|3","Bedroom|4|0|4|3","CCTV Room|8|0|4|3","Cash Room|0|3|4|3","Log Office|4|3|4|3","Construction|8|3|4|3","Catwalk|0|6|6|2","Master Bedroom|6|6|6|2"].map(R),stairs:[[11,7]],hatches:[[2,1]]},
+{label:"1F",rooms:["Bar|0|0|4|3","Stage|4|0|4|3","Kitchen|8|0|4|3","Stock Room|0|3|4|3","Garage|4|3|4|3","Lounge|8|3|4|3","Church Hallway|0|6|12|2"].map(R),stairs:[[0,7]],hatches:[[6,1]]},
+{label:"B",rooms:["Church|0|0|6|4","Arsenal Room|6|0|6|4","Blue Hallway|0|4|6|2","Oil Pit|6|4|6|2","Dirt Tunnel|0|6|12|2"].map(R),stairs:[[11,7]],hatches:[[3,2]]}],
+sites:[["Gym","Bedroom","2F"],["CCTV Room","Cash Room","2F"],["Bar","Stage","1F"],["Church","Arsenal Room","B"]]},
+{id:"consulate",name:"Consulate",pool:"Ranked",loc:"Abidjan, Ivory Coast",size:"Medium",diff:"Hard",lean:"Balanced",partial:false,flag:"Split-floor site: Tellers (1F) with Servers (B).",floors:[
+{label:"2F",rooms:["Consul Office|0|0|4|3","Meeting Room|4|0|4|3","Long Desk|8|0|4|3","Balcony|0|3|6|2","Yellow Stairs|6|3|6|2","Consulate Hallway|0|5|12|3"].map(R),stairs:[[11,7]],hatches:[[2,1]]},
+{label:"1F",rooms:["Piano Room|0|0|4|3","Exposition Room|4|0|4|3","Tellers|8|0|4|3","Lobby|0|3|4|3","Visa Office|4|3|4|3","Meeting Hall|8|3|4|3","Main Entrance|0|6|12|2"].map(R),stairs:[[0,7]],hatches:[[9,1]]},
+{label:"B",rooms:["Servers|0|0|6|4","Garage|6|0|6|4","Cafeteria|0|4|6|2","Storage|6|4|6|2","Basement Hallway|0|6|12|2"].map(R),stairs:[[11,7]],hatches:[[3,2]]}],
+sites:[["Consul Office","Meeting Room","2F"],["Piano Room","Exposition Room","1F"],["Tellers","Servers","Split"],["Garage","Cafeteria","B"]]},
+{id:"kafe",name:"Kafe Dostoyevsky",pool:"Pro",loc:"Moscow, Russia",size:"Medium",diff:"Hard",lean:"Defense lean",partial:false,floors:[
+{label:"3F",rooms:["Bar|0|0|4|3","Cocktail Lounge|4|0|4|3","Freezer|8|0|4|3","Prep Room|0|3|6|2","Cigar Lounge|6|3|6|2","Roof Terrace|0|5|12|3"].map(R),stairs:[[11,7]],hatches:[[2,1]]},
+{label:"2F",rooms:["Fireplace Hall|0|0|4|3","Mining Room|4|0|4|3","Reading Room|8|0|4|3","Train Museum|0|3|6|3","Dining Room|6|3|6|3","Bakery|0|6|12|2"].map(R),stairs:[[0,7]],hatches:[[6,1]]},
+{label:"1F",rooms:["Kitchen Service|0|0|4|3","Kitchen|4|0|4|3","Bakery|8|0|4|3","Coat Check|0|3|6|3","Main Entrance|6|3|6|3","Storage|0|6|12|2"].map(R),stairs:[[11,7]],hatches:[[5,1]]}],
+sites:[["Bar","Cocktail Lounge","3F"],["Fireplace Hall","Mining Room","2F"],["Reading Room","Fireplace Hall","2F"],["Kitchen Service","Kitchen","1F"]]},
+{id:"lair",name:"Lair",pool:"Pro",loc:"Unknown",size:"Medium",diff:"Hard",lean:"Balanced",partial:true,floors:[
+{label:"2F",rooms:["Master Office|0|0|6|4","R6 Room|6|0|6|4","Office Hallway|0|4|6|2","Bathroom|6|4|6|2","Stairs|0|6|12|2"].map(R),stairs:[[11,7]],hatches:[[3,2]]},
+{label:"1F",rooms:["Bunks|0|0|4|3","Briefing|4|0|4|3","Armory|8|0|4|3","Weapon Maintenance|0|3|6|3","Lobby|6|3|6|3","Hallway|0|6|12|2"].map(R),stairs:[[0,7]],hatches:[[2,1]]},
+{label:"B",rooms:["Lab|0|0|6|4","Lab Support|6|0|6|4","Storage|0|4|6|2","Corridor|6|4|6|2","Stairs|0|6|12|2"].map(R),stairs:[[11,7]],hatches:[[3,2]]}],
+sites:[["Master Office","R6 Room","2F"],["Bunks","Briefing","1F"],["Armory","Weapon Maintenance","1F"],["Lab","Lab Support","B"]]},
+{id:"nighthaven",name:"Nighthaven Labs",pool:"Pro",loc:"Unknown",size:"Large",diff:"Hard",lean:"Balanced",partial:true,floors:[
+{label:"2F",rooms:["Command Center|0|0|6|4","Servers|6|0|6|4","Executive Office|0|4|6|2","Break Room|6|4|6|2","Hallway|0|6|12|2"].map(R),stairs:[[11,7]],hatches:[[3,2]]},
+{label:"1F",rooms:["Control Room|0|0|4|3","Storage|4|0|4|3","Kitchen|8|0|4|3","Cafeteria|0|3|6|3","Lobby|6|3|6|3","Corridor|0|6|12|2"].map(R),stairs:[[0,7]],hatches:[[2,1]]},
+{label:"B",rooms:["Tank|0|0|6|4","Assembly|6|0|6|4","Workshop|0|4|6|2","Storage|6|4|6|2","Corridor|0|6|12|2"].map(R),stairs:[[11,7]],hatches:[[3,2]]}],
+sites:[["Command Center","Servers","2F"],["Control Room","Storage","1F"],["Kitchen","Cafeteria","1F"],["Tank","Assembly","B"]]},
+{id:"oregon",name:"Oregon",pool:"Ranked",loc:"Oregon, USA",size:"Medium",diff:"Medium",lean:"Defense lean",partial:false,floors:[
+{label:"2F",rooms:["Kids' Dorms|0|0|4|3","Dorms Main Hall|4|0|4|3","Master Bedroom|8|0|4|3","Bathroom|0|3|6|3","Attic|6|3|6|3","Big Tower|0|6|12|2"].map(R),stairs:[[11,7]],hatches:[[2,1]]},
+{label:"1F",rooms:["Kitchen|0|0|4|3","Dining Hall|4|0|4|3","Meeting Hall|8|0|4|3","Living Room|0|3|6|3","Lobby|6|3|6|3","Small Tower|0|6|12|2"].map(R),stairs:[[0,7]],hatches:[[5,1]]},
+{label:"B",rooms:["Laundry Room|0|0|6|4","Supply Room|6|0|6|4","Boiler Room|0|4|6|2","Freezer|6|4|6|2","Construction|0|6|12|2"].map(R),stairs:[[11,7]],hatches:[[3,2]]}],
+sites:[["Kids' Dorms","Dorms Main Hall","2F"],["Kitchen","Dining Hall","1F"],["Meeting Hall","Kitchen","1F"],["Laundry Room","Supply Room","B"]]},
+{id:"coastline",name:"Coastline",pool:"Ranked",loc:"Ibiza, Spain",size:"Medium",diff:"Medium",lean:"Attack lean",partial:false,floors:[
+{label:"2F",rooms:["Theater|0|0|4|3","Penthouse|4|0|4|3","Hookah Lounge|8|0|4|3","Billiards Room|0|3|4|3","VIP Lounge|4|3|4|3","Aquarium|8|3|4|3","Hallway|0|6|12|2"].map(R),stairs:[[11,7]],hatches:[[2,1]]},
+{label:"1F",rooms:["Blue Bar|0|0|4|3","Sunrise Bar|4|0|4|3","Service Entrance|8|0|4|3","Kitchen|0|3|4|3","Courtyard|4|3|4|3","Lobby|8|3|4|3","Office|0|6|12|2"].map(R),stairs:[[0,7]],hatches:[[5,1]]}],
+sites:[["Theater","Penthouse","2F"],["Hookah Lounge","Billiards Room","2F"],["Blue Bar","Sunrise Bar","1F"],["Service Entrance","Kitchen","1F"]]},
+{id:"villa",name:"Villa",pool:"Pro",loc:"Tuscany, Italy",size:"Medium",diff:"Hard",lean:"Balanced",partial:false,flag:"2026 basement and garage redesign. Older guides may show the old basement site.",floors:[
+{label:"2F",rooms:["Aviator Room|0|0|4|3","Games Room|4|0|4|3","Trophy Room|8|0|4|3","Statuary Room|0|3|4|3","Master Bedroom|4|3|4|3","Study|8|3|4|3","Hallway|0|6|12|2"].map(R),stairs:[[11,7]],hatches:[[2,1]]},
+{label:"1F",rooms:["Kitchen|0|0|4|3","Dining Room|4|0|4|3","Living Room|8|0|4|3","Library|0|3|6|3","Main Entrance|6|3|6|3","Laundry|0|6|12|2"].map(R),stairs:[[0,7]],hatches:[[5,1]]},
+{label:"B",rooms:["Art Storage|0|0|6|4","Old Office|6|0|6|4","Garage|0|4|6|2","Wine Cellar|6|4|6|2","Basement Hallway|0|6|12|2"].map(R),stairs:[[11,7]],hatches:[[3,2]]}],
+sites:[["Aviator Room","Games Room","2F"],["Trophy Room","Statuary Room","2F"],["Kitchen","Dining Room","1F"],["Art Storage","Old Office","B"]]},
+{id:"kanal",name:"Kanal",pool:"Ranked",loc:"Hamburg, Germany",size:"Medium",diff:"Medium",lean:"Balanced",partial:false,floors:[
+{label:"2F",rooms:["Server Room|0|0|4|3","Radar Room|4|0|4|3","Control Room|8|0|4|3","Offices|0|3|6|3","Bridge|6|3|6|3","Hallway|0|6|12|2"].map(R),stairs:[[11,7]],hatches:[[2,1]]},
+{label:"1F",rooms:["Security Room|0|0|4|3","Map Room|4|0|4|3","Coast Guard Meeting Room|8|0|4|3","Lounge|0|3|6|3","Kitchen|6|3|6|3","Green Hallway|0|6|12|2"].map(R),stairs:[[0,7]],hatches:[[5,1]]},
+{label:"B",rooms:["Supply Room|0|0|6|4","Kayaks|6|0|6|4","Diving Room|0|4|6|2","Storage|6|4|6|2","Tunnel|0|6|12|2"].map(R),stairs:[[11,7]],hatches:[[3,2]]}],
+sites:[["Server Room","Radar Room","2F"],["Security Room","Map Room","1F"],["Coast Guard Meeting Room","Lounge","1F"],["Supply Room","Kayaks","B"]]}
+];
+const OVERVIEW=[
+{name:"Skyscraper",pool:"Out",sites:["Tea Room / Karaoke","Exhibition / Office","Kitchen / BBQ","Bedroom / Bathroom"]},
+{name:"Theme Park",pool:"Out",sites:["Office / Initiation","Bunk / Day Care","Armory / Throne","Lab / Storage"]},
+{name:"Emerald Plains",pool:"Out",sites:["Bar / Kitchen","Dining / Lounge","Administration / Meeting","CEO / Painting Gallery"]},
+{name:"Outback",pool:"Ranked",sites:["Piano / Laundry","Party / Office","Green / Red Bedroom","Mechanic Shop / Kitchen"]},
+{name:"Fortress",pool:"Pro + Ranked",sites:["Commander's Office / Bathroom","Dormitory / Games","Waiting / Cafeteria","Hammam / Sitting"]},
+{name:"Calypso Casino",pool:"Ranked",sites:["CCTV / Vault Checkpoint","Bar / Betting","Blackjack / Poker","Cigar Room / Pool"]},
+{name:"Hereford Base",pool:"Out",sites:["Historical pairs, uncertain"]},
+{name:"House",pool:"Out",sites:["Historical pairs, uncertain"]},
+{name:"Favela",pool:"Out",sites:["Historical pairs, uncertain"]},
+{name:"Yacht",pool:"Out",sites:["Historical pairs, uncertain"]},
+{name:"Presidential Plane",pool:"Out",sites:["Historical pairs, uncertain"]},
+{name:"Tower",pool:"Out",sites:["Historical pairs, uncertain"]},
+{name:"Stadium Bravo",pool:"Out",sites:["Historical pairs, uncertain"]},
+{name:"Bartlett U.",pool:"Removed",sites:["Historical pairs, uncertain"]}];
+/* END DATA PART 1 */
+const OPS={
+Thermite:{role:"Hard breach",job:"Opens the reinforced wall that the execute depends on. Keep the breach clear of denial."},
+Thatcher:{role:"Breach support",job:"Clears denial gadgets before the hard breach goes up."},
+Buck:{role:"Vertical",job:"Plays above the site and opens the floor to cut anchors and clear utility."},
+Iana:{role:"Intel / entry",job:"Drones the site and baits utility with holograms before the push."},
+Nomad:{role:"Flank watch",job:"Covers the flank route so the plant is not cut off from behind."},
+Hibana:{role:"Hard breach",job:"Opens reinforced walls and hatches with pellets from range."},
+Kali:{role:"Breach support",job:"Clears denial through walls and holds long angles after the breach."},
+Sledge:{role:"Soft breach",job:"Opens soft walls and floors and clears close utility."},
+Dokkaebi:{role:"Intel",job:"Calls phones to force defenders to move and reveals positions."},
+Gridlock:{role:"Area denial",job:"Blocks rotates and flank routes with Trax during the plant."},
+Ace:{role:"Hard breach",job:"Opens large reinforced walls with Selma charges."},
+Maverick:{role:"Breach support",job:"Burns small holes to clear denial without a loud breach."},
+Zero:{role:"Intel",job:"Places cameras to hold post plant angles and gather info."},
+Flores:{role:"Utility clear",job:"Sends drones to clear shields and utility before entry."},
+Lion:{role:"Intel / plant",job:"Uses the scan to freeze rotates during the execute and plant."},
+Bandit:{role:"Denial",job:"Tricks the main reinforced wall and holds the breach side."},
+Jager:{role:"Utility defense",job:"Catches projectiles that would clear utility and anchors."},
+Smoke:{role:"Anchor / denial",job:"Denies the plant with gas and holds the site late in the round."},
+Mira:{role:"Intel / anchor",job:"Holds a one way view into the main push and anchors the site."},
+Valkyrie:{role:"Intel / roam",job:"Places cameras for flank and execute calls, then plays the retake."},
+Kaid:{role:"Denial",job:"Electrifies reinforced walls and hatches with claws."},
+Wamai:{role:"Utility defense",job:"Captures projectiles and protects the anchor setup."},
+Azami:{role:"Cover / anchor",job:"Creates cover and blocks lines of sight on the site."},
+Maestro:{role:"Intel / anchor",job:"Holds evil eyes to watch the push and deny the plant."},
+Mute:{role:"Denial / intel",job:"Jams drones and walls to slow the attack information game."},
+Aruni:{role:"Gate defense",job:"Blocks doors and rotates with gates and holds the anchor angle."},
+Goyo:{role:"Area denial",job:"Blocks the main push route with shields that punish entry."},
+Echo:{role:"Intel / anchor",job:"Uses Yokai drones to stop the plant and call the push."},
+Lesion:{role:"Intel / roam",job:"Slows the push with mines and calls attacker movement."}
+};
+const TEMPLATES=[
+{atk:["Thermite","Thatcher","Buck","Iana","Nomad"],def:["Bandit","Jager","Smoke","Mira","Valkyrie"]},
+{atk:["Hibana","Kali","Sledge","Dokkaebi","Gridlock"],def:["Kaid","Wamai","Azami","Maestro","Smoke"]},
+{atk:["Ace","Maverick","Buck","Zero","Flores"],def:["Mute","Aruni","Goyo","Echo","Jager"]},
+{atk:["Thermite","Thatcher","Sledge","Iana","Lion"],def:["Bandit","Kaid","Smoke","Mira","Lesion"]}];
+function playbook(map,siteIdx){
+ const s=map.sites[siteIdx],a=s[0],b=s[1];
+ const isBankBase=(map.id==="bank"&&siteIdx===3);
+ const t=isBankBase?TEMPLATES[0]:TEMPLATES[siteIdx%4];
+ const conf=isBankBase?"Verified example lineup":"UNCERTAIN lineup. Role balanced recommendation, not verified pro stats.";
+ return{
+  id:map.id+"-s"+siteIdx,label:a+" / "+b,floor:s[2],conf,
+  defense:"Reinforce the walls that face the main attack entry first, then the wall between "+a+" and "+b+". Create a rotation between "+a+" and "+b+" so one anchor can play both objectives. Open the hatch above the site only if a defender is assigned to watch it, and keep a fallback position outside the site for the retake. Place denial utility on the main breach wall and intel utility to call the drone phase. Do not stack all five defenders inside the two objective rooms.",
+  attackers:t.atk.map(n=>({name:n,role:OPS[n].role,job:OPS[n].job})),
+  defenders:t.def.map(n=>({name:n,role:OPS[n].role,job:OPS[n].job})),
+  execute:["Drone phase: find the site, the anchor positions, and the breach denial. Keep one drone alive for the plant.","Roam clear: clear the roamers above and beside the site before anyone commits to the breach. Do not plant while a roamer is alive.","Vertical play: take control above "+a+" and "+b+", open the floor, and clear utility from above.","Breach: clear denial, then open the main reinforced wall. Hold the breach from range until the site is pressured.","Plant: smoke and cover the planter in "+a+" or "+b+" based on where defenders are weakest. Plant for the breach angle, not in the open.","Post plant: hold crossfires on the defuser from outside the site. Do not all push in to hunt the retake."],
+  prep:["Reinforce the priority walls facing the main entry.","Create the rotation between "+a+" and "+b+".","Handle hatches above and beside the site, reinforce or watch them.","Place denial on the breach wall and intel to watch the main push.","Set default positions: two anchors in site, one flex near the rotation, roamers out.","Agree the fallback and retake call before the round starts."],
+  mistakes:["Losing the main wall early with no one assigned to trick or watch it.","No rotation between "+a+" and "+b+", so the anchor is trapped when the push comes.","All five defenders inside the site with no roam or retake plan, so one execute ends the round."],
+  solo:{principle:"Play the site, not the pro setup. One good rotation and one watched wall beat a five person plan that needs comms you do not have.",defense:["Reinforce the main wall, create one safe rotation, place your utility, and anchor.","Do not depend on a teammate tricking a wall or holding a flank you cannot see."],attack:["Drone, clear one flank, open one wall, and plant with cover.","If no one clears above, play the breach from range instead of forcing the plant."]}
+ };
+}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;")}
+function wrapName(n){const w=n.split(" ");if(w.length<=2)return[n];const mid=Math.ceil(w.length/2);return[w.slice(0,mid).join(" "),w.slice(mid).join(" ")]}
+const $=id=>document.getElementById(id);
+let state={mapId:"bank",floorIdx:0,siteIdx:3,view:"schematic",room:null,filter:"All",search:""};
+let checklist=JSON.parse(localStorage.getItem("bv.maps.checklist.v1")||"{}");
+function saveCheck(){localStorage.setItem("bv.maps.checklist.v1",JSON.stringify(checklist))}
+function curMap(){return CORE.find(m=>m.id===state.mapId)}
+function siteOf(map,roomName){return map.sites.findIndex(s=>s[0]===roomName||s[1]===roomName)}
+function roomFloor(map,roomName){for(let i=0;i<map.floors.length;i++){if(map.floors[i].rooms.some(r=>r.name===roomName))return i}return 0}
+function allRooms(){const out=[];CORE.forEach(m=>m.floors.forEach((f,fi)=>f.rooms.forEach(r=>out.push({map:m,floor:f.label,fi,room:r.name}))));return out}
+/* END PART 2 */
+function renderRail(){
+ const list=$("mapList");const q=state.search.toLowerCase();
+ const items=CORE.filter(m=>(state.filter==="All"||m.pool===state.filter)&&(!q||m.name.toLowerCase().includes(q)));
+ list.innerHTML=items.map(m=>`<button class="mapitem" data-map="${m.id}" aria-current="${m.id===state.mapId}"><span>${esc(m.name)}${m.partial?' <span class="pool">partial</span>':""}</span><span class="pool">${esc(m.pool)}</span></button>`).join("")||`<p style="color:var(--muted);font-size:13px;padding:8px">No maps match this filter.</p>`;
+ list.querySelectorAll("[data-map]").forEach(b=>b.addEventListener("click",()=>{location.hash="#/map/"+b.dataset.map}));
+ document.querySelectorAll(".fbtn").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.filter===state.filter)));
+}
+function renderMaps(){
+ const el=$("view-maps");
+ const cards=CORE.map(m=>`<button class="mcard" data-open="${m.id}"><span class="poolchip ${m.pool==="Ranked"?"ranked":m.pool==="Out"?"out":""}">${esc(m.pool)} pool</span><h2>${esc(m.name)}</h2><p>${esc(m.loc)} · ${esc(m.size)} · ${esc(m.diff)} · ${esc(m.lean)}${m.partial?" · Room list partial":""}</p><div class="sites">${m.sites.map(s=>esc(s[0])+" / "+esc(s[1])).join("<br>")}</div></button>`).join("");
+ const over=OVERVIEW.map(o=>`<div class="mcard"><span class="poolchip ${o.pool==="Ranked"?"ranked":"out"}">${esc(o.pool)}</span><h2>${esc(o.name)}</h2><p>Site list only. Historical pairs are uncertain, do not treat them as current facts.</p><div class="sites">${o.sites.map(esc).join("<br>")}</div></div>`).join("");
+ el.innerHTML=`<div class="view-head"><h1>Siege Maps</h1><p>Pick a map to study its rooms, bomb sites, and playbooks. 12 maps in depth, 14 more with site lists only. Pool status is from the Ubisoft October 15, 2026 Split Fire update.</p></div>
+ <div class="notice"><b>How to use it:</b> open a map, switch floors, click a room, pick a bomb site, then open its playbook. Every playbook is a pro style recommendation. Verify placements in game.</div>
+ <div class="grid-cards">${cards}${over}</div>`;
+ el.querySelectorAll("[data-open]").forEach(b=>b.addEventListener("click",()=>{location.hash="#/map/"+b.dataset.open}));
+}
+function svgFor(map,floorIdx,siteIdx){
+ const fl=map.floors[floorIdx];const site=map.sites[siteIdx];
+ const siteRooms=new Set([site[0],site[1]]);
+ let grid="";for(let i=1;i<12;i++)grid+=`<line x1="${i*80}" y1="0" x2="${i*80}" y2="640" stroke="#1c2a32" stroke-width="1"/>`;for(let j=1;j<8;j++)grid+=`<line x1="0" y1="${j*80}" x2="960" y2="${j*80}" stroke="#1c2a32" stroke-width="1"/>`;
+ const rooms=fl.rooms.map(r=>{
+  const isSite=siteRooms.has(r.name);const sel=state.room===r.name;
+  const lines=wrapName(r.name);const cx=(r.x+r.w/2)*80,cy=(r.y+r.h/2)*80;
+  const txt=lines.map((L,i)=>`<text x="${cx}" y="${cy+(lines.length===1?4:(i===0?-2:14))}" text-anchor="middle">${esc(L)}</text>`).join("");
+  return `<g class="room ${isSite?"site":""} ${sel?"sel":""}" data-room="${esc(r.name)}" tabindex="0" role="button" aria-label="Room ${esc(r.name)}"><rect x="${r.x*80+2}" y="${r.y*80+2}" width="${r.w*80-4}" height="${r.h*80-4}"/>${txt}${isSite?`<text class="sub" x="${cx}" y="${cy+r.h*40-8}" text-anchor="middle">SITE</text>`:""}</g>`;
+ }).join("");
+ const marks=fl.stairs.map(s=>`<g><rect x="${s[0]*80+6}" y="${s[1]*80+6}" width="24" height="24" fill="#10181E" stroke="#91A3AB"/><text x="${s[0]*80+18}" y="${s[1]*80+23}" text-anchor="middle" fill="#EDF3F2" font-size="13" font-weight="700">S</text></g>`).join("")
+  +fl.hatches.map(s=>`<g><rect x="${s[0]*80+6}" y="${s[1]*80+6}" width="24" height="24" fill="#10181E" stroke="#D6F36A" transform="rotate(45 ${s[0]*80+18} ${s[1]*80+18})"/><text x="${s[0]*80+18}" y="${s[1]*80+23}" text-anchor="middle" fill="#D6F36A" font-size="13" font-weight="700">H</text></g>`).join("");
+ return `<svg viewBox="0 0 960 640" role="img" aria-label="Schematic for ${esc(map.name)} floor ${esc(fl.label)}">${rooms}${marks}<g pointer-events="none" opacity="0.55">${grid}</g></svg>
+ <div class="legend"><span><i style="background:#22331f;border-color:#D6F36A"></i>Bomb site room</span><span><i style="background:#17222A"></i>Room</span><span>S Stair, approximate</span><span>H Hatch, approximate</span><span>Grid: 12 by 8</span></div>`;
+}
+function renderMap(){
+ const map=curMap();const el=$("view-map");
+ const pb=playbook(map,state.siteIdx);
+ const floor=map.floors[state.floorIdx];
+ const key=pb.id;const checks=checklist[key]||[false,false,false,false,false,false];
+ const checkItems=["Reinforce the priority walls","Create rotations between the objectives","Handle hatches above and beside the site","Place denial and intel utility","Set default anchor positions","Agree the fallback and retake call"];
+ const done=checks.filter(Boolean).length;
+ const siteBtns=map.sites.map((s,i)=>`<button class="btn small ${i===state.siteIdx?"primary":""}" data-site="${i}">${esc(s[0])} / ${esc(s[1])}</button>`).join("");
+ const floorBtns=map.floors.map((f,i)=>`<button data-floor="${i}" aria-pressed="${i===state.floorIdx}">${esc(f.label)}</button>`).join("");
+ const main=state.view==="schematic"
+  ?`<div class="schematic-wrap">${svgFor(map,state.floorIdx,state.siteIdx)}<p style="color:var(--muted);font-size:12px;margin:10px 2px 0">Schematic layout, not exact geometry. Stairs and hatch spots are approximate.${map.partial?" Room list partial. Rooms not listed here are not invented.":""}</p></div>`
+  :`<div class="playbook"><h2>Playbook: ${esc(pb.label)}</h2><p><b>Pro style recommendation.</b> Operator bans and patches can change it. Verify placements in game. Confidence: ${esc(pb.conf)}</p>
+   <h3>DEFENSE SETUP</h3><p>${esc(pb.defense)}</p>
+   <div class="ops"><div><h3>ATTACKERS, 5</h3>${pb.attackers.map(o=>`<div class="op"><b>${esc(o.name)}</b><span class="role">${esc(o.role)}</span>${esc(o.job)}</div>`).join("")}</div>
+   <div><h3>DEFENDERS, 5</h3>${pb.defenders.map(o=>`<div class="op"><b>${esc(o.name)}</b><span class="role">${esc(o.role)}</span>${esc(o.job)}</div>`).join("")}</div></div>
+   <h3>ATTACK EXECUTE, IN ORDER</h3><ol>${pb.execute.map(e=>`<li>${esc(e)}</li>`).join("")}</ol>
+   <h3>DEFENSE PREP, IN ORDER</h3><ol>${pb.prep.map(e=>`<li>${esc(e)}</li>`).join("")}</ol>
+   <h3>COMMON MISTAKES</h3><ul>${pb.mistakes.map(e=>`<li>${esc(e)}</li>`).join("")}</ul>
+   <h3>SOLO QUEUE</h3><p>${esc(pb.solo.principle)}</p><p><b>Defense:</b> ${pb.solo.defense.map(esc).join(" ")}</p><p><b>Attack:</b> ${pb.solo.attack.map(esc).join(" ")}</p>
+   <p style="font-size:12px">Sources: Ubisoft map rotation, October 15 2026; SiteRep and R6 Prep setup patterns; SiegeGG competitive site data. No pro pick rates are claimed.</p></div>`;
+ el.innerHTML=`<div class="view-head"><h1>${esc(map.name)}${map.partial?'<span class="flag">ROOM LIST PARTIAL</span>':""}</h1><p>${esc(map.loc)} · ${esc(map.size)} · ${esc(map.diff)} · ${esc(map.lean)} · ${esc(map.pool)} pool. ${map.flag?esc(map.flag):""}</p></div>
+ <div class="toolbar"><div class="seg" role="group" aria-label="Floors">${floorBtns}</div>
+ <div class="seg" role="group" aria-label="View"><button data-view="schematic" aria-pressed="${state.view==="schematic"}">Schematic</button><button data-view="playbook" aria-pressed="${state.view==="playbook"}">Playbook</button></div>
+ <a class="btn small" href="${TOPVIEWS[map.id]}" target="_blank" rel="noopener">View real top view</a></div>
+ <div class="toolbar" aria-label="Bomb sites">${siteBtns}</div>
+ ${main}
+ <div class="playbook"><h2>Site checklist: ${esc(pb.label)}</h2><p>${done} of 6 done. Saved on this device.</p><div class="checklist">${checkItems.map((c,i)=>`<label><input type="checkbox" data-check="${i}" ${checks[i]?"checked":""}> <span>${esc(c)}</span></label>`).join("")}</div></div>`;
+ el.querySelectorAll("[data-floor]").forEach(b=>b.addEventListener("click",()=>{state.floorIdx=+b.dataset.floor;renderMap();renderInspector()}));
+ el.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>{state.view=b.dataset.view;renderMap()}));
+ el.querySelectorAll("[data-site]").forEach(b=>b.addEventListener("click",()=>{state.siteIdx=+b.dataset.site;const s=map.sites[state.siteIdx];state.floorIdx=roomFloor(map,s[0]);state.view="playbook";renderMap();renderInspector()}));
+ el.querySelectorAll(".room").forEach(g=>{const act=()=>{state.room=g.dataset.room;renderMap();renderInspector()};g.addEventListener("click",act);g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();act()}})});
+ el.querySelectorAll("[data-check]").forEach(c=>c.addEventListener("change",()=>{const arr=checklist[key]||[false,false,false,false,false,false];arr[+c.dataset.check]=c.checked;checklist[key]=arr;saveCheck();renderInspector()}));
+ renderInspector();
+}
+function renderInspector(){
+ const ins=$("inspector");const map=curMap();
+ const roomName=state.room;const floor=map.floors[state.floorIdx];
+ const room=roomName?floor.rooms.find(r=>r.name===roomName):null;
+ const siteIdx=roomName?siteOf(map,roomName):state.siteIdx;
+ const pb=playbook(map,state.siteIdx);
+ const checks=checklist[pb.id]||[];const done=checks.filter(Boolean).length;
+ ins.innerHTML=`<h2>Inspector</h2>
+ ${room?`<p><b>${esc(room.name)}</b></p><p>Floor ${esc(floor.label)} · ${esc(map.name)}.${siteIdx>=0?` Bomb site room, paired with <b>${esc(map.sites[siteIdx][0]===room.name?map.sites[siteIdx][1]:map.sites[siteIdx][0])}</b>. Learn this callout first.`:" Not an objective room. Use it for rotates, info, and flank control."}</p>`:`<p>Click a room in the schematic to inspect it. Site rooms are highlighted.</p>`}
+ <h3>SELECTED SITE</h3><p><b>${esc(pb.label)}</b> · ${esc(pb.floor)}</p><p>Checklist: ${done} of 6 done.</p>
+ <h3>TOP VIEW</h3><p><a href="${TOPVIEWS[map.id]}" target="_blank" rel="noopener">View real top view</a> on the picture page. Opens in a new tab.</p>
+ <h3>MAP FACTS</h3><ul><li>Pool: <b>${esc(map.pool)}</b></li><li>Size: <b>${esc(map.size)}</b></li><li>Difficulty: <b>${esc(map.diff)}</b></li><li>Lean: <b>${esc(map.lean)}</b></li>${map.partial?`<li><b>Room list partial.</b> Do not treat missing rooms as absent in game.</li>`:""}</ul>
+ <h3>UNCERTAINTY</h3><p>Schematic layout, not exact geometry. Stairs and hatch spots are approximate. Playbooks are pro style recommendations, not verified exact pro match setups.</p>`;
+}
+let quiz={q:null,score:0,answered:false,best:+(localStorage.getItem("bv.maps.quiz.best.v1")||0)};
+function newQuiz(){
+ const rooms=allRooms().filter(r=>r.room.length>3);
+ const type=Math.random()<0.5?"map":"pair";
+ if(type==="map"){
+  const target=rooms[Math.floor(Math.random()*rooms.length)];
+  const opts=[target.map.name];while(opts.length<4){const m=CORE[Math.floor(Math.random()*CORE.length)].name;if(!opts.includes(m))opts.push(m)}
+  opts.sort(()=>Math.random()-0.5);
+  quiz.q={type,prompt:"Which map has the room called "+target.room+"?",answer:target.map.name,opts,go:"#\/map\/"+target.map.id};
+ }else{
+  const map=CORE[Math.floor(Math.random()*CORE.length)];const s=map.sites[Math.floor(Math.random()*map.sites.length)];
+  const opts=[s[1]];while(opts.length<4){const cand=map.floors.flatMap(f=>f.rooms.map(r=>r.name)).filter(n=>n!==s[0]&&n!==s[1]);const c=cand[Math.floor(Math.random()*cand.length)];if(c&&!opts.includes(c))opts.push(c)}
+  opts.sort(()=>Math.random()-0.5);
+  quiz.q={type,prompt:"On "+map.name+", "+s[0]+" is paired with which room as a bomb site?",answer:s[1],opts,go:"#\/map\/"+map.id};
+ }
+ quiz.answered=false;renderLearn();
+}
+function renderLearn(){
+ const el=$("view-learn");const q=quiz.q;
+ $("inspector").innerHTML=`<h2>Inspector</h2><p>Learn mode tests room callouts and bomb site pairings from the 12 core maps.</p><h3>HOW SCORING WORKS</h3><p>Each correct answer adds 1. A wrong answer ends the streak but you can keep going. Your best score is saved on this device.</p><h3>TIP</h3><p>Study a map schematic first, then quiz. Site rooms are the callouts that matter most.</p>`;
+ if(!q){el.innerHTML=`<div class="view-head"><h1>Learn mode</h1><p>Two quiz types: name the map from a room callout, or name the paired bomb site room. Best score is saved on this device.</p></div><div class="quiz"><p>Best score: <b>${quiz.best}</b> · Score: <b>${quiz.score}</b></p><button class="btn primary" id="startQuiz">Start quiz</button></div>`;$("startQuiz").addEventListener("click",newQuiz);return}
+ el.innerHTML=`<div class="view-head"><h1>Learn mode</h1><p>Score: <b>${quiz.score}</b> · Best: <b>${quiz.best}</b></p></div>
+ <div class="quiz"><p style="color:var(--muted);font-size:12px">${q.type==="map"?"NAME THE MAP":"NAME THE PAIRED ROOM"}</p><p class="q">${esc(q.prompt)}</p>
+ <div class="quizopts">${q.opts.map(o=>`<button data-opt="${esc(o)}">${esc(o)}</button>`).join("")}</div>
+ <p id="quizFb" style="margin-top:12px;color:var(--muted)"></p>
+ <div style="display:flex;gap:8px;margin-top:12px"><button class="btn" id="nextQuiz" disabled>Next question</button><a class="btn" href="${q.go}">Open the map</a></div></div>`;
+ el.querySelectorAll("[data-opt]").forEach(b=>b.addEventListener("click",()=>{
+  if(quiz.answered)return;quiz.answered=true;
+  const ok=b.dataset.opt===q.answer;
+  b.classList.add(ok?"correct":"wrong");
+  el.querySelectorAll("[data-opt]").forEach(x=>{if(x.dataset.opt===q.answer)x.classList.add("correct")});
+  if(ok){quiz.score++;if(quiz.score>quiz.best){quiz.best=quiz.score;localStorage.setItem("bv.maps.quiz.best.v1",String(quiz.best))}}
+  $("quizFb").textContent=ok?"Correct.":"Not quite. The answer is "+q.answer+".";
+  $("nextQuiz").disabled=false;renderLearnHeader();
+ }));
+ $("nextQuiz").addEventListener("click",newQuiz);
+}
+function renderLearnHeader(){const h=document.querySelector("#view-learn .view-head p");if(h)h.innerHTML=`Score: <b>${quiz.score}</b> · Best: <b>${quiz.best}</b>`}
+function route(){
+ const h=location.hash||"#/maps";
+ document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+ document.querySelectorAll("[data-nav]").forEach(b=>b.setAttribute("aria-current",String((h.startsWith("#/learn")&&b.dataset.nav==="learn")||(h.startsWith("#/map")&&b.dataset.nav==="maps")||(h==="#/maps"&&b.dataset.nav==="maps"))));
+ if(h.startsWith("#/learn")){$("view-learn").classList.add("active");renderLearn();return}
+ if(h.startsWith("#/map/")){const id=h.split("/")[2];const m=CORE.find(x=>x.id===id);if(m){state.mapId=id;const fl=roomFloor(m,m.sites[state.siteIdx]?m.sites[state.siteIdx][0]:m.sites[0][0]);if(!m.floors[state.floorIdx])state.floorIdx=0;$("view-map").classList.add("active");renderMap();renderRail();return}}
+ $("view-maps").classList.add("active");renderMaps();renderRail();
+}
+document.querySelectorAll("[data-nav]").forEach(b=>b.addEventListener("click",()=>{location.hash=b.dataset.nav==="learn"?"#/learn":"#/maps"}));
+document.querySelectorAll(".fbtn").forEach(b=>b.addEventListener("click",()=>{state.filter=b.dataset.filter;renderRail();if(location.hash==="#/maps"||!location.hash)renderMaps()}));
+$("railSearch").addEventListener("input",e=>{state.search=e.target.value;renderRail();showSearch()});
+function showSearch(){
+ const q=state.search.trim().toLowerCase();let box=document.querySelector(".searchres");
+ if(!q){if(box)box.remove();return}
+ const res=allRooms().filter(r=>r.room.toLowerCase().includes(q)).slice(0,12);
+ if(!box){box=document.createElement("div");box.className="searchres";document.querySelector(".view.active").prepend(box)}
+ box.innerHTML=res.map(r=>`<button data-go="${r.map.id}" data-fi="${r.fi}" data-room="${esc(r.room)}"><span>${esc(r.room)}</span><span style="color:var(--muted)">${esc(r.map.name)} · ${esc(r.floor)}</span></button>`).join("")||`<p style="color:var(--muted);padding:8px">No rooms found.</p>`;
+ box.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>{state.mapId=b.dataset.go;state.floorIdx=+b.dataset.fi;state.room=b.dataset.room;location.hash="#/map/"+b.dataset.go;route();renderInspector()}));
+}
+$("inspToggle").addEventListener("click",()=>{$("inspector").classList.toggle("open")});
+window.addEventListener("hashchange",route);
+renderRail();route();
+
+
+
+</script>
+</body>
+</html>
