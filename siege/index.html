@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#080D11">
+<meta name="description" content="BREACH / VECTOR: an unofficial fan-made tactical operations suite inspired by Rainbow Six Siege. Build squads, plan on a blueprint, train aim.">
+<title>BREACH / VECTOR: Tactical Operations Suite</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23080D11'/%3E%3Cpath d='M6 6 L26 16 L6 26 Z' fill='%23D6F36A'/%3E%3C/svg%3E">
+<style>
+/* BREACH / VECTOR v1.0 | tokens, shell, shared controls */
+:root{
+  --bg:#080D11; --surface:#10181E; --surface-raised:#17222A; --surface-hover:#1C2A32;
+  --border:#2A3942; --text:#EDF3F2; --muted:#91A3AB; --faint:#60737D;
+  --accent:#D6F36A; --attack:#58B6DE; --defense:#E5A16B; --danger:#EA7777; --success:#73CFA9;
+  --blueprint:#12242B;
+  --font-ui:Inter,"Segoe UI",system-ui,-apple-system,sans-serif;
+  --font-mono:"SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --font-display:"Arial Narrow","Helvetica Neue",Arial,sans-serif;
+  --rail:216px; --insp:300px; --head:58px; --foot:28px;
+}
+*{box-sizing:border-box}
+html,body{overflow-x:clip}
+html{height:100%}
+body{margin:0;height:100dvh;background:var(--bg);color:var(--text);font-family:var(--font-ui);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+::selection{background:var(--accent);color:#080D11}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#2A3942;border:2px solid var(--bg)}
+::-webkit-scrollbar-track{background:var(--bg)}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus{outline:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+a{color:var(--accent)}
+.skip{position:absolute;left:-9999px;top:0;background:var(--accent);color:#080D11;padding:10px 14px;z-index:200;font-weight:700}
+.skip:focus{left:8px;top:8px}
+.app{display:grid;grid-template-rows:var(--head) 1fr var(--foot);height:100dvh}
+header.top{display:flex;align-items:center;gap:14px;padding:0 14px;background:var(--surface);border-bottom:1px solid var(--border);min-width:0}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;text-decoration:none;color:var(--text)}
+.brand svg{flex:none}
+.brand b{font-family:var(--font-display);font-size:20px;letter-spacing:.06em;font-weight:700;white-space:nowrap}
+.brand span{color:var(--muted);font-size:12px;white-space:nowrap}
+.top-meta{margin-left:auto;display:flex;gap:14px;align-items:center;font-family:var(--font-mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.top-meta b{color:var(--text);font-weight:600}
+.shell{display:grid;grid-template-columns:var(--rail) minmax(0,1fr) var(--insp);min-height:0}
+nav.rail{background:var(--surface);border-right:1px solid var(--border);padding:12px 10px;display:flex;flex-direction:column;gap:6px;overflow:auto}
+.navbtn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:transparent;border:1px solid transparent;padding:11px 10px;color:var(--muted);font-weight:600;font-size:13px}
+.navbtn svg{flex:none}
+.navbtn:hover{background:var(--surface-hover);color:var(--text)}
+.navbtn[aria-current="page"]{background:var(--surface-raised);color:var(--text);border-color:var(--border);box-shadow:inset 3px 0 0 var(--accent)}
+.navbtn small{display:block;font-family:var(--font-mono);font-size:10px;color:var(--faint);font-weight:400}
+.rail-note{margin-top:auto;font-size:11px;color:var(--faint);padding:8px;line-height:1.5}
+main{min-width:0;min-height:0;overflow:auto;background:var(--bg)}
+.view{display:none;min-height:100%}
+.view.active{display:block}
+.view-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;padding:18px 20px 12px;flex-wrap:wrap}
+.view-head h1{font-family:var(--font-display);font-size:28px;line-height:1;margin:0;letter-spacing:.03em;text-wrap:balance}
+.view-head p{margin:6px 0 0;color:var(--muted);max-width:65ch;font-size:13px}
+.view-head .score-chip{text-align:right}
+.score-big{font-size:32px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.score-big small{font-size:12px;color:var(--muted);font-weight:400}
+aside.insp{background:var(--surface);border-left:1px solid var(--border);overflow:auto;padding:14px;min-height:0}
+aside.insp h2{font-size:15px;margin:2px 0 8px}
+aside.insp h3{font-size:12px;margin:16px 0 6px;color:var(--muted);font-family:var(--font-mono);font-weight:600;letter-spacing:.08em}
+aside.insp p,aside.insp li{font-size:13px;color:var(--muted)}
+aside.insp p b,aside.insp li b{color:var(--text)}
+footer.foot{display:flex;align-items:center;gap:12px;padding:0 14px;background:var(--surface);border-top:1px solid var(--border);font-family:var(--font-mono);font-size:11px;color:var(--faint);white-space:nowrap;overflow:hidden}
+footer.foot .ok{color:var(--success)}
+.panel{background:var(--surface);border:1px solid var(--border)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;background:var(--surface-raised);border:1px solid var(--border);color:var(--text);padding:9px 13px;font-weight:600;font-size:13px;min-height:40px;transition:transform 120ms ease-out,background 120ms ease-out,border-color 120ms ease-out}
+.btn:hover{background:var(--surface-hover)}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#080D11}
+.btn.primary:hover{background:#e2f78f}
+.btn.danger{color:var(--danger);border-color:#4a2b2b}
+.btn.small{min-height:34px;padding:6px 10px;font-size:12px}
+.btn.ghost{background:transparent}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--surface-raised);padding:4px 8px;font-family:var(--font-mono);font-size:11px;color:var(--muted)}
+.chip.atk{color:var(--attack);border-color:#274b5c}
+.chip.def{color:var(--defense);border-color:#5c3f27}
+.chip.warn{color:var(--danger);border-color:#4a2b2b}
+.chip.ok{color:var(--success)}
+input[type="search"],input[type="text"],select{background:#0B1116;border:1px solid var(--border);padding:9px 10px;min-height:40px;width:100%}
+input[type="search"]:focus,input[type="text"]:focus,select:focus{border-color:var(--accent)}
+.fld{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+.fld-row{display:flex;gap:8px;flex-wrap:wrap}
+.fld-row>*{flex:1 1 140px}
+.warn-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.warn-list li{border:1px solid #4a2b2b;background:#171315;padding:8px 10px;font-size:12px;color:var(--text)}
+.warn-list li button{margin-top:6px}
+.score-row{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px}
+.score-row b{font-variant-numeric:tabular-nums}
+.score-row span{color:var(--muted)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+dialog{border:1px solid var(--border);background:var(--surface-raised);color:var(--text);padding:20px;max-width:420px;width:calc(100% - 32px)}
+dialog::backdrop{background:rgba(0,0,0,.65)}
+dialog h2{margin:0 0 8px;font-size:18px}
+dialog p{color:var(--muted);font-size:13px}
+dialog .row{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.toast{position:fixed;left:50%;bottom:44px;transform:translateX(-50%);background:var(--surface-raised);border:1px solid var(--accent);color:var(--text);padding:10px 14px;font-size:13px;z-index:120;display:none;max-width:min(520px,92vw);text-align:center}
+.toast.show{display:block}
+/* Operator Lab */
+.lab{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:0;border-top:1px solid var(--border)}
+.lab-col{padding:16px 20px;min-width:0}
+.lab-col + .lab-col{border-left:1px solid var(--border)}
+.roster{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:8px;margin-top:10px}
+.opcard{display:flex;gap:10px;align-items:center;text-align:left;background:var(--surface);border:1px solid var(--border);padding:9px;min-height:76px;transition:background 120ms ease-out,border-color 120ms ease-out}
+.opcard:hover{background:var(--surface-hover)}
+.opcard[aria-pressed="true"]{border-color:var(--accent);background:var(--surface-raised)}
+.opcard .face{flex:none;width:56px;height:56px;background:var(--blueprint);border:1px solid var(--border);display:grid;place-items:center;overflow:hidden}
+.opcard .nm{font-weight:700;font-size:13px;letter-spacing:.04em}
+.opcard .rl{font-size:11px;color:var(--muted)}
+.opcard .st{font-family:var(--font-mono);font-size:11px;color:var(--faint);white-space:nowrap}
+.opcard .st b{color:var(--text)}
+.slots{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px}
+.slot{border:1px dashed var(--border);background:#0B1116;min-height:104px;padding:8px;text-align:left;display:flex;flex-direction:column;gap:4px}
+.slot.filled{border-style:solid;border-color:var(--border)}
+.slot .num{font-family:var(--font-mono);font-size:10px;color:var(--faint)}
+.slot .nm{font-weight:700;font-size:12px}
+.slot .gd{font-size:11px;color:var(--muted)}
+.slot select{margin-top:auto;min-height:34px;padding:5px 6px;font-size:12px}
+.seg{display:inline-flex;border:1px solid var(--border)}
+.seg button{background:transparent;border:0;padding:9px 13px;font-weight:600;font-size:12px;color:var(--muted);min-height:40px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#080D11}
+/* Planner */
+.plan-tools{display:flex;gap:6px;flex-wrap:wrap;padding:12px 20px;border-top:1px solid var(--border);align-items:center}
+.toolbtn{border:1px solid var(--border);background:var(--surface);padding:8px 11px;font-weight:600;font-size:12px;min-height:40px}
+.toolbtn[aria-pressed="true"]{background:var(--accent);color:#080D11;border-color:var(--accent)}
+.plan-wrap{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:0;border-top:1px solid var(--border)}
+.mapbox{background:var(--blueprint);overflow:auto;min-height:420px;touch-action:none;position:relative}
+.mapbox svg{display:block;width:100%;height:auto;min-width:560px}
+.objlist{border-left:1px solid var(--border);padding:14px;overflow:auto;max-height:560px}
+.objlist ul{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
+.objlist li{display:flex;gap:6px;align-items:center;border:1px solid var(--border);padding:7px 8px;font-size:12px;background:var(--surface)}
+.objlist li b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Aim trainer */
+.range-wrap{padding:0 20px 16px}
+.hud{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--border);background:var(--surface)}
+.hud div{padding:10px 12px;border-right:1px solid var(--border)}
+.hud div:last-child{border-right:0}
+.hud .k{font-family:var(--font-mono);font-size:10px;color:var(--faint);letter-spacing:.08em}
+.hud .v{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.15}
+#rangeCanvas{display:block;width:100%;height:420px;background:#0A1418;border:1px solid var(--border);border-top:0;touch-action:none;cursor:crosshair}
+.range-ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-top:12px}
+.result{position:relative;border:1px solid var(--accent);background:var(--surface-raised);padding:16px;margin-top:12px}
+.result h2{margin:0 0 6px}
+.result dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:10px 0}
+.result dt{font-family:var(--font-mono);font-size:10px;color:var(--muted)}
+.result dd{margin:0;font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.bottomnav{display:none}
+.insp-close{display:none}
+@media (max-width:1100px){
+  .shell{grid-template-columns:var(--rail) minmax(0,1fr)}
+  aside.insp{position:fixed;right:0;top:var(--head);bottom:var(--foot);width:min(340px,92vw);z-index:90;transform:translateX(105%);transition:transform 160ms ease-out;box-shadow:-8px 0 24px rgba(0,0,0,.4)}
+  aside.insp.open{transform:none}
+  .insp-close{display:inline-flex}
+  .lab{grid-template-columns:1fr}
+  .lab-col + .lab-col{border-left:0;border-top:1px solid var(--border)}
+  .plan-wrap{grid-template-columns:1fr}
+  .objlist{border-left:0;border-top:1px solid var(--border);max-height:none}
+}
+@media (max-width:900px){
+  .shell{grid-template-columns:minmax(0,1fr)}
+  nav.rail{display:none}
+  .bottomnav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:100;background:var(--surface);border-top:1px solid var(--border);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+  .bottomnav a{flex:1;text-align:center;text-decoration:none;color:var(--muted);font-weight:700;font-size:12px;padding:10px 4px;min-height:44px;display:grid;place-items:center}
+  .bottomnav a[aria-current="page"]{color:var(--accent)}
+  body{padding-bottom:58px}
+  .app{height:auto;min-height:100dvh}
+  footer.foot{display:none}
+  .top-meta .hide-m{display:none}
+  .brand span{display:none}
+  .top-meta{display:none}
+  .opcard .st{font-size:10px}
+  .opcard{padding:7px}
+  .slots{grid-template-columns:repeat(5,minmax(120px,1fr));overflow-x:auto}
+  .hud{grid-template-columns:repeat(3,1fr)}
+  .hud div:nth-child(3){border-right:0}
+  .hud div:nth-child(n+4){border-top:1px solid var(--border)}
+  #range{height:340px}
+  .view-head h1{font-size:24px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition:none !important;animation:none !important;scroll-behavior:auto !important}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to workspace</a>
+<div class="app">
+<header class="top">
+  <a class="brand" href="#operators" data-nav="operators" aria-label="BREACH / VECTOR home">
+    <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" fill="#10181E" stroke="#2A3942"/><path d="M6 6 L26 16 L6 26 Z" fill="#D6F36A"/></svg>
+    <b>BREACH / VECTOR</b><span>Tactical Operations Suite</span>
+  </a>
+  <div class="top-meta">
+    <span class="hide-m">Unofficial fan project</span>
+    <span>Session <b id="clock">00:00</b></span>
+    <span id="saveState">Local data ready</span>
+  </div>
+</header>
+<div class="shell">
+<nav class="rail" aria-label="Modules">
+  <button class="navbtn" data-nav="operators" aria-current="page"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="6" r="3.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 15c1-3 3.6-4.4 6.5-4.4S14.5 12 15.5 15" fill="none" stroke="currentColor" stroke-width="1.6"/></svg><span>Operators<small>Squad lab, 16 profiles</small></span></button>
+  <button class="navbtn" data-nav="planner"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect x="2" y="2" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9 2v14M2 9h14" stroke="currentColor" stroke-width="1.2"/></svg><span>Map Board<small>Depot 07 planner</small></span></button>
+  <button class="navbtn" data-nav="range"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="9" r="2.2" fill="currentColor"/></svg><span>Aim Range<small>45 second trainer</small></span></button>
+  <p class="rail-note">Every score on this console is calculated from what you do here. Nothing is simulated. Progress saves in this browser only.</p>
+  <button class="btn small ghost" id="inspectorToggle" type="button">Open inspector</button>
+</nav>
+<main id="main" tabindex="-1">
+<!-- OPERATORS -->
+<section class="view active" id="view-operators" aria-labelledby="h-operators">
+  <div class="view-head">
+    <div><h1 id="h-operators">Operator Lab</h1><p>Build a squad of five. The score, synergies, and warnings update live as you change operators, gadgets, and the scenario.</p></div>
+    <div class="score-chip"><div class="score-big"><span id="labScore">0</span><small> / 100</small></div><div class="chip" id="labStatus">Incomplete squad</div></div>
+  </div>
+  <div style="padding:0 20px 12px;display:flex;gap:10px;flex-wrap:wrap;align-items:end">
+    <div><span class="fld">Side</span><div class="seg" role="group" aria-label="Side"><button type="button" id="sideAttack" aria-pressed="true">Attack</button><button type="button" id="sideDefense" aria-pressed="false">Defense</button></div></div>
+    <div><label class="fld" for="scenarioSel">Scenario</label><select id="scenarioSel"></select></div>
+    <div style="flex:1 1 180px"><label class="fld" for="opSearch">Search roster</label><input type="search" id="opSearch" placeholder="Callsign, role, or gadget" autocomplete="off"></div>
+    <div><label class="fld" for="roleFilter">Role</label><select id="roleFilter"><option value="">All roles</option></select></div>
+    <div><label class="fld" for="speedFilter">Speed</label><select id="speedFilter"><option value="">Any speed</option><option value="3">Fast, 3</option><option value="2">Balanced, 2</option><option value="1">Heavy, 1</option></select></div>
+  </div>
+  <div class="lab">
+    <div class="lab-col">
+      <h2 style="margin:0;font-size:16px">Roster <span style="color:var(--muted);font-weight:400;font-size:13px" id="rosterCount"></span></h2>
+      <div class="roster" id="roster" role="list"></div>
+      <p id="rosterEmpty" style="color:var(--muted);display:none">No operators match those filters. Clear the search or change a filter.</p>
+    </div>
+    <div class="lab-col">
+      <h2 style="margin:0;font-size:16px">Squad <span style="color:var(--muted);font-weight:400;font-size:13px" id="squadCount"></span></h2>
+      <div class="slots" id="slots"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+        <button class="btn small" id="resetSquad" type="button">Reset squad</button>
+        <button class="btn small" id="exportSquad" type="button">Export squad</button>
+        <button class="btn small primary" id="sendPlanner" type="button">Send to planner</button>
+      </div>
+      <h3 style="font-family:var(--font-mono);font-size:11px;color:var(--muted);letter-spacing:.08em;margin:18px 0 4px">SCORE BREAKDOWN</h3>
+      <div id="scoreBreakdown"></div>
+      <h3 style="font-family:var(--font-mono);font-size:11px;color:var(--muted);letter-spacing:.08em;margin:18px 0 6px">WARNINGS</h3>
+      <ul class="warn-list" id="warnList"></ul>
+      <p id="noWarn" style="color:var(--muted);font-size:13px">No warnings. The squad covers the selected scenario basics.</p>
+    </div>
+  </div>
+</section>
+<!-- PLANNER -->
+<section class="view" id="view-planner" aria-labelledby="h-planner">
+  <div class="view-head">
+    <div><h1 id="h-planner">Map Board: Depot 07</h1><p>Place your squad, gadgets, and cameras on two floors. Draw routes, check the plan score, and save named operations. Routes that cross a solid wall are flagged, not fixed for you.</p></div>
+    <div class="score-chip"><div class="score-big"><span id="planScore">0</span><small> / 100</small></div><div class="chip" id="planStatus">Plan completeness</div></div>
+  </div>
+  <div class="plan-tools" role="toolbar" aria-label="Planner tools">
+    <button class="toolbtn" data-tool="select" aria-pressed="true" type="button">Select</button>
+    <button class="toolbtn" data-tool="attack" aria-pressed="false" type="button">Attack</button>
+    <button class="toolbtn" data-tool="defense" aria-pressed="false" type="button">Defense</button>
+    <button class="toolbtn" data-tool="gadget" aria-pressed="false" type="button">Gadget</button>
+    <button class="toolbtn" data-tool="camera" aria-pressed="false" type="button">Camera</button>
+    <button class="toolbtn" data-tool="route" aria-pressed="false" type="button">Route</button>
+    <button class="toolbtn" data-tool="erase" aria-pressed="false" type="button">Erase</button>
+    <span style="flex:1"></span>
+    <button class="btn small" id="undoBtn" type="button">Undo</button>
+    <button class="btn small" id="redoBtn" type="button">Redo</button>
+    <button class="btn small" id="finishRouteBtn" type="button" disabled>Finish route</button>
+    <button class="btn small" id="cancelRouteBtn" type="button" disabled>Cancel drawing</button>
+  </div>
+  <div style="padding:0 20px 10px;display:flex;gap:8px;flex-wrap:wrap;align-items:end">
+    <div><label class="fld" for="floorSel">Floor</label><select id="floorSel" style="width:auto"><option value="1">Floor 01, Ground</option><option value="2">Floor 02, Upper</option></select></div>
+    <div><label class="fld" for="objectiveSel">Objective</label><select id="objectiveSel" style="width:auto"></select></div>
+    <div><label class="fld" for="gadgetSel">Gadget type</label><select id="gadgetSel" style="width:auto"><option value="scan">Scan Node, intel</option><option value="barrier">Barrier Marker, protection</option><option value="jammer">Signal Jammer, denial</option><option value="cache">Support Cache, sustain</option></select></div>
+    <div><span class="fld">Zoom</span><div class="fld-row" style="flex-wrap:nowrap"><button class="btn small" id="zoomOut" type="button" aria-label="Zoom out">−</button><button class="btn small" id="zoomFit" type="button">Fit</button><button class="btn small" id="zoomIn" type="button" aria-label="Zoom in">+</button><span class="chip" id="zoomLabel">100%</span></div></div>
+    <div><label class="fld" for="slotSel">Save slot</label><select id="slotSel" style="width:auto"><option value="alpha">Operation Alpha</option><option value="bravo">Operation Bravo</option><option value="charlie">Operation Charlie</option></select></div>
+    <button class="btn small" id="savePlanBtn" type="button">Save plan</button>
+    <button class="btn small" id="loadPlanBtn" type="button">Load plan</button>
+    <button class="btn small" id="newBoardBtn" type="button">New board</button>
+    <button class="btn small danger" id="clearAllBtn" type="button">Clear all</button>
+    <span class="chip" id="draftState">Draft saved</span>
+  </div>
+  <div class="plan-wrap">
+    <div class="mapbox" id="mapbox">
+      <svg id="mapSvg" viewBox="0 0 700 520" role="application" aria-label="Depot 07 blueprint. Use the object list below the map to place and edit objects without pointer interaction." preserveAspectRatio="xMidYMid meet"></svg>
+      <p style="padding:8px 12px;color:var(--muted);font-size:12px;margin:0">Click the map with a placement tool to add an object. Drag a placed object to move it. Arrow keys nudge a selected object. Shift plus arrows moves farther.</p>
+    </div>
+    <div class="objlist">
+      <h2 style="margin:0;font-size:15px">Objects and routes</h2>
+      <p style="color:var(--muted);font-size:12px;margin:6px 0 0">This list works without the map. Select an item to edit it in the inspector.</p>
+      <div id="paletteBox"></div>
+      <ul id="objList"></ul>
+      <h3 style="font-family:var(--font-mono);font-size:11px;color:var(--muted);letter-spacing:.08em;margin:16px 0 4px">PLAN BREAKDOWN</h3>
+      <div id="planBreakdown"></div>
+      <ul class="warn-list" id="planWarn" style="margin-top:10px"></ul>
+    </div>
+  </div>
+</section>
+<!-- RANGE -->
+<section class="view" id="view-range" aria-labelledby="h-range">
+  <div class="view-head">
+    <div><h1 id="h-range">Aim Range</h1><p>Abstract targets only, no characters. Hit the small upper ring for precision points. A miss costs points and resets your combo.</p></div>
+    <div class="score-chip"><div class="score-big"><span id="bestLine">Best: none</span></div><div class="chip">45 second rounds</div></div>
+  </div>
+  <div class="range-wrap">
+    <div class="hud" aria-live="off">
+      <div><div class="k">Time left</div><div class="v" id="hudTime">45.0</div></div>
+      <div><div class="k">Score</div><div class="v" id="hudScore">0</div></div>
+      <div><div class="k">Accuracy</div><div class="v" id="hudAcc">-</div></div>
+      <div><div class="k">Avg reaction</div><div class="v" id="hudReact">-</div></div>
+      <div><div class="k">Combo</div><div class="v" id="hudCombo">0</div></div>
+    </div>
+    <canvas id="rangeCanvas" width="900" height="420" aria-label="Aim range canvas. Targets appear and move. Click or tap a target to score."></canvas>
+    <div class="range-ctl">
+      <div><label class="fld" for="diffSel">Difficulty</label><select id="diffSel" style="width:auto"><option value="rookie">Rookie</option><option value="standard" selected>Standard</option><option value="elite">Elite</option></select></div>
+      <button class="btn primary" id="startAim" type="button">Start session</button>
+      <button class="btn" id="pauseAim" type="button" disabled>Pause</button>
+      <button class="btn" id="resumeAim" type="button" disabled>Resume</button>
+      <p style="margin:0;color:var(--muted);font-size:12px;flex:1 1 220px" id="aimHint">Precision ring: +150. Body: +75. Empty click: −25. Five hits in a row: +25 bonus. Escaped targets reset the combo.</p>
+    </div>
+    <div id="resultBox"></div>
+  </div>
+</section>
+</main>
+<aside class="insp" id="inspector" aria-label="Inspector">
+  <button class="btn small insp-close" id="inspClose" type="button">Close inspector</button>
+  <div id="inspBody"></div>
+</aside>
+</div>
+<footer class="foot"><span>BREACH / VECTOR v1</span><span class="ok" id="footStatus">System ready</span><span style="margin-left:auto">Unofficial fan project. Not affiliated with Ubisoft. Saves stay in this browser.</span></footer>
+</div>
+<nav class="bottomnav" aria-label="Modules mobile">
+  <a href="#operators" data-nav="operators" aria-current="page">Operators</a>
+  <a href="#planner" data-nav="planner">Map Board</a>
+  <a href="#range" data-nav="range">Aim Range</a>
+</nav>
+<dialog id="confirmDlg"><h2 id="confirmTitle">Confirm</h2><p id="confirmText"></p><div class="row"><button class="btn" id="confirmNo" type="button">Cancel</button><button class="btn primary" id="confirmYes" type="button">Confirm</button></div></dialog>
+<div class="toast" id="toast" role="status"></div>
+<div class="sr" aria-live="polite" id="live"></div>
+<script>
+"use strict";
+/* ================= DATA ================= */
+const OPERATORS=[
+{id:"kestrel",side:"attack",name:"KESTREL",role:"Entry",gadget:"Survey Dart",tags:["intel","entry"],speed:3,armor:1,art:"visor",desc:"Fast first entry. The survey dart marks what is ahead before the push starts.",gadgetTags:["intel"]},
+{id:"torque",side:"attack",name:"TORQUE",role:"Breach",gadget:"Splitter Tool",tags:["breach","access"],speed:1,armor:3,art:"plate",desc:"Heavy breach work. Opens reinforced lines so the rest of the squad can follow.",gadgetTags:["access"]},
+{id:"specter",side:"attack",name:"SPECTER",role:"Intel",gadget:"Echo Pin",tags:["intel","detection"],speed:2,armor:2,art:"mask",desc:"Quiet information play. Echo pins track movement without giving the push away.",gadgetTags:["intel","detection"]},
+{id:"veil",side:"attack",name:"VEIL",role:"Control",gadget:"Frost Screen",tags:["cover","control"],speed:3,armor:1,art:"hood",desc:"Blocks sightlines on the move. Screens buy seconds for plants and revives.",gadgetTags:["cover"]},
+{id:"relay",side:"attack",name:"RELAY",role:"Support",gadget:"Signal Pack",tags:["resilience","support"],speed:2,armor:2,art:"goggles",desc:"Keeps utility online. Signal packs sustain the squad through long executes.",gadgetTags:["resilience"]},
+{id:"switch",side:"attack",name:"SWITCH",role:"Support",gadget:"Static Key",tags:["counter","access"],speed:2,armor:2,art:"cap",desc:"Disables defensive electronics. Opens routes that gadgets would otherwise close.",gadgetTags:["counter","access"]},
+{id:"atlas",side:"attack",name:"ATLAS",role:"Breach",gadget:"Forge Tool",tags:["breach","access"],speed:1,armor:3,art:"helm",desc:"Slow, armored breach anchor. Forges a second entry when the first one stalls.",gadgetTags:["access"]},
+{id:"cinder",side:"attack",name:"CINDER",role:"Control",gadget:"Decoy Beacon",tags:["disruption","control"],speed:3,armor:1,art:"scout",desc:"Forces defenders to check ghosts. Decoys pull attention away from the real push.",gadgetTags:["disruption"]},
+{id:"bastion",side:"defense",name:"BASTION",role:"Anchor",gadget:"Shield Panel",tags:["protection","anchor"],speed:1,armor:3,art:"plate",desc:"Holds the objective. Shield panels create safe angles that attackers must respect.",gadgetTags:["protection"]},
+{id:"latch",side:"defense",name:"LATCH",role:"Denial",gadget:"Lock Thread",tags:["delay","denial"],speed:2,armor:2,art:"mask",desc:"Slows entries at doors and hatches. Every delay buys time for a retake.",gadgetTags:["delay"]},
+{id:"wisp",side:"defense",name:"WISP",role:"Intel",gadget:"Optic Seed",tags:["intel","detection"],speed:3,armor:1,art:"goggles",desc:"Light roam intel. Optic seeds report movement before attackers reach the site.",gadgetTags:["intel","detection"]},
+{id:"harrow",side:"defense",name:"HARROW",role:"Roam",gadget:"Ghost Beacon",tags:["disruption","roam"],speed:3,armor:1,art:"hood",desc:"Mobile pressure. Ghost beacons make attackers second guess every flank.",gadgetTags:["disruption"]},
+{id:"mender",side:"defense",name:"MENDER",role:"Support",gadget:"Patch Pod",tags:["resilience","support"],speed:2,armor:2,art:"cap",desc:"Sustains the hold. Patch pods recover the squad between pushes.",gadgetTags:["resilience"]},
+{id:"null",side:"defense",name:"NULL",role:"Denial",gadget:"Jam Shroud",tags:["counter","denial"],speed:1,armor:3,art:"helm",desc:"Kills enemy intel in a zone. Jam shrouds blind drones and sensors.",gadgetTags:["counter","delay"]},
+{id:"beacon",side:"defense",name:"BEACON",role:"Intel",gadget:"Audio Pin",tags:["intel","detection"],speed:2,armor:2,art:"visor",desc:"Listens for the push. Audio pins turn footsteps into early warning.",gadgetTags:["intel","detection"]},
+{id:"vantage",side:"defense",name:"VANTAGE",role:"Roam",gadget:"Watch Prism",tags:["intel","roam"],speed:3,armor:1,art:"scout",desc:"Wide roam vision. Watch prisms cover angles the site cannot see.",gadgetTags:["intel"]}
+];
+const SECONDARIES={
+attack:[{id:"arc",name:"Arc Probe",tags:["intel"]},{id:"shade",name:"Shade Canister",tags:["cover"]},{id:"field",name:"Field Pack",tags:["resilience"]},{id:"noise",name:"Noise Coin",tags:["disruption"]}],
+defense:[{id:"pin",name:"Pin Lens",tags:["intel"]},{id:"tile",name:"Barrier Tile",tags:["protection"]},{id:"bell",name:"Trip Bell",tags:["delay"]},{id:"foam",name:"Patch Foam",tags:["resilience"]}]
+};
+const SYNERGIES=[
+["kestrel","veil","Screened Entry"],["torque","switch","Systems Access"],["specter","cinder","Decoy Confirmation"],
+["atlas","relay","Sustained Utility"],["bastion","mender","Reinforced Hold"],["latch","wisp","Detection Delay"],
+["null","vantage","Signal Screen"],["harrow","beacon","Mobile Awareness"],["kestrel","specter","Confirmed Entry"],
+["torque","atlas","Double Breach"],["veil","cinder","Layered Control"],["bastion","latch","Locked Hold"]
+];
+const SCENARIOS={
+attack:[{id:"fortified",name:"FORTIFIED",need:["breach","counter"],label:"Needs breach and counter tech"},{id:"camera",name:"CAMERA-HEAVY",need:["intel","disruption"],label:"Needs intel and disruption"},{id:"roam",name:"FAST ROAM",need:["detection","control"],label:"Needs detection and control"}],
+defense:[{id:"rapid",name:"RAPID ENTRY",need:["delay","detection"],label:"Needs delay and detection"},{id:"signal",name:"SIGNAL-HEAVY",need:["counter","protection"],label:"Needs counter tech and protection"},{id:"hold",name:"LONG HOLD",need:["intel","resilience"],label:"Needs intel and sustain"}]
+};
+const FAMILIES={attack:["intel","access","cover","resilience"],defense:["intel","delay","protection","resilience"]};
+const GADGETS=[
+{id:"scan",name:"Scan Node",fam:"intel",desc:"Intel marker. Counts toward intelligence coverage."},
+{id:"barrier",name:"Barrier Marker",fam:"protection",desc:"Protection marker. Blocks a lane in the plan."},
+{id:"jammer",name:"Signal Jammer",fam:"denial",desc:"Denial marker. Represents jammed intel in a room."},
+{id:"cache",name:"Support Cache",fam:"resilience",desc:"Sustain marker. Represents resupply in the plan."}
+];
+const ROOMS={
+1:[{n:"Loading",x:0,y:0,w:4,h:3},{n:"Power",x:4,y:0,w:3,h:3},{n:"Stair A",x:7,y:0,w:3,h:3},{n:"Archive",x:10,y:0,w:4,h:3},{n:"Workshop",x:0,y:3,w:4,h:3},{n:"Atrium West",x:4,y:3,w:3,h:3},{n:"Atrium East",x:7,y:3,w:3,h:3},{n:"Utilities",x:10,y:3,w:4,h:3},{n:"Storage",x:0,y:6,w:4,h:4},{n:"Dispatch",x:4,y:6,w:3,h:4,obj:true},{n:"Stair B",x:7,y:6,w:3,h:4},{n:"Dock Admin",x:10,y:6,w:4,h:4}],
+2:[{n:"Observation",x:0,y:0,w:4,h:3},{n:"Comms",x:4,y:0,w:3,h:3},{n:"Stair A",x:7,y:0,w:3,h:3},{n:"Server",x:10,y:0,w:4,h:3},{n:"Gallery",x:0,y:3,w:4,h:3},{n:"Control West",x:4,y:3,w:3,h:3,obj:true},{n:"Control East",x:7,y:3,w:3,h:3},{n:"Records",x:10,y:3,w:4,h:3},{n:"Barracks",x:0,y:6,w:4,h:4},{n:"Briefing",x:4,y:6,w:3,h:4},{n:"Stair B",x:7,y:6,w:3,h:4},{n:"Equipment",x:10,y:6,w:4,h:4}]
+};
+const DOORS=[
+{x:4,y:1.5,h:false},{x:7,y:1.5,h:false},{x:10,y:1.5,h:false},{x:2,y:3,h:true},{x:5.5,y:3,h:true},{x:8.5,y:3,h:true},{x:12,y:3,h:true},
+{x:4,y:4.5,h:false},{x:7,y:4.5,h:false},{x:10,y:4.5,h:false},{x:2,y:6,h:true},{x:5.5,y:6,h:true},{x:8.5,y:6,h:true},{x:12,y:6,h:true},
+{x:4,y:7.5,h:false},{x:7,y:7.5,h:false},{x:10,y:7.5,h:false},{x:0,y:1.5,ext:true,h:false},{x:14,y:8,ext:true,h:false}
+];
+const DIFFS={
+rookie:{label:"Rookie",d:96,speed:70,life:2300,spawn:900,max:1},
+standard:{label:"Standard",d:72,speed:140,life:1600,spawn:700,max:2},
+elite:{label:"Elite",d:52,speed:220,life:1100,spawn:520,max:3}
+};
+
+/* ================= STATE + STORAGE ================= */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const store={ok:true,
+ get(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null}catch(e){this.ok=false;return null}},
+ set(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){this.ok=false;return false}}};
+const state={
+ route:"operators", faction:"attack",
+ squads:{attack:Array(5).fill(null),defense:Array(5).fill(null)},
+ secondaries:{attack:{},defense:{}},
+ scenario:{attack:"fortified",defense:"rapid"},
+ selectedOp:null, search:"", roleFilter:"", speedFilter:"",
+ planner:{floor:1,faction:"attack",objective:"Dispatch",entities:[],routes:[],tool:"select",selectedId:null,zoom:1,draftDirty:false},
+ history:[],hIndex:-1, drawing:null,
+ aim:{running:false,paused:false}
+};
+function loadPersist(){
+ const sq=store.get("bv.squads.v1");
+ if(sq&&sq.squads){state.squads=sq.squads;state.secondaries=sq.secondaries||state.secondaries;state.scenario=sq.scenario||state.scenario;}
+ const draft=store.get("bv.planner.draft.v1");
+ if(draft&&Array.isArray(draft.entities)){state.planner.entities=draft.entities;state.planner.routes=draft.routes||[];state.planner.floor=draft.floor||1;state.planner.faction=draft.faction||"attack";state.planner.objective=draft.objective||"Dispatch";}
+ if(!store.ok) toast("Local storage is blocked. Editing still works, but progress will not persist.");
+}
+function saveSquads(){store.set("bv.squads.v1",{v:1,squads:state.squads,secondaries:state.secondaries,scenario:state.scenario});markSaved();}
+function markSaved(){$("#saveState").textContent=store.ok?"Local data saved":"Storage blocked";$("#footStatus").textContent=store.ok?"System ready":"Storage blocked, editing only";}
+let draftTimer=null;
+function saveDraftSoon(){$("#draftState").textContent="Draft unsaved";state.planner.draftDirty=true;clearTimeout(draftTimer);draftTimer=setTimeout(()=>{store.set("bv.planner.draft.v1",{v:1,floor:state.planner.floor,faction:state.planner.faction,objective:state.planner.objective,entities:state.planner.entities,routes:state.planner.routes,updated:Date.now()});$("#draftState").textContent="Draft saved";state.planner.draftDirty=false;markSaved();},300);}
+function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2600);}
+function announce(msg){$("#live").textContent=msg;}
+function confirmDlg(title,text){return new Promise(res=>{const d=$("#confirmDlg");$("#confirmTitle").textContent=title;$("#confirmText").textContent=text;d.showModal();const yes=$("#confirmYes"),no=$("#confirmNo");const done=v=>{yes.onclick=no.onclick=null;d.close();res(v)};yes.onclick=()=>done(true);no.onclick=()=>done(false);d.oncancel=()=>done(false);});}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+/* Portraits: distinct silhouettes, one per art key */
+function portrait(op){
+ const c=op.side==="attack"?"#58B6DE":"#E5A16B";
+ const shapes={
+ visor:`<path d="M14 10h28l-3 18H17z" fill="#22333D"/><rect x="17" y="18" width="22" height="6" rx="3" fill="${c}"/><path d="M14 10h28l-2 6H16z" fill="#31454F"/>`,
+ plate:`<path d="M10 12h36l4 22H6z" fill="#22333D"/><rect x="13" y="17" width="30" height="5" fill="#31454F"/><rect x="18" y="24" width="20" height="7" fill="${c}" opacity=".85"/>`,
+ mask:`<path d="M16 8h24l4 26H12z" fill="#22333D"/><rect x="18" y="16" width="20" height="8" rx="2" fill="#0B1116"/><circle cx="22" cy="20" r="2" fill="${c}"/><circle cx="34" cy="20" r="2" fill="${c}"/><rect x="24" y="28" width="8" height="3" fill="#31454F"/>`,
+ hood:`<path d="M28 4c12 0 18 8 18 20v12H10V24C10 12 16 4 28 4z" fill="#31454F"/><path d="M18 14h20l-2 20H20z" fill="#22333D"/><rect x="20" y="19" width="16" height="4" fill="${c}"/>`,
+ goggles:`<circle cx="28" cy="24" r="17" fill="#22333D"/><circle cx="21" cy="22" r="6" fill="#0B1116" stroke="${c}" stroke-width="2"/><circle cx="35" cy="22" r="6" fill="#0B1116" stroke="${c}" stroke-width="2"/><path d="M14 34h28" stroke="#31454F" stroke-width="3"/>`,
+ cap:`<path d="M16 16h24l3 14H13z" fill="#22333D"/><path d="M12 16h32l6 4-6 3H14z" fill="#31454F"/><rect x="20" y="24" width="16" height="4" fill="${c}"/>`,
+ helm:`<path d="M14 26c0-11 6-18 14-18s14 7 14 18v10H14z" fill="#22333D"/><rect x="14" y="24" width="28" height="4" fill="#31454F"/><rect x="19" y="18" width="18" height="4" fill="${c}"/>`,
+ scout:`<path d="M28 8l14 8-4 20H18l-4-20z" fill="#22333D"/><path d="M28 8l14 8-3 5H17l-3-5z" fill="#31454F"/><circle cx="28" cy="24" r="4" fill="${c}"/>`
+ };
+ return `<svg width="56" height="56" viewBox="0 0 56 56" role="img" aria-label="Abstract portrait for ${esc(op.name)}">${shapes[op.art]||shapes.visor}<text x="28" y="52" text-anchor="middle" font-family="monospace" font-size="7" fill="#91A3AB">${esc(op.name.slice(0,2))}</text></svg>`;
+}
+function opById(id){return OPERATORS.find(o=>o.id===id);}
+function currentSquad(){return state.squads[state.faction];}
+function squadTags(){
+ const tags=new Set();
+ currentSquad().forEach(id=>{if(!id)return;const op=opById(id);op.tags.forEach(t=>tags.add(t));op.gadgetTags.forEach(t=>tags.add(t));
+  const sec=(state.secondaries[state.faction]||{})[id];if(sec){const s=SECONDARIES[state.faction].find(x=>x.id===sec);if(s)s.tags.forEach(t=>tags.add(t));}});
+ return tags;
+}
+function scoreSquad(){
+ const sq=currentSquad().filter(Boolean);
+ const roles=new Set(sq.map(id=>opById(id).role));
+ let roleScore=roles.size*7;
+ let syn=0;const found=[];
+ SYNERGIES.forEach(([a,b,label])=>{if(sq.includes(a)&&sq.includes(b)){syn+=5;found.push(label);}});
+ syn=Math.min(25,syn);
+ const tags=squadTags();const fams=FAMILIES[state.faction];
+ const famScore=fams.filter(f=>{if(f==="access")return tags.has("access")||tags.has("breach");if(f==="cover")return tags.has("cover")||tags.has("control");if(f==="resilience")return tags.has("resilience")||tags.has("support");return tags.has(f);}).length*5;
+ const totalSpeed=sq.reduce((a,id)=>a+opById(id).speed,0);
+ const speedScore=sq.length?Math.max(0,10-2*Math.abs(totalSpeed-10)):0;
+ const scen=SCENARIOS[state.faction].find(s=>s.id===state.scenario[state.faction]);
+ const scenScore=scen?scen.need.filter(n=>tags.has(n)).length*5:0;
+ const total=sq.length===5?roleScore+syn+famScore+speedScore+scenScore:0;
+ return {total:Math.min(100,total),roleScore,syn,famScore,speedScore,scenScore,found,totalSpeed,complete:sq.length===5,roles,tags};
+}
+function squadWarnings(){
+ const w=[];const sq=currentSquad().filter(Boolean);const tags=squadTags();
+ const scen=SCENARIOS[state.faction].find(s=>s.id===state.scenario[state.faction]);
+ if(sq.length<5)w.push({t:`Squad incomplete: ${sq.length} of 5 operators assigned.`,filter:null});
+ if(state.faction==="attack"&&sq.length&&!tags.has("breach"))w.push({t:"Missing breach capability. Add TORQUE or ATLAS, or a breach tag.",filter:"Breach"});
+ if(scen&&sq.length&&scen.need.some(n=>!tags.has(n)))w.push({t:`Scenario ${scen.name} is not fully covered. ${scen.label}.`,filter:null});
+ const roleCounts={};sq.forEach(id=>{const r=opById(id).role;roleCounts[r]=(roleCounts[r]||0)+1;});
+ Object.entries(roleCounts).forEach(([r,c])=>{if(c>=3)w.push({t:`${c} operators share the ${r} role. Consider a different role for coverage.`,filter:r});});
+ const speeds=sq.reduce((a,id)=>a+opById(id).speed,0);
+ if(sq.length===5&&speeds>=13)w.push({t:"Speed-heavy squad, low armor coverage. A heavy operator would balance the push.",filter:null});
+ const secCounts={};Object.values(state.secondaries[state.faction]||{}).forEach(s=>secCounts[s]=(secCounts[s]||0)+1);
+ Object.entries(secCounts).forEach(([s,c])=>{if(c>=2)w.push({t:`Secondary gadget limit reached for ${SECONDARIES[state.faction].find(x=>x.id===s).name}. A third copy is blocked.`,filter:null});});
+ return w;
+}
+/* ================= ROUTER ================= */
+function setRoute(route,focus=true){
+ state.route=route;
+ $$(".view").forEach(v=>v.classList.toggle("active",v.id==="view-"+route));
+ $$("[data-nav]").forEach(b=>{const on=b.dataset.nav===route;b.setAttribute("aria-current",on?"page":"false");if(b.tagName==="A"&&on)b.setAttribute("aria-current","page");});
+ if(location.hash!=="#"+route)history.replaceState(null,"","#"+route);
+ renderInspector();
+ if(route==="range")drawRangeIdle();
+ if(route==="planner")renderPlanner();
+ if(focus){const h=$("#view-"+route+" h1");if(h){h.setAttribute("tabindex","-1");h.focus({preventScroll:true});}}
+ closeInspectorOnMobile();
+}
+function closeInspectorOnMobile(){if(window.innerWidth<=1100)$("#inspector").classList.remove("open");}
+$$("[data-nav]").forEach(b=>b.addEventListener("click",e=>{e.preventDefault();setRoute(b.dataset.nav);}));
+window.addEventListener("hashchange",()=>{const r=location.hash.replace("#","");if(["operators","planner","range"].includes(r))setRoute(r,false);});
+
+/* ================= OPERATOR LAB ================= */
+function renderScenario(){
+ const sel=$("#scenarioSel");const list=SCENARIOS[state.faction];
+ sel.innerHTML=list.map(s=>`<option value="${s.id}">${s.name} : ${s.label}</option>`).join("");
+ sel.value=state.scenario[state.faction];
+ const roles=[...new Set(OPERATORS.filter(o=>o.side===state.faction).map(o=>o.role))];
+ $("#roleFilter").innerHTML=`<option value="">All roles</option>`+roles.map(r=>`<option>${r}</option>`).join("");
+ $("#roleFilter").value=state.roleFilter;
+}
+function renderRoster(){
+ const q=state.search.toLowerCase();
+ const list=OPERATORS.filter(o=>o.side===state.faction)
+  .filter(o=>!q||(o.name+" "+o.role+" "+o.gadget).toLowerCase().includes(q))
+  .filter(o=>!state.roleFilter||o.role===state.roleFilter)
+  .filter(o=>!state.speedFilter||o.speed===+state.speedFilter);
+ $("#rosterCount").textContent=`${list.length} shown`;
+ $("#rosterEmpty").style.display=list.length?"none":"block";
+ const sq=currentSquad();
+ $("#roster").innerHTML=list.map(o=>`<button type="button" class="opcard" role="listitem" data-op="${o.id}" aria-pressed="${state.selectedOp===o.id}" aria-label="${o.name}, ${o.role}, ${o.gadget}${sq.includes(o.id)?", in squad":""}">
+   <span class="face">${portrait(o)}</span>
+   <span><span class="nm">${o.name}</span><br><span class="rl">${o.role} : ${o.gadget}</span><br><span class="st">SPD <b>${o.speed}</b> / ARM <b>${o.armor}</b>${sq.includes(o.id)?" : IN SQUAD":""}</span></span></button>`).join("");
+ $$("#roster .opcard").forEach(b=>b.addEventListener("click",()=>{state.selectedOp=b.dataset.op;renderRoster();renderInspector();}));
+}
+function renderSlots(){
+ const sq=currentSquad();
+ $("#squadCount").textContent=`${sq.filter(Boolean).length} / 5`;
+ $("#slots").innerHTML=sq.map((id,i)=>{
+  if(!id)return `<div class="slot"><span class="num">SLOT ${i+1}</span><span style="color:var(--faint);font-size:12px">Empty slot</span><span style="font-size:11px;color:var(--faint)">Select an operator, then Add to squad.</span></div>`;
+  const op=opById(id);const sec=(state.secondaries[state.faction]||{})[id]||"";
+  return `<div class="slot filled"><span class="num">SLOT ${i+1}</span><span class="nm">${op.name}</span><span class="gd">${op.role} : ${op.gadget}</span>
+   <label class="sr" for="sec-${i}">Secondary gadget for ${op.name}</label>
+   <select id="sec-${i}" data-slot="${i}"><option value="">No secondary</option>${SECONDARIES[state.faction].map(s=>`<option value="${s.id}" ${sec===s.id?"selected":""}>${s.name}</option>`).join("")}</select>
+   <button class="btn small ghost" type="button" data-remove="${i}">Remove</button></div>`;
+ }).join("");
+ $$("#slots select").forEach(sel=>sel.addEventListener("change",()=>{
+  const idx=+sel.dataset.slot;const id=sq[idx];const val=sel.value;
+  if(val){const count=Object.entries(state.secondaries[state.faction]||{}).filter(([k,v])=>v===val&&k!==id).length;
+   if(count>=2){toast("Secondary gadget limit reached. A squad can carry at most two copies.");sel.value=(state.secondaries[state.faction]||{})[id]||"";return;}}
+  state.secondaries[state.faction]=state.secondaries[state.faction]||{};
+  if(val)state.secondaries[state.faction][id]=val;else delete state.secondaries[state.faction][id];
+  saveSquads();renderLab();
+ }));
+ $$("#slots [data-remove]").forEach(b=>b.addEventListener("click",()=>{
+  const idx=+b.dataset.remove;const id=sq[idx];sq[idx]=null;delete (state.secondaries[state.faction]||{})[id];
+  saveSquads();renderLab();announce(`${opById(id).name} removed from squad.`);
+ }));
+}
+function renderLab(){
+ renderScenario();renderRoster();renderSlots();
+ const sc=scoreSquad();
+ $("#labScore").textContent=sc.complete?sc.total:0;
+ $("#labStatus").textContent=sc.complete?`Complete squad, ${sc.total} / 100`:`Incomplete squad, ${currentSquad().filter(Boolean).length} / 5`;
+ $("#labStatus").className="chip "+(sc.complete?"ok":"");
+ $("#scoreBreakdown").innerHTML=[["Role coverage",sc.roleScore,35],["Synergy",sc.syn,25],["Utility variety",sc.famScore,20],["Speed balance",sc.speedScore,10],["Scenario readiness",sc.scenScore,10]]
+  .map(([l,v,m])=>`<div class="score-row"><span>${l}</span><b>${sc.complete?v:0} / ${m}</b></div>`).join("")
+  +(sc.found.length?`<p style="font-size:12px;color:var(--muted);margin:8px 0 0">Synergies: ${sc.found.map(esc).join(", ")}.</p>`:"");
+ const warns=squadWarnings();
+ $("#warnList").innerHTML=warns.map(w=>`<li>${esc(w.t)}${w.filter?` <button class="btn small" type="button" data-wfilter="${esc(w.filter)}">Show ${esc(w.filter)} operators</button>`:""}</li>`).join("");
+ $("#noWarn").style.display=warns.length?"none":"block";
+ $$("#warnList [data-wfilter]").forEach(b=>b.addEventListener("click",()=>{const f=b.dataset.wfilter;if(["Entry","Breach","Intel","Control","Support","Anchor","Denial","Roam"].includes(f)){$("#roleFilter").value=f;state.roleFilter=f;}else{state.search=f.toLowerCase();$("#opSearch").value=state.search;}renderLab();}));
+ renderInspector();
+}
+function renderInspector(){
+ const body=$("#inspBody");
+ if(state.route==="operators"){
+  const op=state.selectedOp?opById(state.selectedOp):null;
+  if(!op){body.innerHTML=`<h2>Inspector</h2><p>Select an operator from the roster to see the profile, gadget, and squad actions here.</p><h3>Squad summary</h3><p>${esc(currentSquad().filter(Boolean).map(id=>opById(id).name).join(", ")||"No operators assigned yet.")}</p>`;return;}
+  const inSq=currentSquad().includes(op.id);
+  body.innerHTML=`<h2>${op.name}</h2><div>${portrait(op)}</div>
+   <p><b>${op.role}</b> : ${esc(op.gadget)}<br>Speed ${op.speed} / Armor ${op.armor}. Tags: ${op.tags.map(esc).join(", ")}.</p>
+   <p>${esc(op.desc)}</p>
+   <p><button class="btn primary" id="addOpBtn" type="button" ${inSq?"disabled":""}>${inSq?"Already in squad":"Add to squad"}</button></p>
+   ${inSq?"<p>To replace this operator, remove it from its squad slot first.</p>":"<p>Adding fills the first empty slot. A squad cannot hold the same operator twice.</p>"}
+   <h3>Scenario</h3><p>${esc(SCENARIOS[state.faction].find(s=>s.id===state.scenario[state.faction]).label)}</p>`;
+  const btn=$("#addOpBtn");if(btn)btn.addEventListener("click",()=>{
+   const sq=currentSquad();const empty=sq.indexOf(null);
+   if(empty===-1){toast("Squad is full. Remove an operator first.");return;}
+   sq[empty]=op.id;saveSquads();renderLab();announce(`${op.name} added to squad.`);
+  });
+ } else if(state.route==="range"){
+  body.innerHTML=`<h2>Aim Range</h2><p>Choose a difficulty, then Start session. Targets move and expire. Precision hits use the small upper ring.</p><h3>Best scores</h3>${["rookie","standard","elite"].map(d=>{const b=aimBest()[d];return `<p><b>${DIFFS[d].label}</b>: ${b?`${b.score} points, ${b.accuracy.toFixed(1)}% accuracy`:"No completed round yet."}</p>`;}).join("")}<h3>Controls</h3><p>Mouse or touch: click or tap a target. Keyboard: Tab to Start, Enter to start. The session pauses automatically if the tab is hidden.</p>`;
+ } else {
+  renderPlannerInspector();
+ }
+}
+$("#sideAttack").addEventListener("click",()=>{state.faction="attack";$("#sideAttack").setAttribute("aria-pressed","true");$("#sideDefense").setAttribute("aria-pressed","false");state.selectedOp=null;renderLab();});
+$("#sideDefense").addEventListener("click",()=>{state.faction="defense";$("#sideDefense").setAttribute("aria-pressed","true");$("#sideAttack").setAttribute("aria-pressed","false");state.selectedOp=null;renderLab();});
+$("#scenarioSel").addEventListener("change",e=>{state.scenario[state.faction]=e.target.value;saveSquads();renderLab();});
+$("#opSearch").addEventListener("input",e=>{state.search=e.target.value;renderRoster();});
+$("#roleFilter").addEventListener("change",e=>{state.roleFilter=e.target.value;renderRoster();});
+$("#speedFilter").addEventListener("change",e=>{state.speedFilter=e.target.value;renderRoster();});
+$("#resetSquad").addEventListener("click",async()=>{if(await confirmDlg("Reset squad","Clear all five slots for the active side only? Secondary gadgets for those operators are also cleared.")){state.squads[state.faction]=Array(5).fill(null);state.secondaries[state.faction]={};saveSquads();renderLab();}});
+$("#exportSquad").addEventListener("click",async()=>{
+ const sq=currentSquad().filter(Boolean);if(!sq.length){toast("Squad is empty. Nothing to export.");return;}
+ const sc=scoreSquad();
+ const text=`BREACH / VECTOR squad, ${state.faction.toUpperCase()} (${sc.complete?sc.total+"/100":"incomplete"})\n`+sq.map(id=>{const o=opById(id);const sec=(state.secondaries[state.faction]||{})[id];return `- ${o.name} (${o.role}, ${o.gadget}${sec?", "+SECONDARIES[state.faction].find(s=>s.id===sec).name:""})`;}).join("\n");
+ try{await navigator.clipboard.writeText(text);toast("Squad summary copied to clipboard.");}catch(e){toast("Copy was blocked. Select the squad list to copy it manually.");}
+});
+$("#sendPlanner").addEventListener("click",()=>{state.planner.faction=state.faction;setRoute("planner");toast("Squad loaded into the planner palette. Use Attack or Defense to place them.");});
+$("#inspectorToggle").addEventListener("click",()=>$("#inspector").classList.toggle("open"));
+$("#inspClose").addEventListener("click",()=>$("#inspector").classList.remove("open"));
+
+/* ================= MAP PLANNER ================= */
+const OX=14, OY=20, CELL=48;
+function roomAt(floor,x,y){return ROOMS[floor].find(r=>x>=r.x&&x<r.x+r.w&&y>=r.y&&y<r.y+r.h)||null;}
+function nearDoor(x,y){
+ for(const d of DOORS){if(!d.h&&Math.abs(x-d.x)<0.22&&Math.abs(y-d.y)<0.75)return true;if(d.h&&Math.abs(y-d.y)<0.22&&Math.abs(x-d.x)<0.75)return true;}
+ return false;
+}
+function pointOnWall(x,y){
+ if(x<0||x>14||y<0||y>10)return true;
+ for(const gx of [4,7,10])if(Math.abs(x-gx)<0.2&&!nearDoor(x,y))return true;
+ for(const gy of [3,6])if(Math.abs(y-gy)<0.2&&!nearDoor(x,y))return true;
+ return false;
+}
+function segmentCrossesWall(a,b){
+ const lines=[];
+ for(const gx of [4,7,10]){if((a.x-gx)*(b.x-gx)<0){const t=(gx-a.x)/(b.x-a.x);const y=a.y+t*(b.y-a.y);if(!DOORS.some(d=>!d.h&&d.x===gx&&Math.abs(y-d.y)<0.7))lines.push("wall");}}
+ for(const gy of [3,6]){if((a.y-gy)*(b.y-gy)<0){const t=(gy-a.y)/(b.y-a.y);const x=a.x+t*(b.x-a.x);if(!DOORS.some(d=>d.h&&d.y===gy&&Math.abs(x-d.x)<0.7))lines.push("wall");}}
+ return lines.length>0;
+}
+function routeValid(r){
+ if(r.points.length<3)return false;
+ for(let i=0;i<r.points.length-1;i++)if(segmentCrossesWall(r.points[i],r.points[i+1]))return false;
+ return true;
+}
+function planScore(){
+ const f=state.planner.faction, ents=state.planner.entities.filter(e=>e.faction===f);
+ const deployed=new Set(ents.filter(e=>e.type==="unit").map(e=>e.opId));
+ const deploy=Math.min(25,deployed.size*5);
+ const intelRooms=new Set();
+ ents.forEach(e=>{if(e.type==="camera"){const r=roomAt(e.floor,e.x,e.y);if(r)intelRooms.add(e.floor+":"+r.n);}if(e.type==="gadget"&&e.gadgetId==="scan"){const r=roomAt(e.floor,e.x,e.y);if(r)intelRooms.add(e.floor+":"+r.n);}});
+ const intel=Math.min(20,intelRooms.size*5);
+ const fams=new Set(ents.filter(e=>e.type==="gadget").map(e=>GADGETS.find(g=>g.id===e.gadgetId).fam));
+ const util=Math.min(15,fams.size*5);
+ const routes=state.planner.routes.filter(r=>r.faction===f);
+ let routeScore=0;const valid=routes.filter(routeValid);
+ if(valid.length)routeScore+=10;
+ const obj=state.planner.objective;
+ if(valid.some(r=>{const last=r.points[r.points.length-1];const rm=roomAt(last.floor,last.x,last.y);return rm&&rm.n===obj;}))routeScore+=10;
+ if(valid.length>1||routes.some(r=>r.stair))routeScore+=5;
+ routeScore=Math.min(25,routeScore);
+ const covRooms=new Set(ents.filter(e=>e.type==="unit").map(e=>{const r=roomAt(e.floor,e.x,e.y);return r?e.floor+":"+r.n:null;}).filter(Boolean));
+ const cov=Math.min(15,covRooms.size*5);
+ return {total:deploy+intel+util+routeScore+cov,deploy,intel,util,routeScore,cov};
+}
+function planWarnings(){
+ const w=[];const f=state.planner.faction;
+ const placed=new Set(state.planner.entities.filter(e=>e.faction===f&&e.type==="unit").map(e=>e.opId));
+ const squad=currentSquadForPlanner();
+ const unplaced=squad.filter(id=>id&&!placed.has(id)).length;
+ if(unplaced)w.push(`${unplaced} squad member${unplaced===1?"":"s"} undeployed.`);
+ if(!state.planner.entities.some(e=>e.faction===f&&(e.type==="camera"||(e.type==="gadget"&&e.gadgetId==="scan"))))w.push("No intel coverage. Place a camera or a Scan Node.");
+ state.planner.routes.filter(r=>r.faction===f).forEach((r,i)=>{if(!routeValid(r))w.push(`Route ${i+1} intersects a closed wall or has fewer than 3 points.`);});
+ const obj=state.planner.objective;
+ const linked=state.planner.routes.some(r=>r.faction===f&&routeValid(r)&&(()=>{const last=r.points[r.points.length-1];const rm=roomAt(last.floor,last.x,last.y);return rm&&rm.n===obj;})());
+ if(!linked)w.push("Objective not linked by a valid route.");
+ return w;
+}
+function currentSquadForPlanner(){return state.squads[state.planner.faction];}
+function snapPlanner(){return JSON.stringify({entities:state.planner.entities,routes:state.planner.routes});}
+function pushHistory(){
+ const snap=snapPlanner();
+ state.history=state.history.slice(0,state.hIndex+1);
+ if(state.history[state.hIndex]!==snap)state.history.push(snap);
+ if(state.history.length>40)state.history.shift();
+ state.hIndex=state.history.length-1;
+ queueMicrotask(()=>{const now=snapPlanner();if(state.history[state.hIndex]!==now){state.history=state.history.slice(0,state.hIndex+1);state.history.push(now);if(state.history.length>40)state.history.shift();state.hIndex=state.history.length-1;}});
+}
+function commitHistory(){
+ const snap=snapPlanner();
+ if(state.history[state.hIndex]!==snap){state.history=state.history.slice(0,state.hIndex+1);state.history.push(snap);if(state.history.length>40)state.history.shift();state.hIndex=state.history.length-1;}
+}
+function applyHistory(){
+ const s=JSON.parse(state.history[state.hIndex]);
+ state.planner.entities=s.entities;state.planner.routes=s.routes;saveDraftSoon();renderPlanner();
+}
+function gadgetSymbol(id,x,y,rot,color){
+ const px=OX+x*CELL, py=OY+y*CELL;
+ if(id==="scan")return `<circle cx="${px}" cy="${py}" r="9" fill="none" stroke="${color}" stroke-width="2"/><circle cx="${px}" cy="${py}" r="3" fill="${color}"/><path d="M${px} ${py-14} L${px} ${py-9} M${px} ${py+9} L${px} ${py+14} M${px-14} ${py} L${px-9} ${py} M${px+9} ${py} L${px+14} ${py}" stroke="${color}" stroke-width="1.4"/>`;
+ if(id==="barrier")return `<rect x="${px-10}" y="${py-6}" width="20" height="12" fill="none" stroke="${color}" stroke-width="2"/><path d="M${px-10} ${py+6} L${px} ${py-6} L${px+10} ${py+6}" fill="none" stroke="${color}" stroke-width="1.4"/>`;
+ if(id==="jammer")return `<rect x="${px-8}" y="${py-8}" width="16" height="16" fill="none" stroke="${color}" stroke-width="2"/><path d="M${px-12} ${py+10} L${px+12} ${py-10} M${px-12} ${py-10} L${px+12} ${py+10}" stroke="${color}" stroke-width="1.6"/>`;
+ return `<rect x="${px-9}" y="${py-7}" width="18" height="14" fill="none" stroke="${color}" stroke-width="2"/><path d="M${px-9} ${py} H${px+9} M${px} ${py-7} V${py+7}" stroke="${color}" stroke-width="1.4"/>`;
+}
+function renderMapSVG(){
+ const svg=$("#mapSvg");const fl=state.planner.floor;const z=state.planner.zoom;
+ svg.setAttribute("viewBox",`${350-350/z} ${260-260/z} ${700/z} ${520/z}`);
+ $("#zoomLabel").textContent=Math.round(z*100)+"%";
+ let s=`<rect x="0" y="0" width="700" height="520" fill="#12242B"/>`;
+ s+=`<g font-family="monospace" font-size="9" fill="#60737D">`;
+ for(let i=0;i<=14;i++)s+=`<text x="${OX+i*CELL}" y="12" text-anchor="middle">${i}</text>`;
+ for(let j=0;j<=10;j++)s+=`<text x="6" y="${OY+j*CELL+3}">${j}</text>`;
+ s+=`</g><g stroke="#1C2A32" stroke-width="1">`;
+ for(let i=0;i<=14;i++)s+=`<line x1="${OX+i*CELL}" y1="${OY}" x2="${OX+i*CELL}" y2="${OY+480}"/>`;
+ for(let j=0;j<=10;j++)s+=`<line x1="${OX}" y1="${OY+j*CELL}" x2="${OX+672}" y2="${OY+j*CELL}"/>`;
+ s+=`</g>`;
+ ROOMS[fl].forEach(r=>{
+  const rx=OX+r.x*CELL, ry=OY+r.y*CELL, rw=r.w*CELL, rh=r.h*CELL;
+  s+=`<rect x="${rx+2}" y="${ry+2}" width="${rw-4}" height="${rh-4}" fill="${r.obj?"#162E36":"#0F1C22"}" stroke="#2A3942" stroke-width="2"/>`;
+  s+=`<text x="${rx+8}" y="${ry+18}" font-family="monospace" font-size="11" fill="${r.obj?"#D6F36A":"#91A3AB"}">${r.n.toUpperCase()}${r.obj?" : OBJECTIVE":""}</text>`;
+  if(r.n.startsWith("Stair"))s+=`<path d="M${rx+10} ${ry+rh-10} L${rx+rw-10} ${ry+10} M${rx+10} ${ry+rh-22} L${rx+rw-22} ${ry+10} M${rx+22} ${ry+rh-10} L${rx+rw-10} ${ry+22}" stroke="#60737D" stroke-width="1.4"/>`;
+ });
+ DOORS.forEach(d=>{
+  if(d.ext)return;
+  if(!d.h)s+=`<rect x="${OX+d.x*CELL-3}" y="${OY+d.y*CELL-11}" width="6" height="22" fill="#12242B"/><path d="M${OX+d.x*CELL} ${OY+d.y*CELL-11} A11 11 0 0 1 ${OX+d.x*CELL+11} ${OY+d.y*CELL}" fill="none" stroke="#91A3AB" stroke-width="1"/>`;
+  else s+=`<rect x="${OX+d.x*CELL-11}" y="${OY+d.y*CELL-3}" width="22" height="6" fill="#12242B"/><path d="M${OX+d.x*CELL-11} ${OY+d.y*CELL} A11 11 0 0 1 ${OX+d.x*CELL} ${OY+d.y*CELL+11}" fill="none" stroke="#91A3AB" stroke-width="1"/>`;
+ });
+ s+=`<text x="${OX+2}" y="${OY+492}" font-family="monospace" font-size="10" fill="#60737D">DEPOT 07 : FLOOR 0${fl} : GRID 14 x 10 : EXTERIOR ACCESS AT LOADING AND DOCK ADMIN</text>`;
+ state.planner.routes.filter(r=>r.points.some(p=>p.floor===fl)).forEach(r=>{
+  const pts=r.points.filter(p=>p.floor===fl);if(pts.length<2)return;
+  const col=r.faction==="attack"?"#58B6DE":"#E5A16B";
+  const sel=state.planner.selectedId===r.id;
+  s+=`<polyline points="${pts.map(p=>`${OX+p.x*CELL},${OY+p.y*CELL}`).join(" ")}" fill="none" stroke="${col}" stroke-width="${sel?4:2.5}" stroke-dasharray="8 5" opacity="${sel?1:.85}"/>`;
+  const f0=pts[0];s+=`<circle cx="${OX+f0.x*CELL}" cy="${OY+f0.y*CELL}" r="8" fill="${col}"/><text x="${OX+f0.x*CELL}" y="${OY+f0.y*CELL+3.5}" text-anchor="middle" font-size="10" font-weight="700" fill="#080D11">1</text>`;
+  const last=pts[pts.length-1];s+=`<path d="M${OX+last.x*CELL-6} ${OY+last.y*CELL-6} L${OX+last.x*CELL+6} ${OY+last.y*CELL} L${OX+last.x*CELL-6} ${OY+last.y*CELL+6} Z" fill="${col}"/>`;
+ });
+ if(state.drawing&&state.drawing.floor===fl&&state.drawing.points.length){
+  const pts=state.drawing.points;const col=state.drawing.faction==="attack"?"#58B6DE":"#E5A16B";
+  s+=`<polyline points="${pts.map(p=>`${OX+p.x*CELL},${OY+p.y*CELL}`).join(" ")}" fill="none" stroke="${col}" stroke-width="2.5" stroke-dasharray="4 4"/>`;
+  pts.forEach((p,i)=>{s+=`<circle cx="${OX+p.x*CELL}" cy="${OY+p.y*CELL}" r="5" fill="${col}"/>`;});
+ }
+ state.planner.entities.filter(e=>e.floor===fl).forEach(e=>{
+  const px=OX+e.x*CELL, py=OY+e.y*CELL, col=e.faction==="attack"?"#58B6DE":"#E5A16B";
+  const sel=state.planner.selectedId===e.id;
+  if(e.type==="unit"){const op=opById(e.opId);
+   s+=`<g data-ent="${e.id}" style="cursor:move"><circle cx="${px}" cy="${py}" r="${sel?17:14}" fill="${sel?"#17222A":"#10181E"}" stroke="${col}" stroke-width="${sel?3:2}"/><path d="M${px} ${py} L${px+13*Math.cos((e.rot||0)*Math.PI/180)} ${py+13*Math.sin((e.rot||0)*Math.PI/180)}" stroke="${col}" stroke-width="3"/><text x="${px}" y="${py+4}" text-anchor="middle" font-size="10" font-weight="700" fill="#EDF3F2">${esc(op?op.name.slice(0,2):"??")}</text><text x="${px}" y="${py+26}" text-anchor="middle" font-family="monospace" font-size="9" fill="${col}">${esc(op?op.name:"")}</text></g>`;
+  } else if(e.type==="gadget"){
+   s+=`<g data-ent="${e.id}" style="cursor:move">${gadgetSymbol(e.gadgetId,e.x,e.y,e.rot,col)}${sel?`<circle cx="${px}" cy="${py}" r="17" fill="none" stroke="#D6F36A" stroke-width="2" stroke-dasharray="3 3"/>`:""}</g>`;
+  } else {
+   const rad=(e.rot||0)*Math.PI/180;
+   s+=`<g data-ent="${e.id}" style="cursor:move"><path d="M${px} ${py} L${px+30*Math.cos(rad-0.45)} ${py+30*Math.sin(rad-0.45)} L${px+30*Math.cos(rad+0.45)} ${py+30*Math.sin(rad+0.45)} Z" fill="${col}" opacity=".22"/><circle cx="${px}" cy="${py}" r="8" fill="#10181E" stroke="${col}" stroke-width="2"/><circle cx="${px}" cy="${py}" r="2.5" fill="${col}"/>${sel?`<circle cx="${px}" cy="${py}" r="14" fill="none" stroke="#D6F36A" stroke-width="2" stroke-dasharray="3 3"/>`:""}</g>`;
+  }
+ });
+ svg.innerHTML=s;
+ attachMapEvents();
+}
+function svgPoint(evt){
+ const svg=$("#mapSvg");const pt=new DOMPoint(evt.clientX,evt.clientY);
+ const m=svg.getScreenCTM();if(!m)return {x:0,y:0};
+ const p=pt.matrixTransform(m.inverse());
+ return {x:(p.x-OX)/CELL,y:(p.y-OY)/CELL};
+}
+let dragEnt=null;
+function attachMapEvents(){
+ const svg=$("#mapSvg");
+ svg.onpointerdown=e=>{
+  const g=e.target.closest("[data-ent]");
+  const p=svgPoint(e);
+  if(state.planner.tool==="erase"&&g){pushHistory();state.planner.entities=state.planner.entities.filter(x=>x.id!==g.dataset.ent);state.planner.routes=state.planner.routes.filter(x=>x.id!==g.dataset.ent);state.planner.selectedId=null;saveDraftSoon();renderPlanner();return;}
+  if(g){
+   const ent=state.planner.entities.find(x=>x.id===g.dataset.ent);
+   state.planner.selectedId=ent.id;
+   if(state.planner.tool==="select"){lastGood=snapPlanner();dragEnt={id:ent.id,moved:false};try{svg.setPointerCapture(e.pointerId);}catch(err){}}
+   renderPlannerInspector();renderMapSVG();return;
+  }
+  if(state.planner.tool==="route"){
+   if(pointOnWall(p.x,p.y)){toast("Route point cannot sit on a wall. Place it inside a room or at a door.");return;}
+   if(!state.drawing)state.drawing={faction:state.planner.faction,floor:state.planner.floor,points:[]};
+   if(state.drawing.floor!==state.planner.floor){toast("Finish the current route before switching floors, or connect it via a stair.");return;}
+   state.drawing.points.push({floor:state.planner.floor,x:+p.x.toFixed(2),y:+p.y.toFixed(2)});
+   $("#finishRouteBtn").disabled=state.drawing.points.length<2;$("#cancelRouteBtn").disabled=false;
+   renderMapSVG();return;
+  }
+  if(["attack","defense"].includes(state.planner.tool)){
+   placeUnit(p,state.planner.tool);return;
+  }
+  if(state.planner.tool==="gadget"){placeGadget(p);return;}
+  if(state.planner.tool==="camera"){placeCamera(p);return;}
+  state.planner.selectedId=null;renderPlannerInspector();
+ };
+ svg.onpointermove=e=>{
+  if(!dragEnt)return;const p=svgPoint(e);const ent=state.planner.entities.find(x=>x.id===dragEnt.id);if(!ent)return;
+  ent.x=+Math.max(0,Math.min(14,p.x)).toFixed(2);ent.y=+Math.max(0,Math.min(10,p.y)).toFixed(2);dragEnt.moved=true;renderMapSVG();
+ };
+ svg.onpointerup=e=>{
+  if(dragEnt&&dragEnt.moved){const ent=state.planner.entities.find(x=>x.id===dragEnt.id);
+   if(ent&&pointOnWall(ent.x,ent.y)){toast("That spot is inside a wall. The object was returned to its previous position.");applyHistorySoft();}
+   else{commitHistory();saveDraftSoon();renderPlanner();}
+  }
+  dragEnt=null;
+ };
+ svg.ondblclick=e=>{if(state.planner.tool==="route"&&state.drawing)finishRoute();};
+}
+let lastGood=null;
+function applyHistorySoft(){if(lastGood){state.planner.entities=JSON.parse(lastGood).entities;state.planner.routes=JSON.parse(lastGood).routes;renderPlanner();}}
+function pushHistorySilent(){/* snapshot already pushed on drag start via pushHistory in pointerdown? keep simple: push current */ }
+function placeUnit(p,faction){
+ const squad=currentSquadForPlanner();
+ const placed=new Set(state.planner.entities.filter(e=>e.faction===faction&&e.type==="unit").map(e=>e.opId));
+ const pending=state._pendingOp&&squad.includes(state._pendingOp)&&!placed.has(state._pendingOp)?state._pendingOp:squad.find(id=>id&&!placed.has(id));
+ if(!pending){toast("No unplaced squad member for this side. Build the squad in the Operator Lab first.");return;}
+ if(pointOnWall(p.x,p.y)){toast("Cannot place inside a wall or outside the building.");return;}
+ lastGood=JSON.stringify({entities:state.planner.entities,routes:state.planner.routes});pushHistory();
+ state.planner.entities.push({id:"e"+Date.now()+Math.floor(Math.random()*999),type:"unit",faction,opId:pending,floor:state.planner.floor,x:+p.x.toFixed(2),y:+p.y.toFixed(2),rot:0});
+ state._pendingOp=null;saveDraftSoon();renderPlanner();announce(`${opById(pending).name} placed on floor ${state.planner.floor}.`);
+}
+function placeGadget(p){
+ if(pointOnWall(p.x,p.y)){toast("Cannot place inside a wall or outside the building.");return;}
+ lastGood=JSON.stringify({entities:state.planner.entities,routes:state.planner.routes});pushHistory();
+ const gid=$("#gadgetSel").value;
+ state.planner.entities.push({id:"e"+Date.now()+Math.floor(Math.random()*999),type:"gadget",faction:state.planner.faction,gadgetId:gid,floor:state.planner.floor,x:+p.x.toFixed(2),y:+p.y.toFixed(2),rot:0});
+ saveDraftSoon();renderPlanner();
+}
+function placeCamera(p){
+ if(pointOnWall(p.x,p.y)){toast("Cannot place inside a wall or outside the building.");return;}
+ lastGood=JSON.stringify({entities:state.planner.entities,routes:state.planner.routes});pushHistory();
+ state.planner.entities.push({id:"e"+Date.now()+Math.floor(Math.random()*999),type:"camera",faction:state.planner.faction,floor:state.planner.floor,x:+p.x.toFixed(2),y:+p.y.toFixed(2),rot:0});
+ saveDraftSoon();renderPlanner();
+}
+function finishRoute(){
+ if(!state.drawing||state.drawing.points.length<2)return;
+ pushHistory();
+ state.planner.routes.push({id:"r"+Date.now(),faction:state.drawing.faction,floor:state.drawing.floor,label:"Route "+(state.planner.routes.length+1),points:state.drawing.points,stair:false});
+ state.planner.selectedId=state.planner.routes[state.planner.routes.length-1].id;
+ state.drawing=null;$("#finishRouteBtn").disabled=true;$("#cancelRouteBtn").disabled=true;
+ saveDraftSoon();renderPlanner();
+}
+function renderPlanner(){
+ renderMapSVG();
+ const sc=planScore();
+ $("#planScore").textContent=sc.total;
+ $("#planBreakdown").innerHTML=[["Deployment",sc.deploy,25],["Intelligence",sc.intel,20],["Utility",sc.util,15],["Routes",sc.routeScore,25],["Room coverage",sc.cov,15]].map(([l,v,m])=>`<div class="score-row"><span>${l}</span><b>${v} / ${m}</b></div>`).join("");
+ $("#planWarn").innerHTML=planWarnings().map(w=>`<li>${esc(w)}</li>`).join("");
+ const squad=currentSquadForPlanner();
+ const placed=new Set(state.planner.entities.filter(e=>e.faction===state.planner.faction&&e.type==="unit").map(e=>e.opId));
+ $("#paletteBox").innerHTML=`<h3 style="font-family:var(--font-mono);font-size:11px;color:var(--muted);letter-spacing:.08em;margin:14px 0 6px">PLACEMENT PALETTE, ${state.planner.faction.toUpperCase()}</h3>`+(squad.filter(Boolean).length?squad.filter(Boolean).map(id=>{const o=opById(id);return `<button class="btn small" type="button" data-palette="${id}" style="margin:0 4px 4px 0;${placed.has(id)?"opacity:.55":""}">${o.name}${placed.has(id)?" : placed":""}</button>`;}).join(""):`<p style="font-size:12px;color:var(--muted)">No squad for this side yet. Build one in the Operator Lab.</p>`);
+ $$("#paletteBox [data-palette]").forEach(b=>b.addEventListener("click",()=>{state._pendingOp=b.dataset.palette;setTool(state.planner.faction);toast(`${opById(b.dataset.palette).name} selected. Click the map to place.`);}));
+ const items=[];
+ state.planner.entities.forEach(e=>{
+  const rm=roomAt(e.floor,e.x,e.y);
+  const label=e.type==="unit"?opById(e.opId).name:e.type==="gadget"?GADGETS.find(g=>g.id===e.gadgetId).name:"Camera";
+  items.push(`<li><b>${esc(label)}</b><span style="color:var(--muted)">F${e.floor} ${rm?rm.n:"outside"} : ${e.faction}</span><button class="btn small" type="button" data-sel-ent="${e.id}">Select</button><button class="btn small" type="button" data-del-ent="${e.id}">Delete</button></li>`);
+ });
+ state.planner.routes.forEach((r,i)=>{
+  items.push(`<li><b>${esc(r.label)}</b><span style="color:var(--muted)">${r.points.length} points : ${r.faction}${r.stair?" : stair link":""}${routeValid(r)?"":" : wall warning"}</span><button class="btn small" type="button" data-sel-route="${r.id}">Select</button><button class="btn small" type="button" data-del-route="${r.id}">Delete</button></li>`);
+ });
+ $("#objList").innerHTML=items.join("")||`<li>No objects or routes yet. Place a unit or draw a route.</li>`;
+ $$("#objList [data-sel-ent]").forEach(b=>b.addEventListener("click",()=>{state.planner.selectedId=b.dataset.selEnt;renderPlanner();}));
+ $$("#objList [data-sel-route]").forEach(b=>b.addEventListener("click",()=>{state.planner.selectedId=b.dataset.selRoute;renderPlanner();}));
+ $$("#objList [data-del-ent]").forEach(b=>b.addEventListener("click",()=>{pushHistory();state.planner.entities=state.planner.entities.filter(x=>x.id!==b.dataset.delEnt);saveDraftSoon();renderPlanner();}));
+ $$("#objList [data-del-route]").forEach(b=>b.addEventListener("click",()=>{pushHistory();state.planner.routes=state.planner.routes.filter(x=>x.id!==b.dataset.delRoute);saveDraftSoon();renderPlanner();}));
+ renderPlannerInspector();
+}
+function renderPlannerInspector(){
+ if(state.route!=="planner")return;
+ const body=$("#inspBody");const id=state.planner.selectedId;
+ const ent=state.planner.entities.find(e=>e.id===id);const route=state.planner.routes.find(r=>r.id===id);
+ if(route){
+  body.innerHTML=`<h2>${esc(route.label)}</h2><p>Route, ${route.faction}, ${route.points.length} points, ${routeValid(route)?"valid":"wall warning"}. Floor ${route.floor}.</p>
+  <label class="fld" for="routeLabel">Route label</label><input type="text" id="routeLabel" value="${esc(route.label)}">
+  <p><button class="btn small" id="stairBtn" type="button">Connect via stair</button> <button class="btn small danger" id="delRouteBtn" type="button">Delete route</button></p>
+  <h3>Points</h3><p>${route.points.map((p,i)=>`${i+1}. Floor ${p.floor}, ${p.x.toFixed(1)}, ${p.y.toFixed(1)}`).join("<br>")}</p>`;
+  $("#routeLabel").addEventListener("change",e=>{route.label=e.target.value||route.label;saveDraftSoon();renderPlanner();});
+  $("#delRouteBtn").addEventListener("click",()=>{pushHistory();state.planner.routes=state.planner.routes.filter(r=>r.id!==route.id);state.planner.selectedId=null;saveDraftSoon();renderPlanner();});
+  $("#stairBtn").addEventListener("click",()=>{
+   const last=route.points[route.points.length-1];const rm=roomAt(last.floor,last.x,last.y);
+   if(!rm||!rm.n.startsWith("Stair")){toast("Stair connect needs the last point inside Stair A or Stair B.");return;}
+   pushHistory();route.stair=true;const other=last.floor===1?2:1;
+   route.points.push({floor:other,x:last.x,y:last.y});saveDraftSoon();renderPlanner();toast("Stair link added on the other floor.");
+  });
+  return;
+ }
+ if(ent){
+  const label=ent.type==="unit"?opById(ent.opId).name:ent.type==="gadget"?GADGETS.find(g=>g.id===ent.gadgetId).name:"Camera";
+  const rm=roomAt(ent.floor,ent.x,ent.y);
+  body.innerHTML=`<h2>${esc(label)}</h2><p>${ent.type}, ${ent.faction}, floor ${ent.floor}, ${rm?rm.n:"outside the building"}. Position ${ent.x.toFixed(1)}, ${ent.y.toFixed(1)}. Rotation ${ent.rot||0} degrees.</p>
+  <div class="fld-row"><div><label class="fld" for="entX">X, 0 to 14</label><input type="text" id="entX" value="${ent.x}"></div><div><label class="fld" for="entY">Y, 0 to 10</label><input type="text" id="entY" value="${ent.y}"></div></div>
+  <p style="margin-top:10px"><button class="btn small" id="rotBtn" type="button">Rotate 45 degrees</button> <button class="btn small danger" id="delEntBtn" type="button">Delete</button></p>
+  <p style="color:var(--muted);font-size:12px">Arrow keys nudge this object. Shift plus arrows moves farther.</p>`;
+  const commitPos=()=>{const x=parseFloat($("#entX").value),y=parseFloat($("#entY").value);if(isNaN(x)||isNaN(y))return;if(pointOnWall(x,y)){toast("That position is inside a wall.");renderPlannerInspector();return;}pushHistory();ent.x=Math.max(0,Math.min(14,x));ent.y=Math.max(0,Math.min(10,y));saveDraftSoon();renderPlanner();};
+  $("#entX").addEventListener("change",commitPos);$("#entY").addEventListener("change",commitPos);
+  $("#rotBtn").addEventListener("click",()=>{pushHistory();ent.rot=((ent.rot||0)+45)%360;saveDraftSoon();renderPlanner();});
+  $("#delEntBtn").addEventListener("click",()=>{pushHistory();state.planner.entities=state.planner.entities.filter(x=>x.id!==ent.id);state.planner.selectedId=null;saveDraftSoon();renderPlanner();});
+  return;
+ }
+ body.innerHTML=`<h2>Planner inspector</h2><p>Select a tool, then click the map. Select an object to edit its position and rotation here, or use the object list.</p><h3>Current plan</h3><p>Floor ${state.planner.floor}, objective ${esc(state.planner.objective)}, ${state.planner.entities.length} objects, ${state.planner.routes.length} routes. Score ${planScore().total} / 100.</p><h3>Tools</h3><p>Select moves objects. Attack and Defense place squad members. Gadget and Camera place markers. Route draws waypoints. Erase removes one object.</p>`;
+}
+function setTool(t){state.planner.tool=t;$$(".toolbtn").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.tool===t)));}
+$$(".toolbtn").forEach(b=>b.addEventListener("click",()=>setTool(b.dataset.tool)));
+$("#floorSel").addEventListener("change",e=>{state.planner.floor=+e.target.value;renderObjectives();saveDraftSoon();renderPlanner();});
+function renderObjectives(){
+ const opts=state.planner.floor===1?["Dispatch"]:["Control West"];
+ $("#objectiveSel").innerHTML=opts.map(o=>`<option>${o}</option>`).join("");
+ if(!opts.includes(state.planner.objective))state.planner.objective=opts[0];
+ $("#objectiveSel").value=state.planner.objective;
+}
+$("#objectiveSel").addEventListener("change",e=>{state.planner.objective=e.target.value;saveDraftSoon();renderPlanner();});
+$("#zoomIn").addEventListener("click",()=>{state.planner.zoom=Math.min(2.5,state.planner.zoom+0.25);renderMapSVG();});
+$("#zoomOut").addEventListener("click",()=>{state.planner.zoom=Math.max(0.75,state.planner.zoom-0.25);renderMapSVG();});
+$("#zoomFit").addEventListener("click",()=>{state.planner.zoom=1;renderMapSVG();});
+$("#finishRouteBtn").addEventListener("click",finishRoute);
+$("#cancelRouteBtn").addEventListener("click",()=>{state.drawing=null;$("#finishRouteBtn").disabled=true;$("#cancelRouteBtn").disabled=true;renderMapSVG();});
+$("#undoBtn").addEventListener("click",()=>{if(state.hIndex>0){state.hIndex--;applyHistory();}});
+$("#redoBtn").addEventListener("click",()=>{if(state.hIndex<state.history.length-1){state.hIndex++;applyHistory();}});
+$("#savePlanBtn").addEventListener("click",()=>{
+ const slot=$("#slotSel").value;const slots=store.get("bv.planner.v1")||{};
+ slots[slot]={v:1,floor:state.planner.floor,faction:state.planner.faction,objective:state.planner.objective,entities:state.planner.entities,routes:state.planner.routes,updated:Date.now()};
+ store.set("bv.planner.v1",slots);toast(`Plan saved to ${$("#slotSel").selectedOptions[0].text}.`);
+});
+$("#loadPlanBtn").addEventListener("click",async()=>{
+ const slot=$("#slotSel").value;const slots=store.get("bv.planner.v1")||{};const doc=slots[slot];
+ if(!doc){toast("That save slot is empty.");return;}
+ if(state.planner.draftDirty&&!(await confirmDlg("Load plan","Loading will replace the current board, including unsaved edits. Continue?")))return;
+ pushHistory();state.planner.floor=doc.floor;state.planner.faction=doc.faction;state.planner.objective=doc.objective;state.planner.entities=doc.entities;state.planner.routes=doc.routes;
+ $("#floorSel").value=String(doc.floor);renderObjectives();saveDraftSoon();renderPlanner();toast("Plan loaded.");
+});
+$("#newBoardBtn").addEventListener("click",async()=>{if(await confirmDlg("New board","Clear the working board? Saved slots are kept.")){pushHistory();state.planner.entities=[];state.planner.routes=[];state.planner.selectedId=null;saveDraftSoon();renderPlanner();}});
+$("#clearAllBtn").addEventListener("click",async()=>{if(await confirmDlg("Clear all","Delete the working board and all three named saves? This cannot be undone.")){pushHistory();state.planner.entities=[];state.planner.routes=[];store.set("bv.planner.v1",{});saveDraftSoon();renderPlanner();toast("All plans cleared.");}});
+document.addEventListener("keydown",e=>{
+ if(state.route!=="planner")return;if(e.key==="Escape"&&state.drawing){state.drawing=null;$("#finishRouteBtn").disabled=true;$("#cancelRouteBtn").disabled=true;renderMapSVG();return;}
+ const ent=state.planner.entities.find(x=>x.id===state.planner.selectedId);if(!ent)return;
+ if(["INPUT","SELECT","TEXTAREA"].includes(document.activeElement.tagName))return;
+ const step=e.shiftKey?1:0.25;let moved=false;
+ if(e.key==="ArrowLeft"){ent.x=Math.max(0,ent.x-step);moved=true;}
+ if(e.key==="ArrowRight"){ent.x=Math.min(14,ent.x+step);moved=true;}
+ if(e.key==="ArrowUp"){ent.y=Math.max(0,ent.y-step);moved=true;}
+ if(e.key==="ArrowDown"){ent.y=Math.min(10,ent.y+step);moved=true;}
+ if(moved){e.preventDefault();if(pointOnWall(ent.x,ent.y)){toast("That move would enter a wall.");renderPlanner();return;}saveDraftSoon();renderPlanner();}
+});
+
+/* ================= AIM TRAINER ================= */
+const canvas=$("#rangeCanvas"), ctx=canvas.getContext("2d");
+let aim={targets:[],shots:0,hits:0,prec:0,misses:0,escaped:0,streak:0,maxStreak:0,score:0,reactSum:0,reactN:0,left:45,lastSpawn:0,lastTs:0,raf:0,countdown:0,started:false,ended:false};
+function aimBest(){return store.get("bv.aim.best.v1")||{};}
+function updateBestLine(){const b=aimBest()[$("#diffSel").value];$("#bestLine").textContent=b?`Best: ${b.score} pts, ${b.accuracy.toFixed(1)}%`:"Best: none";}
+function sizeCanvas(){
+ const r=canvas.getBoundingClientRect();const dpr=Math.min(2,window.devicePixelRatio||1);
+ canvas.width=Math.max(300,r.width)*dpr;canvas.height=420*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+function drawRangeIdle(){
+ sizeCanvas();const w=canvas.getBoundingClientRect().width;
+ ctx.clearRect(0,0,w,420);ctx.fillStyle="#0A1418";ctx.fillRect(0,0,w,420);
+ ctx.strokeStyle="#1C2A32";for(let x=0;x<w;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,420);ctx.stroke();}
+ ctx.fillStyle="#91A3AB";ctx.font="13px system-ui";ctx.textAlign="center";
+ ctx.fillText("Aim range ready.",w/2,190);
+ ctx.fillText("Choose a difficulty, then start.",w/2,212);
+ ctx.fillText("Targets are abstract rings.",w/2,234);
+}
+function spawnTarget(now){
+ const d=DIFFS[$("#diffSel").value];const w=canvas.getBoundingClientRect().width;
+ const scale=Math.min(1,w/900);const r=(d.d/2)*Math.max(.62,scale);
+ let x,y,tries=0;
+ do{x=r+Math.random()*(w-2*r);y=r+20+Math.random()*(380-2*r);tries++;}
+ while(tries<12&&aim.targets.some(t=>Math.hypot(t.x-x,t.y-y)<r+t.r+14));
+ const ang=Math.random()*Math.PI*2, sp=d.speed*Math.max(.6,scale);
+ aim.targets.push({id:Math.random().toString(36).slice(2),x,y,r,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,born:now,life:d.life,ring:0});
+}
+function drawTargets(now){
+ const w=canvas.getBoundingClientRect().width;
+ ctx.clearRect(0,0,w,420);ctx.fillStyle="#0A1418";ctx.fillRect(0,0,w,420);
+ ctx.strokeStyle="#16222A";for(let x=0;x<w;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,420);ctx.stroke();}
+ if(aim.countdown>0){ctx.fillStyle="#EDF3F2";ctx.font="700 64px system-ui";ctx.textAlign="center";ctx.fillText(String(aim.countdown),w/2,230);return;}
+ aim.targets.forEach(t=>{
+  const age=now-t.born;const fade=age>t.life-300?Math.max(.25,(t.life-age)/300):1;
+  ctx.globalAlpha=fade;
+  ctx.beginPath();ctx.arc(t.x,t.y,t.r,0,Math.PI*2);ctx.fillStyle="#17222A";ctx.fill();ctx.lineWidth=2;ctx.strokeStyle="#D6F36A";ctx.stroke();
+  ctx.beginPath();ctx.arc(t.x,t.y,t.r*0.55,0,Math.PI*2);ctx.strokeStyle="#58B6DE";ctx.stroke();
+  const py=t.y-t.r*0.55, pr=t.r*0.38;
+  ctx.beginPath();ctx.arc(t.x,py,pr,0,Math.PI*2);ctx.fillStyle="#10181E";ctx.fill();ctx.strokeStyle="#E5A16B";ctx.stroke();
+  ctx.beginPath();ctx.arc(t.x,py,pr*0.45,0,Math.PI*2);ctx.strokeStyle="#E5A16B";ctx.stroke();
+  if(t.ring>0){ctx.beginPath();ctx.arc(t.x,t.y,t.r+(1-t.ring)*22,0,Math.PI*2);ctx.strokeStyle="#D6F36A";ctx.globalAlpha=t.ring;ctx.stroke();}
+  ctx.globalAlpha=1;
+ });
+}
+function updateHud(){
+ $("#hudTime").textContent=Math.max(0,aim.left).toFixed(1);
+ $("#hudScore").textContent=aim.score;
+ $("#hudAcc").textContent=aim.shots?((aim.hits/aim.shots)*100).toFixed(1)+"%":"-";
+ $("#hudReact").textContent=aim.reactN?Math.round(aim.reactSum/aim.reactN)+" ms":"-";
+ $("#hudCombo").textContent=aim.streak;
+}
+function aimLoop(ts){
+ if(!aim.running||aim.paused)return;
+ if(!aim.lastTs)aim.lastTs=ts;
+ const dt=Math.min(50,ts-aim.lastTs);aim.lastTs=ts;
+ if(aim.countdown>0){
+  const cd=Math.ceil((aim.countdownEnd-ts)/1000);
+  if(cd!==aim.countdown){aim.countdown=cd;if(cd<=0){aim.countdown=0;aim.left=45;}}
+  drawTargets(ts);aim.raf=requestAnimationFrame(aimLoop);return;
+ }
+ aim.left-=dt/1000;
+ const d=DIFFS[$("#diffSel").value];
+ if(ts-aim.lastSpawn>=d.spawn&&aim.targets.length<d.max){spawnTarget(ts);aim.lastSpawn=ts;}
+ const now=ts;
+ aim.targets=aim.targets.filter(t=>{
+  if(now-t.born>=t.life){aim.escaped++;aim.streak=0;return false;}
+  t.x+=t.vx*dt/1000;t.y+=t.vy*dt/1000;
+  const w=canvas.getBoundingClientRect().width;
+  if(t.x-t.r<0||t.x+t.r>w)t.vx*=-1;if(t.y-t.r<20||t.y+t.r>420)t.vy*=-1;
+  t.x=Math.max(t.r,Math.min(w-t.r,t.x));t.y=Math.max(t.r+20,Math.min(420-t.r,t.y));
+  if(t.ring>0)t.ring=Math.max(0,t.ring-dt/220);
+  return true;
+ });
+ drawTargets(ts);updateHud();
+ if(aim.left<=0){endAim();return;}
+ aim.raf=requestAnimationFrame(aimLoop);
+}
+function startAim(){
+ if(aim.running)return;
+ aim={targets:[],shots:0,hits:0,prec:0,misses:0,escaped:0,streak:0,maxStreak:0,score:0,reactSum:0,reactN:0,left:45,lastSpawn:0,lastTs:0,raf:0,countdown:3,countdownEnd:performance.now()+3000,started:true,ended:false,running:true,paused:false};
+ $("#resultBox").innerHTML="";$("#aimHint").textContent="Session running. Precision ring: +150. Body: +75. Empty click: −25.";
+ $("#startAim").disabled=true;$("#pauseAim").disabled=false;$("#resumeAim").disabled=true;$("#diffSel").disabled=true;
+ sizeCanvas();aim.raf=requestAnimationFrame(aimLoop);announce("Aim session started.");
+}
+function pauseAim(auto){
+ if(!aim.running||aim.paused)return;
+ aim.paused=true;cancelAnimationFrame(aim.raf);
+ $("#pauseAim").disabled=true;$("#resumeAim").disabled=false;
+ if(!auto)$("#aimHint").textContent="Session paused. Resume when ready. Paused time does not count.";
+}
+function resumeAim(){
+ if(!aim.running||!aim.paused)return;
+ aim.paused=false;aim.lastTs=0;if(aim.countdown>0)aim.countdownEnd=performance.now()+aim.countdown*1000;
+ $("#pauseAim").disabled=false;$("#resumeAim").disabled=true;
+ aim.raf=requestAnimationFrame(aimLoop);
+}
+function endAim(){
+ aim.running=false;cancelAnimationFrame(aim.raf);
+ const acc=aim.shots?(aim.hits/aim.shots)*100:0;
+ const avg=aim.reactN?Math.round(aim.reactSum/aim.reactN):null;
+ const key=$("#diffSel").value;const best=aimBest();
+ const isPB=!best[key]||aim.score>best[key].score;
+ if(isPB){best[key]={score:aim.score,accuracy:acc,precision:aim.prec,avgReaction:avg,date:new Date().toISOString()};store.set("bv.aim.best.v1",best);}
+ $("#startAim").disabled=false;$("#pauseAim").disabled=true;$("#resumeAim").disabled=true;$("#diffSel").disabled=false;
+ updateBestLine();
+ $("#resultBox").innerHTML=`<div class="result" role="status"><h2>Session complete${isPB?" : new personal best":""}</h2>
+ <dl><div><dt>Score</dt><dd>${aim.score}</dd></div><div><dt>Accuracy</dt><dd>${acc.toFixed(1)}%</dd></div><div><dt>Precision hits</dt><dd>${aim.prec}</dd></div><div><dt>Avg reaction</dt><dd>${avg?avg+" ms":"-"}</dd></div><div><dt>Longest combo</dt><dd>${aim.maxStreak}</dd></div><div><dt>Previous best</dt><dd>${best[key]&&!isPB?best[key].score+" pts":"-"}</dd></div></dl>
+ <p style="color:var(--muted);font-size:13px;margin:0 0 10px">Shots ${aim.shots}, hits ${aim.hits}, misses ${aim.misses}, escaped targets ${aim.escaped}.</p>
+ <button class="btn primary" id="retryAim" type="button">Retry</button> <button class="btn" id="changeDiff" type="button">Change difficulty</button></div>`;
+ $("#retryAim").addEventListener("click",startAim);
+ $("#changeDiff").addEventListener("click",()=>{$("#diffSel").focus();});
+ drawRangeIdle();updateHud();announce(`Session complete. Score ${aim.score}.`);
+}
+canvas.addEventListener("pointerdown",e=>{
+ if(!aim.running||aim.paused||aim.countdown>0)return;
+ const rect=canvas.getBoundingClientRect();const x=e.clientX-rect.left,y=e.clientY-rect.top;
+ aim.shots++;const now=performance.now();let hit=null,prec=false;
+ for(const t of aim.targets){
+  const py=t.y-t.r*0.55, pr=t.r*0.38;
+  if(Math.hypot(x-t.x,y-py)<=pr){hit=t;prec=true;break;}
+  if(Math.hypot(x-t.x,y-t.y)<=t.r){hit=t;break;}
+ }
+ if(hit){
+  aim.targets=aim.targets.filter(t=>t!==hit);aim.hits++;aim.streak++;aim.maxStreak=Math.max(aim.maxStreak,aim.streak);
+  aim.reactSum+=now-hit.born;aim.reactN++;
+  if(prec){aim.prec++;aim.score+=150;}else aim.score+=75;
+  if(aim.streak%5===0)aim.score+=25;
+  hit.ring=1;
+ } else {
+  aim.misses++;aim.streak=0;aim.score=Math.max(0,aim.score-25);
+  const ctx2=ctx;ctx2.fillStyle="rgba(234,119,119,.5)";ctx2.beginPath();ctx2.arc(x,y,6,0,Math.PI*2);ctx2.fill();
+ }
+ updateHud();
+});
+$("#startAim").addEventListener("click",startAim);
+$("#pauseAim").addEventListener("click",()=>pauseAim(false));
+$("#resumeAim").addEventListener("click",resumeAim);
+$("#diffSel").addEventListener("change",updateBestLine);
+document.addEventListener("visibilitychange",()=>{if(document.hidden)pauseAim(true);});
+window.addEventListener("resize",()=>{if(state.route==="range"&&!aim.running)drawRangeIdle();});
+/* ================= INIT ================= */
+function init(){
+ loadPersist();
+ renderObjectives();
+ $("#floorSel").value=String(state.planner.floor);
+ pushHistory();
+ const saved=JSON.parse(JSON.stringify({entities:state.planner.entities,routes:state.planner.routes}));
+ state.history=[JSON.stringify(saved)];state.hIndex=0;
+ renderLab();renderPlanner();updateBestLine();markSaved();
+ const start=(location.hash||"#operators").replace("#","");
+ setRoute(["operators","planner","range"].includes(start)?start:"operators",false);
+ drawRangeIdle();updateHud();
+ const t0=Date.now();
+ setInterval(()=>{const s=Math.floor((Date.now()-t0)/1000);$("#clock").textContent=String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");},1000);
+}
+init();
+</script>
+</body>
+</html>
